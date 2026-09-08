@@ -34,14 +34,16 @@ public final class ServerGrammar {
     }
 
     public static String empacotarEnvelope(
+            int codigo,
             String tipo,
-            String token,
-            String dados
+            String dados,
+            String token
     ) {
         dados = dados != null ? dados : "";
 
         return String.join(
                 ENV_JOIN,
+                String.valueOf(codigo),
                 tipo,
                 dados,
                 token,

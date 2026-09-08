@@ -1,19 +1,22 @@
 package org.UEFS.vaijunto.Server;
+
+import org.UEFS.vaijunto.Exceptions.ServerException;
 import org.UEFS.vaijunto.Exceptions.Status;
-import org.UEFS.vaijunto.Util.DmppParser;
 import org.UEFS.vaijunto.Util.IOUtils;
+import org.UEFS.vaijunto.Util.Parser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.*;
-import java.rmi.ServerException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.UEFS.vaijunto.Util.DmppParser.getServerIP;
+import static org.UEFS.vaijunto.Util.Parser.getServerIP;
 
 public class MainServer {
     private final int port;
@@ -67,9 +70,13 @@ public class MainServer {
 
                 Request request;
 
-                try { request = DmppParser.parceRequest(requisicao);
-                } catch (ServerException e) {
-                    saida.write(new Response(Status.BAD_REQUEST).toMessage());
+                try {
+                    request = Parser.parceRequest(requisicao);
+                } catch (ServerException se){
+                    saida.println(se.toResponse());
+                    break;
+                } catch (IOException e) {
+                    saida.println(new Response(Status.BAD_REQUEST, "").toMessage());
                     break;
                 }
 

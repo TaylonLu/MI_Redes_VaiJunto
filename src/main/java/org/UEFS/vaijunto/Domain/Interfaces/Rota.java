@@ -1,7 +1,8 @@
-package org.UEFS.vaijunto.Domain.Caronas;
+package org.UEFS.vaijunto.Domain.Interfaces;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public record Rota(List<Trecho> trechos) {
     public Rota() {
@@ -14,8 +15,8 @@ public record Rota(List<Trecho> trechos) {
 
     @Override
     public String toString() {
-        String dados = this.trechos.stream()
-                                    .map(T -> T.inicio() + "," + T.fim())
-                                    .toString();
+        return this.trechos.stream()
+                                    .map(T -> "[" + T.inicio() + "," + T.fim() + "]")
+                                    .collect(Collectors.joining(","));
     }
 }

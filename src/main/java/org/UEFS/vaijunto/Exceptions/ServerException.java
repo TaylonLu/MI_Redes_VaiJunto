@@ -10,6 +10,6 @@ public class ServerException extends RuntimeException {
     }
 
     public Response toResponse() {
-        return new Response(status, this.getMessage());
+        return new Response(status, "EXCEÇÃO", this.getMessage());
     }
 }

@@ -1,0 +1,87 @@
+/* Configuração Geral da Tela */
+.root-pane {
+    -fx-background-color: #F4F6F9;
+    -fx-font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Rótulos / Labels */
+.form-label {
+    -fx-text-fill: #333333;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* Campos de Texto e Senha */
+.text-field, .password-field {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 6px;
+    -fx-border-color: #CCCCCC;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+    -fx-padding: 8px 12px;
+    -fx-font-size: 13px;
+    -fx-min-width: 220px;
+    -fx-pref-height: 35px;
+}
+
+.text-field:focused, .password-field:focused {
+    -fx-border-color: #2D6A4F;
+    -fx-background-color: #FFFFFF;
+    -fx-effect: dropshadow(three-pass-box, rgba(45, 106, 79, 0.2), 5, 0, 0, 0);
+}
+
+/* Botão Principal */
+.btn-primary {
+    -fx-background-color: #2D6A4F;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 24px;
+    -fx-cursor: hand;
+    -fx-pref-height: 38px;
+    -fx-min-width: 150px;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #1B4332;
+}
+
+.btn-primary:pressed {
+    -fx-background-color: #081C15;
+}
+
+/* Títulos da Tela Inicial */
+.welcome-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1B4332;
+}
+
+.welcome-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: #666666;
+}
+
+/* Botão Secundário (Outlines / Inverso) */
+.btn-secondary {
+    -fx-background-color: transparent;
+    -fx-text-fill: #2D6A4F;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-border-color: #2D6A4F;
+    -fx-border-width: 2px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 24px;
+    -fx-cursor: hand;
+    -fx-pref-height: 38px;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #E8F5E9;
+}
+
+.btn-secondary:pressed {
+    -fx-background-color: #C8E6C9;
+}

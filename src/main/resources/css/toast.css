@@ -1,0 +1,38 @@
+/* Estilo base para todos os toasts */
+#toast-label {
+    -fx-text-fill: white;
+    -fx-padding: 12px 20px;
+    -fx-border-radius: 25px; /* Bordas mais arredondadas */
+    -fx-background-radius: 25px;
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI", Arial, sans-serif; /* Fonte mais moderna */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 5);
+}
+
+/* --- Estilos de Contexto --- */
+
+/* Estilo para mensagens de Sucesso (Verde) */
+#toast-label.success {
+    -fx-background-color: #28a745;
+}
+
+/* Estilo para mensagens de Aviso (Amarelo) */
+#toast-label.warning {
+    -fx-background-color: #ffc107;
+    -fx-text-fill: #212529;
+}
+
+/* Estilo para mensagens de Erro (Laranja) */
+#toast-label.error {
+    -fx-background-color: #ff4b00;
+}
+
+/* Estilo para mensagens de Informação (Azul) */
+#toast-label.info {
+    -fx-background-color: #17a2b8;
+}
+
+/* Estilo Padrão/Geral (Cinza Escuro) */
+#toast-label.general {
+    -fx-background-color: rgba(0, 0, 0, 0.75);
+}

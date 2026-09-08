@@ -33,13 +33,13 @@ public class UserController extends DataController<Usuario, UserRepo, UserDTO> {
 
         String token = sessions.criarSessao(user.getID());
 
-        return new Response(Status.SUCESSO.getCodigo(), token);
+        return new Response(Status.SUCESSO.getCodigo(), "LOGIN_EFETUADO", token);
     }
 
     @Override
     public Response cadastrar(Request RQ) {
         String[] dadosSplit = ServerGrammar.extrairAtributo(RQ.getDados());
-        if (dadosSplit.length != 3) return new Response(Status.DADOS_INCORRETOS);
+        if (dadosSplit.length != 3) return new Response(Status.DADOS_INCORRETOS, "DADOS_INCORRETOS");
 
         String email = dadosSplit[0];
         String senha = dadosSplit[1];
@@ -51,7 +51,7 @@ public class UserController extends DataController<Usuario, UserRepo, UserDTO> {
 
         String token = sessions.criarSessao(novoUser.getID());
 
-        return new Response(Status.SUCESSO.getCodigo(), token);
+        return new Response(Status.SUCESSO.getCodigo(), "CADASTRO_COMPLETO", token);
     }
 
     public Response cadastrarMotorista(Request RQ) {
@@ -66,13 +66,13 @@ public class UserController extends DataController<Usuario, UserRepo, UserDTO> {
         if (dadosSplit.length != 3) return new Response(Status.DADOS_INCORRETOS);
 
         if (Arrays.stream(dadosSplit).anyMatch(D -> (D == null || D.isBlank()))) {
-            return new Response(Status.DADOS_INCORRETOS);
+            return new Response(Status.DADOS_INCORRETOS,"");
         }
         user.tornarMotorista(dadosSplit[0], dadosSplit[1], dadosSplit[2]);
 
         repo.salvar(user);
 
-        return new Response(Status.SUCESSO);
+        return new Response(Status.SUCESSO, "CADASTRO_COMPLETO");
     }
 
 

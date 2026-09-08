@@ -1,14 +1,17 @@
 package org.UEFS.vaijunto.Domain;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.UEFS.vaijunto.Domain.Interfaces.BaseMapper;
+import org.UEFS.vaijunto.Domain.Interfaces.Cidade;
 import org.UEFS.vaijunto.Domain.Interfaces.Identificavel;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FileManager {
@@ -55,6 +58,26 @@ public class FileManager {
             throw new RuntimeException("Erro ao carregar o arquivo: " + caminho, e);
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static List<Cidade> carregarDeJson(String caminhoArquivo) {
+        Path arquivoC = Path.of(caminhoArquivo);
+        if (!Files.exists(arquivoC)) {
+            System.out.println("Arquivo não encontrado.");
+            return new ArrayList<>();
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        File arquivo = new File(arquivoC.toUri());
+
+        try {
+            return mapper.readValue(arquivo, new TypeReference<List<Cidade>>() {
+            });
+        } catch (IOException e) {
+            System.err.println("Erro ao ler o arquivo JSON: " + e.getMessage());
+            return null;
         }
     }
 }

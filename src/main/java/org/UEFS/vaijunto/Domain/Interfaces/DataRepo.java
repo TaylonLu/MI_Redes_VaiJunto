@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class DataRepo<T extends Identificavel> {
     protected final Map<String, T> dados = new ConcurrentHashMap<>();

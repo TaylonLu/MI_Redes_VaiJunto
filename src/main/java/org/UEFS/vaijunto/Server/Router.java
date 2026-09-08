@@ -26,6 +26,6 @@ public class Router {
 
         return acao != null
                 ? acao.apply(request)
-                : new Response(Status.NAO_IMPLEMENTADO);
+                : new Response(Status.NAO_IMPLEMENTADO, "");
     }
 }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="640.0" maxWidth="640.0" minHeight="640.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.UEFS.client.Controller.MapaCaronaController">
+    <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <top>
+            <HBox spacing="10.0">
+                <padding>
+                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                </padding>
+                <Button onAction="#gerarCodigoParaConsole" text="Gerar Código no Console" />
+                <Label fx:id="lblStatus" text="Ferramenta Pronta. Use os atalhos (Shift, Alt, Ctrl)." />
+            </HBox>
+        </top>
+
+        <center>
+            <Pane fx:id="containerMapa" onMouseClicked="#onMapaClicked" onMouseDragged="#onMapaDragged" onMousePressed="#onMapaPressed">
+                <Group fx:id="mapaGrupo" />
+            </Pane>
+        </center>
+
+    </BorderPane>
+</AnchorPane>

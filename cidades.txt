@@ -1,0 +1,16 @@
+1: Vaniville Town -> 2
+2: Aquacorde Town -> 3
+3: Santalune City -> 4, 15, 16
+4: Lumiose City -> 3, 5, 10, 11, 12
+5: Camphrier Town -> 4, 6
+6: Cyllage City -> 7, 8
+7: Ambrette Town -> 6
+8: Geosenge Town -> 6
+9: Shalour City -> 10
+10: Coumarine City -> 4, 9
+11: Laverre City -> 4, 12
+12: Dendemille Town -> 4, 11, 13
+13: Anistar City -> 12, 14
+14: Couriway Town -> 13, 15
+15: Snowbelle City -> 3, 16
+16: Pokémon League -> 3, 15

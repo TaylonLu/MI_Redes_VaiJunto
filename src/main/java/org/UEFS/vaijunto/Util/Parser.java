@@ -1,16 +1,16 @@
 package org.UEFS.vaijunto.Util;
 
+import org.UEFS.vaijunto.Exceptions.ServerException;
 import org.UEFS.vaijunto.Server.Request;
 import org.UEFS.vaijunto.Exceptions.IncorrectRequestException;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 
-public class DmppParser {
+public class Parser {
 
-    public static Request parceRequest(String mensagem) throws IOException {
+    public static Request parceRequest(String mensagem) throws IOException, ServerException {
         String[] parametros = mensagem.split("\\|");
 
         if (parametros.length != 4) {
@@ -20,7 +20,7 @@ public class DmppParser {
         String tipo = parametros[0];
         String dados = parametros[1];
         String token = parametros[2];
-        int tamanho = -1;
+        int tamanho;
         try {
             tamanho = Integer.parseInt(parametros[3]);
         } catch (NumberFormatException e) {

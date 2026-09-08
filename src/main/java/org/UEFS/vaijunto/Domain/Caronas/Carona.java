@@ -1,6 +1,7 @@
 package org.UEFS.vaijunto.Domain.Caronas;
 
 import org.UEFS.vaijunto.Domain.Interfaces.Identificavel;
+import org.UEFS.vaijunto.Domain.Interfaces.Rota;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -43,6 +44,12 @@ public class Carona implements Identificavel {
         return data;
     }
 
+    public synchronized boolean temVaga() {
+        return this.vagasDisponiveis > 0;
+    }
+    public synchronized boolean emAberto() {
+        return this.status == StatusCarona.AGENDADA;
+    }
     public synchronized int getVagasDisponiveis() {
         return this.vagasDisponiveis;
     }
