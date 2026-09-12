@@ -1,9 +1,9 @@
 package org.UEFS.vaijunto.Server;
 
+import org.UEFS.vaijunto.Exceptions.IncorrectRequestException;
 import org.UEFS.vaijunto.Exceptions.ServerException;
 import org.UEFS.vaijunto.Exceptions.Status;
 import org.UEFS.vaijunto.Util.IOUtils;
-import org.UEFS.vaijunto.Util.Parser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -37,7 +37,7 @@ public class MainServer {
 
             for (;;) {
                 Socket cSocket = serverSocket.accept();
-                cSocket.setSoTimeout(60_000);
+                cSocket.setSoTimeout(300_000);
                 threadPool.submit(() -> handleConnection(cSocket));
             }
         }
@@ -65,18 +65,19 @@ public class MainServer {
 
             while ((requisicao = entrada.readLine()) != null) {
                 if (requisicao.equalsIgnoreCase("SAIR")) {
+                    System.out.println("Saindo...");
                     break;
                 }
 
                 Request request;
 
                 try {
-                    request = Parser.parceRequest(requisicao);
+                    request = ServerGrammar.parseRequest(requisicao);
+                } catch (IncorrectRequestException e) {
+                    saida.println(new Response(Status.BAD_REQUEST.getCodigo(), "", e.getMessage()).toMessage());
+                    break;
                 } catch (ServerException se){
                     saida.println(se.toResponse());
-                    break;
-                } catch (IOException e) {
-                    saida.println(new Response(Status.BAD_REQUEST, "").toMessage());
                     break;
                 }
 
@@ -88,16 +89,11 @@ public class MainServer {
                 saida.println(response.toMessage());
             }
         } catch (SocketTimeoutException e){
-            IOUtils.fprintln("[:yellow]Conexão com o cliente chegou ao limite.");
+            IOUtils.fprintln("[:yellow]Conexão com o cliente chegou ao limite por inatividade.[::]");
         } catch (IOException e) {
-            try { client.close(); } catch (IOException ignored) {} throw new RuntimeException(e);
+            IOUtils.fprintln("[:red]| Conexão com o cliente " + client.getInetAddress() + " foi interrompida abruptamente.[::]");
         } finally {
-           try {
-               if (!client.isClosed()) client.close();
-           } catch (IOException e) {
-               IOUtils.fprintln("[:red]Erro ao fechar socket do cliente.[::]");
-           }
-            System.out.println("Resposta enviada e conexão fechada.\n");
+            IOUtils.fprintln("[:green]| Conexão finalizada e recursos liberados.\n[::]");
         }
     }
 

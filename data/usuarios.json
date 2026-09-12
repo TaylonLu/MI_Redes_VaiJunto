@@ -1,0 +1,70 @@
+{
+  "user_6581cd16-352d-4bbd-be46-8ed4c2d1a210" : {
+    "id" : "user_6581cd16-352d-4bbd-be46-8ed4c2d1a210",
+    "email" : "eu@gmail.com",
+    "senha" : "123",
+    "nome" : "Eu",
+    "motorista" : null
+  },
+  "user_d3eb2ef7-9a30-427d-8b6c-6a1400773fe7" : {
+    "id" : "user_d3eb2ef7-9a30-427d-8b6c-6a1400773fe7",
+    "email" : "silva@",
+    "senha" : "1234",
+    "nome" : "thay",
+    "motorista" : null
+  },
+  "user_1c42c492-32a5-4b2f-add5-177f825f8e72" : {
+    "id" : "user_1c42c492-32a5-4b2f-add5-177f825f8e72",
+    "email" : "silva@",
+    "senha" : "1234",
+    "nome" : "thay",
+    "motorista" : null
+  },
+  "user_685291de-fe77-4eb3-9892-7d9ce9878e37" : {
+    "id" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37",
+    "email" : "user@br.com",
+    "senha" : "senhaforte",
+    "nome" : "Luis",
+    "motorista" : {
+      "cnh" : "12345678912",
+      "placaCarro" : "amore123",
+      "modeloCarro" : "Ford Fiesta",
+      "notaAvaliacao" : -1.0
+    }
+  },
+  "user_5c1641bf-8af5-4def-8d91-2730342f19a2" : {
+    "id" : "user_5c1641bf-8af5-4def-8d91-2730342f19a2",
+    "email" : "silva@a",
+    "senha" : "1234",
+    "nome" : "thay",
+    "motorista" : null
+  },
+  "user_faa06d1c-dadc-400c-b8d0-f70a008924d4" : {
+    "id" : "user_faa06d1c-dadc-400c-b8d0-f70a008924d4",
+    "email" : "silva@a",
+    "senha" : "1234",
+    "nome" : "thay",
+    "motorista" : null
+  },
+  "user_df2faa3b-2de4-462f-992b-2939b151a20c" : {
+    "id" : "user_df2faa3b-2de4-462f-992b-2939b151a20c",
+    "email" : "email1@gmail.com",
+    "senha" : "senha1",
+    "nome" : "tayyy",
+    "motorista" : null
+  },
+  "user_380dfde6-4515-410b-9594-395d5c4adcb8" : {
+    "id" : "user_380dfde6-4515-410b-9594-395d5c4adcb8",
+    "email" : "tay@lu",
+    "senha" : "senha",
+    "nome" : "nicklegal",
+    "motorista" : null
+  },
+  "user_37a0c87a-948c-471d-8ad4-a946e8384e41" : {
+    "id" : "user_37a0c87a-948c-471d-8ad4-a946e8384e41",
+    "email" : "babilonia@gmail.com",
+    "senha" : "123",
+    "nome" : "Ea Nasir",
+    "motorista" : null
+  }
+}

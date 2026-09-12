@@ -1,10 +1,12 @@
 package org.UEFS.vaijunto.Domain.Caronas;
 
+import org.UEFS.vaijunto.DTO.TrechoOcupacaoDTO;
 import org.UEFS.vaijunto.Domain.Interfaces.Identificavel;
-import org.UEFS.vaijunto.Domain.Interfaces.Rota;
+import org.UEFS.vaijunto.Domain.Interfaces.Trecho;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class Carona implements Identificavel {
@@ -13,25 +15,29 @@ public class Carona implements Identificavel {
     private final String id;
     private final Rota rota;
     private final String id_motorista;
-    /**
-     * Lista de passageiros (ID dos usuários)
-     */
-    private final String[] passageiros;
-    private LocalDateTime data;
-    private int vagasDisponiveis;
+
+    private final Map<Trecho, Set<String>> ocupacaoPorTrecho;
+    private final LocalDateTime data;
+    private final int vagasTotais;
     private StatusCarona status;
 
-    public Carona(Rota rota, String id_motorista, int vagas, LocalDateTime data) {
+    public Carona(Rota rota, String id_motorista, int vagasTotais, LocalDateTime data) {
         this.id = ID_BASE + UUID.randomUUID();
+
         this.rota = rota;
+        this.data = data;
+        this.vagasTotais = vagasTotais;
         this.id_motorista = id_motorista;
-        this.passageiros = new String[vagas];
-        this.vagasDisponiveis = vagas;
         this.status = StatusCarona.AGENDADA;
+
+        this.ocupacaoPorTrecho = new HashMap<>();
+        for (Trecho T : rota.getTrechos()) {
+            this.ocupacaoPorTrecho.put(T, new HashSet<>());
+        }
     }
 
     @Override
-    public String getID() {
+    public String getId() {
         return id;
     }
     public Rota getRota() {
@@ -44,23 +50,53 @@ public class Carona implements Identificavel {
         return data;
     }
 
-    public synchronized boolean temVaga() {
-        return this.vagasDisponiveis > 0;
+    public synchronized boolean semVaga(Trecho T) {
+        return !this.ocupacaoPorTrecho.containsKey(T)
+                || this.ocupacaoPorTrecho.get(T).size() >= vagasTotais;
     }
+
+    public int vagas(Trecho T) {
+        return this.ocupacaoPorTrecho.containsKey(T)
+                ? this.ocupacaoPorTrecho.get(T).size()
+                : -1;
+    }
+
     public synchronized boolean emAberto() {
         return this.status == StatusCarona.AGENDADA;
     }
-    public synchronized int getVagasDisponiveis() {
-        return this.vagasDisponiveis;
-    }
-    public synchronized String[] getPassageiros() {
-        return passageiros;
-    }
-    public synchronized boolean addPassageiro(String id) {
-        if (vagasDisponiveis == 0 && status != StatusCarona.AGENDADA) return false;
 
-        passageiros[--vagasDisponiveis] = id;
+    public synchronized Set<String>
+    getPassageirosSet() {
+        return ocupacaoPorTrecho.values().stream()
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
+    }
+
+    public synchronized HashMap<Trecho, Set<String>>
+    getOcupacaoPorTrecho() {
+        return new HashMap<>(ocupacaoPorTrecho);
+    }
+
+    public synchronized boolean
+    addPassageiro(String idPassageiro, List<Trecho> trechosDesejados) {
+        if (status != StatusCarona.AGENDADA) return false;
+
+        if (trechosDesejados.stream()
+                .allMatch(T -> ocupacaoPorTrecho.containsKey(T)
+                                     && ocupacaoPorTrecho.get(T).size() < vagasTotais)
+        ) return false;
+
+        for (Trecho T : trechosDesejados) {
+            ocupacaoPorTrecho.get(T).add(idPassageiro);
+        }
+
         return true;
+    }
+
+    public synchronized void removePassageiro(String idPassageiro) {
+        for (Set<String> L : ocupacaoPorTrecho.values()) {
+            L.remove(idPassageiro);
+        }
     }
 
     public synchronized StatusCarona getStatus() {
@@ -68,5 +104,15 @@ public class Carona implements Identificavel {
     }
     public synchronized void setStatus(StatusCarona status) {
         this.status = status;
+    }
+
+    public int getVagasTotais() {
+        return this.vagasTotais;
+    }
+
+    public List<TrechoOcupacaoDTO> toTrechoOcupacao() {
+        return ocupacaoPorTrecho.entrySet().stream()
+                .map(E -> new TrechoOcupacaoDTO(E.getKey(), E.getValue()))
+                .toList();
     }
 }

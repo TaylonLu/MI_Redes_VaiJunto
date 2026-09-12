@@ -3,6 +3,7 @@ package org.UEFS.vaijunto.Controller;
 import org.UEFS.vaijunto.DTO.UserDTO;
 import org.UEFS.vaijunto.Domain.Usuarios.Usuario;
 import org.UEFS.vaijunto.Domain.Usuarios.UserRepo;
+import org.UEFS.vaijunto.Exceptions.ForbiddenException;
 import org.UEFS.vaijunto.Exceptions.IncorrectDataException;
 import org.UEFS.vaijunto.Exceptions.Status;
 import org.UEFS.vaijunto.Server.Request;
@@ -11,11 +12,13 @@ import org.UEFS.vaijunto.Server.ServerGrammar;
 
 import java.util.Arrays;
 
-public class UserController extends DataController<Usuario, UserRepo, UserDTO> {
-    private final SessionsController sessions = serviceProvider.get(SessionsController.class);
+public class UserController {
+    private final ControllerService service = ControllerService.getInstance();
+    private final SessionsController sessions = service.get(SessionsController.class);
+    private final UserRepo repo;
 
     public UserController(UserRepo repositorio) {
-        super(repositorio);
+        this.repo = repositorio;
     }
 
     public Response login(Request RQ) {
@@ -31,12 +34,12 @@ public class UserController extends DataController<Usuario, UserRepo, UserDTO> {
         if (user == null) return new Response(Status.USUARIO_NAO_CADASTRADO);
         if (!senha.equals(user.getSenha())) return new Response(Status.DADOS_INCORRETOS);
 
-        String token = sessions.criarSessao(user.getID());
+        String token = sessions.criarSessao(user.getId());
 
         return new Response(Status.SUCESSO.getCodigo(), "LOGIN_EFETUADO", token);
     }
 
-    @Override
+
     public Response cadastrar(Request RQ) {
         String[] dadosSplit = ServerGrammar.extrairAtributo(RQ.getDados());
         if (dadosSplit.length != 3) return new Response(Status.DADOS_INCORRETOS, "DADOS_INCORRETOS");
@@ -49,7 +52,7 @@ public class UserController extends DataController<Usuario, UserRepo, UserDTO> {
 
         repo.salvar(novoUser);
 
-        String token = sessions.criarSessao(novoUser.getID());
+        String token = sessions.criarSessao(novoUser.getId());
 
         return new Response(Status.SUCESSO.getCodigo(), "CADASTRO_COMPLETO", token);
     }
@@ -75,14 +78,34 @@ public class UserController extends DataController<Usuario, UserRepo, UserDTO> {
         return new Response(Status.SUCESSO, "CADASTRO_COMPLETO");
     }
 
+    public void cadastrarMotoristaT() {
+        Usuario U = repo.getByID("user_685291de-fe77-4eb3-9892-7d9ce9878e37");
 
-    @Override
+        U.tornarMotorista(
+                "12345678912",
+                "amore123",
+                "Ford Fiesta"
+        );
+
+        repo.salvar(U);
+    }
+
+    public String vaidadeUsuarioLogado(String token) throws ForbiddenException {
+        String userID = sessions.validarToken(token);
+        if (userID == null || userID.isBlank()) throw new ForbiddenException("Usuário não está logado.");
+
+        return userID;
+    }
+
     public Response atualizar(Request RQ) throws Exception {
         return new Response(Status.NAO_IMPLEMENTADO);
     }
 
-    @Override
     public UserDTO toData(Usuario entidade) {
-        return new UserDTO(entidade.getID(), entidade.getEmail(), entidade.getNome(), entidade.isMotorista());
+        return new UserDTO(entidade.getId(), entidade.getEmail(), entidade.getNome(), entidade.isMotorista());
+    }
+
+    public Usuario getByID(String userID) {
+        return repo.getByID(userID);
     }
 }

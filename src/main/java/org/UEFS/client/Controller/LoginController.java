@@ -38,10 +38,6 @@ public class LoginController {
             }
         };
 
-        tarefaDeRede.setOnSucceeded(_ -> {
-            Toast.success("Mensagem enviada.");
-        });
-
         tarefaDeRede.setOnFailed(_ -> {
             Throwable erro = tarefaDeRede.getException();
             System.err.println("Erro na rede: " + erro.getMessage());

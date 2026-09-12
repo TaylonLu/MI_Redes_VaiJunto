@@ -1,8 +1,6 @@
 package org.UEFS.vaijunto.Domain.Usuarios;
 
-import org.UEFS.vaijunto.Exceptions.DadosMotoristaInvalidosException;
-
-import java.sql.Array;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class PerfilMotorista {
     private String cnh;
@@ -10,12 +8,13 @@ public class PerfilMotorista {
     private String modeloCarro;
     private double notaAvaliacao;
 
+    public PerfilMotorista() {}
     public PerfilMotorista(String cnh, String placaCarro, String modeloCarro, double nota) {
-        if (!cnh.matches("[0-9]{11}"))
-            throw new DadosMotoristaInvalidosException("CNH inválida");
-
-        if (!placaCarro.matches("[A-Z]{3}[0-9][A-Z0-9][0-9]{2}"))
-            throw new DadosMotoristaInvalidosException("Placa inválida");
+//        if (!cnh.matches("[0-9]{11}"))
+//            throw new DadosMotoristaInvalidosException("CNH inválida");
+//
+//        if (!placaCarro.matches("[A-Z]{3}[0-9][A-Z0-9][0-9]{2}"))
+//            throw new DadosMotoristaInvalidosException("Placa inválida");
 
         this.cnh = cnh;
         this.placaCarro = placaCarro;
@@ -47,6 +46,7 @@ public class PerfilMotorista {
     public void setNotaAvaliacao(double notaAvaliacao) {
         this.notaAvaliacao = notaAvaliacao;
     }
+    @JsonIgnore
     public String[] getData() {
         return new String[]{cnh, placaCarro, modeloCarro, String.valueOf(notaAvaliacao)};
     }

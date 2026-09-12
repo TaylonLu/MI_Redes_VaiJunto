@@ -1,0 +1,26 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Docker/Server/Dockerfile
+    container_name: vai-junto-server
+    ports:
+      - "8080:8080"
+    tty: true
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - maven-cache:/root/.m2
+
+  client:
+    build:
+      context: .
+      dockerfile: Docker/Client/Dockerfile
+    container_name: vai-junto-client
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - maven-cache:/root/.m2
+
+volumes:
+  maven-cache:

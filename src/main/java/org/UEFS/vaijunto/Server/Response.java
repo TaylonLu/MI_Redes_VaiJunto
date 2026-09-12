@@ -32,9 +32,6 @@ public class Response {
     public int getStatus() {
         return status;
     }
-    public String getOutput() {
-        return dados;
-    }
 
     public String toMessage() {
         return ServerGrammar.empacotarEnvelope(status, tipo, dados, "NULL");

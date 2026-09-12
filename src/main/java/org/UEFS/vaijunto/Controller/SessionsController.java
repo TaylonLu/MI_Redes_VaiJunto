@@ -1,13 +1,13 @@
 package org.UEFS.vaijunto.Controller;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class SessionsController {
-    private final Map<String, String> sessoesAtivas = new HashMap<>();
-    private final Map<String, String> idToToken = new HashMap<>();
+    private final Map<String, String> sessoesAtivas = new ConcurrentHashMap<>();
+    private final Map<String, String> idToToken = new ConcurrentHashMap<>();
 
     private final ReentrantLock trava = new ReentrantLock();
 
@@ -38,30 +38,18 @@ public class SessionsController {
     public String validarToken(String token) {
         if (token == null || token.isBlank()) return null;
 
-        trava.lock();
-        try {
-            return sessoesAtivas.get(token);
-        } finally {
-            trava.unlock();
-        }
-
-
+        return sessoesAtivas.get(token);
     }
 
     public boolean encerrarSessao(String token) {
         if (token == null || token.isBlank()) return false;
 
-        trava.lock();
-
-        try {
-            String idUsuario = sessoesAtivas.remove(token);
-            if (idUsuario != null) {
-                idToToken.remove(idUsuario);
-                return true;
-            }
-            return false;
-        } finally {
-            trava.unlock();
+        String idUsuario = sessoesAtivas.remove(token);
+        if (idUsuario != null) {
+            idToToken.remove(idUsuario);
+            return true;
         }
+        return false;
+
     }
 }

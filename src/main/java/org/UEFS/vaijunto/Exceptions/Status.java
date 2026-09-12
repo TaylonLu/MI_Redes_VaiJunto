@@ -2,6 +2,7 @@ package org.UEFS.vaijunto.Exceptions;
 
 public enum Status {
     SUCESSO(200, "Operação realizada com sucesso."),
+    CONFLITO(444, "Conflito detectado."),
     BAD_REQUEST(700, "A requisição possui formato inválido."),
     DADOS_INCORRETOS(701, "Os dados enviados não são válidos."),
     TOKEN_INVALIDO(702, "Sessão expirada ou inválida."),

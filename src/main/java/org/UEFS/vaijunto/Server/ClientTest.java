@@ -9,7 +9,7 @@ import java.util.Scanner;
 public class ClientTest {
     public static void main(String[] args) {
         String ipServidor = "localhost";
-        int porta = 2602;
+        int porta = 8080;
 
         try {
             Socket socket = new Socket(ipServidor, porta);
