@@ -1,4 +1,4 @@
-package org.UEFS.client.Service;
+package org.UEFS.client.service;
 
 import java.io.BufferedReader;
 import java.io.IOException;

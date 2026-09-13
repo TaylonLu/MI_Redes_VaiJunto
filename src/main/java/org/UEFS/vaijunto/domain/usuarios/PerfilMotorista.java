@@ -1,15 +1,17 @@
 package org.UEFS.vaijunto.domain.usuarios;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.UEFS.shared.dto.PerfilMotoristaDTO;
 
 public class PerfilMotorista {
     private String cnh;
     private String placaCarro;
     private String modeloCarro;
+    private String corCarro;
     private double notaAvaliacao;
 
     public PerfilMotorista() {}
-    public PerfilMotorista(String cnh, String placaCarro, String modeloCarro, double nota) {
+    public PerfilMotorista(String cnh, String placaCarro, String modeloCarro, String corCarro, double nota) {
 //        if (!cnh.matches("[0-9]{11}"))
 //            throw new DadosMotoristaInvalidosException("CNH inválida");
 //
@@ -19,6 +21,7 @@ public class PerfilMotorista {
         this.cnh = cnh;
         this.placaCarro = placaCarro;
         this.modeloCarro = modeloCarro;
+        this.corCarro = corCarro;
         this.notaAvaliacao = nota;
     }
 
@@ -47,7 +50,7 @@ public class PerfilMotorista {
         this.notaAvaliacao = notaAvaliacao;
     }
     @JsonIgnore
-    public String[] getData() {
-        return new String[]{cnh, placaCarro, modeloCarro, String.valueOf(notaAvaliacao)};
+    public PerfilMotoristaDTO getData() {
+        return new PerfilMotoristaDTO(cnh, placaCarro, modeloCarro, notaAvaliacao);
     }
 }

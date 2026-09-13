@@ -1,6 +1,6 @@
-package org.UEFS.shared.dto;
+package org.UEFS.shared.dto.requests;
 
-public record MaisResultadosDTO(
+public record MaisResultadosRequest(
         int origemDesejada, int destinoDesejado,
         String ultimoIdEnviado, int limite
 ) {

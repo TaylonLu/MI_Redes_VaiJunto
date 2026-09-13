@@ -1,16 +1,17 @@
 package org.UEFS.vaijunto.controller;
 
-import org.UEFS.shared.dto.UserDTO;
-import org.UEFS.vaijunto.domain.usuarios.Usuario;
+import org.UEFS.shared.JsonUtils;
+import org.UEFS.shared.dto.requests.CadastroMotoristaRequest;
+import org.UEFS.shared.dto.requests.CadastroRequest;
+import org.UEFS.shared.dto.requests.LoginRequest;
+import org.UEFS.shared.dto.responses.LoginResponse;
+import org.UEFS.shared.enums.Status;
 import org.UEFS.vaijunto.domain.usuarios.UserRepo;
+import org.UEFS.vaijunto.domain.usuarios.Usuario;
 import org.UEFS.vaijunto.exceptions.ForbiddenException;
 import org.UEFS.vaijunto.exceptions.IncorrectDataException;
-import org.UEFS.shared.enums.Status;
 import org.UEFS.vaijunto.server.Request;
 import org.UEFS.vaijunto.server.Response;
-import org.UEFS.shared.dto.ServerGrammar;
-
-import java.util.Arrays;
 
 public class UserController {
     private final ControllerService service = ControllerService.getInstance();
@@ -22,72 +23,64 @@ public class UserController {
     }
 
     public Response login(Request RQ) {
-        String[] partes = ServerGrammar.extrairAtributo(RQ.getDados());
+        try {
+            LoginRequest login = JsonUtils.fromJson(RQ.getDados(), LoginRequest.class);
+            Usuario user = repo.buscaPorEmail(login.email());
 
-        if (partes.length != 2) throw new IncorrectDataException("Dados para login incorretos");
+            if (user == null) return new Response(Status.USUARIO_NAO_CADASTRADO);
+            if (!login.senha().equals(user.getSenha())) return new Response(Status.DADOS_INCORRETOS);
 
-        String email = partes[0];
-        String senha = partes[1];
+            String token = sessions.criarSessao(user.getId());
 
-        Usuario user = repo.buscaPorEmail(email);
+            LoginResponse dados = new LoginResponse(token, user.getData());
 
-        if (user == null) return new Response(Status.USUARIO_NAO_CADASTRADO);
-        if (!senha.equals(user.getSenha())) return new Response(Status.DADOS_INCORRETOS);
-
-        String token = sessions.criarSessao(user.getId());
-
-        return new Response(Status.SUCESSO.getCodigo(), "LOGIN_EFETUADO", token);
+            return new Response(Status.SUCESSO.getCodigo(), "LOGIN_EFETUADO", JsonUtils.toJson(dados));
+        } catch (IncorrectDataException e) {
+            return new Response(Status.DADOS_INCORRETOS);
+        }
     }
 
 
     public Response cadastrar(Request RQ) {
-        String[] dadosSplit = ServerGrammar.extrairAtributo(RQ.getDados());
-        if (dadosSplit.length != 3) return new Response(Status.DADOS_INCORRETOS, "DADOS_INCORRETOS");
+        try {
+            CadastroRequest cadastro = JsonUtils.fromJson(RQ.getDados(), CadastroRequest.class);
 
-        String email = dadosSplit[0];
-        String senha = dadosSplit[1];
-        String nome = dadosSplit[2];
+            Usuario novoUser = new Usuario(cadastro.email(), cadastro.senha(), cadastro.nome());
 
-        Usuario novoUser = new Usuario(email, senha, nome);
+            repo.salvar(novoUser);
 
-        repo.salvar(novoUser);
+            String token = sessions.criarSessao(novoUser.getId());
 
-        String token = sessions.criarSessao(novoUser.getId());
+            LoginResponse dados = new LoginResponse(token, novoUser.getData());
 
-        return new Response(Status.SUCESSO.getCodigo(), "CADASTRO_COMPLETO", token);
+            return new Response(Status.SUCESSO.getCodigo(), "CADASTRO_COMPLETO", JsonUtils.toJson(dados));
+
+        } catch (IncorrectDataException e) {
+            return new Response(Status.DADOS_INCORRETOS);
+        }
     }
 
     public Response cadastrarMotorista(Request RQ) {
-        String userID = sessions.validarToken(RQ.getToken());
-        if (userID == null) return new Response(Status.TOKEN_INVALIDO);
+        try {
 
-        Usuario user = repo.getByID(userID);
+            String userID = sessions.validarToken(RQ.getToken());
+            if (userID == null) return new Response(Status.TOKEN_INVALIDO);
 
-        if (user.isMotorista()) return new Response(Status.ACAO_INVALIDA);
+            Usuario user = repo.getByID(userID);
 
-        String[] dadosSplit = ServerGrammar.extrairAtributo(RQ.getDados());
-        if (dadosSplit.length != 3) return new Response(Status.DADOS_INCORRETOS);
+            if (user.isMotorista()) return new Response(Status.ACAO_INVALIDA);
 
-        if (Arrays.stream(dadosSplit).anyMatch(D -> (D == null || D.isBlank()))) {
-            return new Response(Status.DADOS_INCORRETOS,"");
+            CadastroMotoristaRequest cadastro = JsonUtils.fromJson(RQ.getDados(), CadastroMotoristaRequest.class);
+            user.tornarMotorista(cadastro.cnh(), cadastro.placaCarro(), cadastro.modeloCarro(), cadastro.corCarro());
+
+            repo.salvar(user);
+
+            String payload = JsonUtils.toJson(user.getData());
+            return new Response(Status.SUCESSO.getCodigo(), "CADASTRO_COMPLETO", payload);
+
+        } catch (IncorrectDataException e) {
+            return new Response(Status.DADOS_INCORRETOS);
         }
-        user.tornarMotorista(dadosSplit[0], dadosSplit[1], dadosSplit[2]);
-
-        repo.salvar(user);
-
-        return new Response(Status.SUCESSO, "CADASTRO_COMPLETO");
-    }
-
-    public void cadastrarMotoristaT() {
-        Usuario U = repo.getByID("user_685291de-fe77-4eb3-9892-7d9ce9878e37");
-
-        U.tornarMotorista(
-                "12345678912",
-                "amore123",
-                "Ford Fiesta"
-        );
-
-        repo.salvar(U);
     }
 
     public String vaidadeUsuarioLogado(String token) throws ForbiddenException {
@@ -97,12 +90,8 @@ public class UserController {
         return userID;
     }
 
-    public Response atualizar(Request RQ) throws Exception {
+    public Response atualizar(Request RQ) {
         return new Response(Status.NAO_IMPLEMENTADO);
-    }
-
-    public UserDTO toData(Usuario entidade) {
-        return new UserDTO(entidade.getId(), entidade.getEmail(), entidade.getNome(), entidade.isMotorista());
     }
 
     public Usuario getByID(String userID) {

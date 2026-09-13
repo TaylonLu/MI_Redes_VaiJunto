@@ -2,7 +2,7 @@ package org.UEFS.vaijunto.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.UEFS.shared.Cidade;
+import org.UEFS.shared.model.Cidade;
 import org.UEFS.shared.JsonUtils;
 import org.UEFS.vaijunto.domain.interfaces.Identificavel;
 
@@ -39,11 +39,11 @@ public class FileManager {
 
     public <T extends Identificavel>
     void salvarObjetos(String arquivo, Map<String, T> mapa) throws IOException {
-        mapper.writeValue(new File(arquivo), mapa);
+        mapper.writerWithDefaultPrettyPrinter().writeValue(new File(arquivo), mapa);
     }
 
     public void salvarObjetos(String arquivo, Object dados) throws IOException {
-        mapper.writeValue(new File(arquivo), dados);
+        mapper.writerWithDefaultPrettyPrinter().writeValue(new File(arquivo), dados);
     }
 
     public <U> U carregarObjetos(String arquivo, TypeReference<U> tipo) throws IOException {

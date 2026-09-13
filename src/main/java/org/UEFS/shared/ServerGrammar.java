@@ -1,15 +1,10 @@
 package org.UEFS.shared;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.UEFS.vaijunto.exceptions.IncorrectDataException;
 import org.UEFS.vaijunto.exceptions.IncorrectRequestException;
 import org.UEFS.vaijunto.server.Request;
-
-import java.util.List;
-import java.util.Map;
 
 public final class ServerGrammar {
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -52,8 +47,7 @@ public final class ServerGrammar {
     public static String empacotarEnvelope(
             int codigo,
             String tipo,
-            String dados,
-            String token
+            String dados
     ) {
         dados = dados != null ? dados : "";
 
@@ -62,7 +56,6 @@ public final class ServerGrammar {
                 String.valueOf(codigo),
                 tipo,
                 dados,
-                token,
                 String.valueOf(dados.length())
         );
     }

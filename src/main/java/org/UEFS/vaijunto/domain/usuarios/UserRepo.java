@@ -11,11 +11,9 @@ public class UserRepo extends DataRepo<Usuario> {
     private final Map<String, Usuario> emailIdx = new ConcurrentHashMap<>();
 
     public UserRepo() {
-        super("data/usuarios.json", new TypeReference<>() {
-        });
+        super("data/usuarios.json", new TypeReference<Map<String, Usuario>>() {});
         for (Usuario usuario : this.dados.values()) {
             this.emailIdx.put(usuario.getEmail(), usuario);
-            IOUtils.fprintf("[:yellow]Email: [:green]%s\t[:yellow]Senha: [:green]%s[::]", usuario.getEmail(), usuario.getSenha());
         }
     }
 

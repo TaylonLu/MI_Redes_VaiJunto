@@ -1,6 +1,6 @@
 package org.UEFS.vaijunto.domain.caronas;
 
-import org.UEFS.shared.dto.BuscaCaronaDTO;
+import org.UEFS.shared.dto.requests.BuscaCaronaRequest;
 import org.UEFS.shared.dto.ItinerarioDTO;
 import org.UEFS.shared.dto.PassoItinerarioDTO;
 import org.UEFS.shared.dto.Trecho;
@@ -29,7 +29,7 @@ public class CaronaService {
                .toList();
     }
 
-    public List<List<ArestaTrecho>> buscarItinerarios(BuscaCaronaDTO busca) {
+    public List<List<ArestaTrecho>> buscarItinerarios(BuscaCaronaRequest busca) {
         Map<Integer, List<ArestaTrecho>> grafo = new HashMap<>();
 
         construirGrafo(grafo, busca);
@@ -67,7 +67,7 @@ public class CaronaService {
         return itinerarios;
     }
 
-    private void construirGrafo(Map<Integer, List<ArestaTrecho>> grafo, BuscaCaronaDTO busca) {
+    private void construirGrafo(Map<Integer, List<ArestaTrecho>> grafo, BuscaCaronaRequest busca) {
         for (Carona carona : caronaRepo.getDadosList()) {
             if (!carona.emAberto()) continue;
 
@@ -94,7 +94,7 @@ public class CaronaService {
         return true;
     }
 
-    private boolean atendeRequisito(Carona carona, BuscaCaronaDTO busca) {
+    private boolean atendeRequisito(Carona carona, BuscaCaronaRequest busca) {
         List<Trecho> trechosCarona = carona.getRota().getTrechos();
 
         boolean achouOrigem = false;

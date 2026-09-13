@@ -1,4 +1,4 @@
-package org.UEFS.client.Controller;
+package org.UEFS.client.controller;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
@@ -8,7 +8,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
-import org.UEFS.client.Service.ClientSocket;
+import org.UEFS.client.service.ClientSocket;
 import org.UEFS.client.utils.Toast;
 
 public class CadastroController {

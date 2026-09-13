@@ -1,7 +1,10 @@
 package org.UEFS.vaijunto.domain.usuarios;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.UEFS.shared.dto.PerfilMotoristaDTO;
+import org.UEFS.shared.dto.UserDTO;
 import org.UEFS.vaijunto.domain.interfaces.Identificavel;
 
 import java.util.UUID;
@@ -63,14 +66,24 @@ public class Usuario implements Identificavel {
     public boolean isMotorista() {
         return this.perfilMotorista != null;
     }
-    public void tornarMotorista(String cnh, String placa, String modelo) {
-        tornarMotorista(cnh, placa, modelo, -1.0);
+    public void tornarMotorista(String cnh, String placa, String modelo, String cor) {
+        tornarMotorista(cnh, placa, modelo, cor, -1.0);
     }
-    public void tornarMotorista(String cnh, String placa, String modelo, double nota) {
-        this.perfilMotorista = new PerfilMotorista(cnh, placa, modelo, nota);
+    public void tornarMotorista(String cnh, String placa, String modelo, String cor, double nota) {
+        this.perfilMotorista = new PerfilMotorista(cnh, placa, modelo, cor, nota);
     }
     @JsonProperty("motorista")
     public PerfilMotorista getPerfilMotorista() {
         return this.perfilMotorista;
+    }
+
+    @JsonIgnore
+    public UserDTO getData() {
+        return new UserDTO(
+                this.ID,
+                this.email,
+                this.nome,
+                this.perfilMotorista != null ? this.perfilMotorista.getData() : null
+        );
     }
 }

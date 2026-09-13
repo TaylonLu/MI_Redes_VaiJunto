@@ -1,8 +1,8 @@
-package org.UEFS.shared.dto;
+package org.UEFS.shared.dto.requests;
 
 import java.time.LocalDateTime;
 
-public record BuscaCaronaDTO(
+public record BuscaCaronaRequest(
         int origemDesejada,
         int destinoDesejado,
         int vagasRequeridas,

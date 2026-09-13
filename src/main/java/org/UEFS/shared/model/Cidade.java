@@ -1,4 +1,4 @@
-package org.UEFS.shared;
+package org.UEFS.shared.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

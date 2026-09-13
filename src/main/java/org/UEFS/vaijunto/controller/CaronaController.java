@@ -2,6 +2,11 @@ package org.UEFS.vaijunto.controller;
 
 import org.UEFS.shared.JsonUtils;
 import org.UEFS.shared.dto.*;
+import org.UEFS.shared.dto.requests.BuscaCaronaRequest;
+import org.UEFS.shared.dto.requests.NovaCaronaRequest;
+import org.UEFS.shared.dto.requests.ReservaRequest;
+import org.UEFS.shared.dto.responses.CaronaResponse;
+import org.UEFS.shared.dto.responses.PassageiroPorTrechoResponse;
 import org.UEFS.shared.enums.StatusCarona;
 import org.UEFS.vaijunto.domain.caronas.*;
 import org.UEFS.vaijunto.domain.usuarios.Usuario;
@@ -31,7 +36,7 @@ public class CaronaController {
         try {
             String userID = validarMotorista(request.getToken());
 
-            NovaCaronaRequestDTO caronaDTO = JsonUtils.fromJson(request.getDados(), NovaCaronaRequestDTO.class);
+            NovaCaronaRequest caronaDTO = JsonUtils.fromJson(request.getDados(), NovaCaronaRequest.class);
 
             if (!userID.equals(caronaDTO.idMotorista())) return new IncorrectRequestException("Token Inválido").toResponse();
 
@@ -55,7 +60,7 @@ public class CaronaController {
         try {
             String userID = validarMotorista(request.getToken());
 
-            List<CaronaResponseDTO> caronas = repo.getDadosList().stream()
+            List<CaronaResponse> caronas = repo.getDadosList().stream()
                     .filter(C -> C.getId_motorista().equals(userID))
                     .map(this::toCaronaResponseDTO)
                     .toList();
@@ -72,8 +77,8 @@ public class CaronaController {
         try {
             Carona C = encontrarCaronaValidado(request.getToken(), request.getDados());
 
-            List<PassageiroPorTrechoResponseDTO> passageiros = C.getOcupacaoPorTrecho().entrySet().stream()
-                    .map(E -> new PassageiroPorTrechoResponseDTO(E.getKey(), getNomesPassageiros(E.getValue())))
+            List<PassageiroPorTrechoResponse> passageiros = C.getOcupacaoPorTrecho().entrySet().stream()
+                    .map(E -> new PassageiroPorTrechoResponse(E.getKey(), getNomesPassageiros(E.getValue())))
                     .toList();
 
             return new Response(Status.SUCESSO.getCodigo(), "DADOS_PASSAGEIROS", JsonUtils.toJson(passageiros));
@@ -98,7 +103,7 @@ public class CaronaController {
         try {
             userController.vaidadeUsuarioLogado(request.getToken());
 
-            BuscaCaronaDTO buscarDTO = JsonUtils.fromJson(request.getDados(), BuscaCaronaDTO.class);
+            BuscaCaronaRequest buscarDTO = JsonUtils.fromJson(request.getDados(), BuscaCaronaRequest.class);
 
             List<List<ArestaTrecho>> caminhosBrutos = caronaService.buscarItinerarios(buscarDTO);
 
@@ -115,7 +120,7 @@ public class CaronaController {
         try {
             String userID = userController.vaidadeUsuarioLogado(request.getToken());
 
-            List<CaronaResponseDTO> minhasReservas = repo.getDadosList().stream()
+            List<CaronaResponse> minhasReservas = repo.getDadosList().stream()
                     .filter(carona -> carona.getOcupacaoPorTrecho().values().stream()
                             .anyMatch(passageiros -> passageiros.contains(userID)))
                     .map(this::toCaronaResponseDTO)
@@ -135,7 +140,7 @@ public class CaronaController {
         try {
             String userID = userController.vaidadeUsuarioLogado(request.getToken());
 
-            ReservaRequestDTO reservaDTO = JsonUtils.fromJson(request.getDados(), ReservaRequestDTO.class);
+            ReservaRequest reservaDTO = JsonUtils.fromJson(request.getDados(), ReservaRequest.class);
 
             List<ArestaTrecho> itinerarioEscolhido = reservaDTO.passos().stream()
                     .map(passo -> {
@@ -185,8 +190,8 @@ public class CaronaController {
                 .toList();
     }
 
-    private CaronaResponseDTO toCaronaResponseDTO(Carona carona) {
-        return new CaronaResponseDTO(
+    private CaronaResponse toCaronaResponseDTO(Carona carona) {
+        return new CaronaResponse(
                 carona.getId(), carona.getId_motorista(),
                 carona.getVagasTotais(), carona.getData(),
                 carona.getStatus().toString(),

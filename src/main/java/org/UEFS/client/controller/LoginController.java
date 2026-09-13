@@ -1,11 +1,11 @@
-package org.UEFS.client.Controller;
+package org.UEFS.client.controller;
 
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
-import org.UEFS.client.Service.ClientSocket;
+import org.UEFS.client.service.ClientSocket;
 import org.UEFS.client.utils.Toast;
 
 public class LoginController {

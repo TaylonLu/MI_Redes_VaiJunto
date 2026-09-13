@@ -1,4 +1,4 @@
-package org.UEFS.client.Controller;
+package org.UEFS.client.controller;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

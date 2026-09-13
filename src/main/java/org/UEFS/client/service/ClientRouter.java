@@ -1,7 +1,6 @@
-package org.UEFS.client.Service;
+package org.UEFS.client.service;
 
 import javafx.application.Platform;
-import org.UEFS.client.Controller.UserController;
 import org.UEFS.client.utils.Toast;
 
 import java.util.Arrays;
@@ -17,8 +16,6 @@ public class ClientRouter {
     }
 
     private void configurarRotas() {
-        UserController userController =
-
         rotas.put("LOGIN_EFETUADO", rawM -> {
             Toast.success("Login efetuado.");
 

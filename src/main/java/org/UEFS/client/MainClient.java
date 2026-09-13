@@ -3,9 +3,9 @@ package org.UEFS.client;
 import javafx.application.Application;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
-import org.UEFS.client.Controller.SceneManager;
-import org.UEFS.client.Service.ClientListener;
-import org.UEFS.client.Service.ClientSocket;
+import org.UEFS.client.controller.SceneManager;
+import org.UEFS.client.service.ClientListener;
+import org.UEFS.client.service.ClientSocket;
 
 import java.io.BufferedReader;
 

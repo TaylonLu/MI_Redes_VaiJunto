@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import javafx.scene.layout.AnchorPane?>
-<AnchorPane prefWidth="600.0" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.UEFS.client.Controller.LoginController">
+<AnchorPane prefWidth="600.0" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.UEFS.client.controller.LoginController">
     <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
     <top>
         <HBox alignment="CENTER" prefHeight="227.0" prefWidth="600.0" BorderPane.alignment="CENTER">

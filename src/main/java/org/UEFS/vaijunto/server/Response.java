@@ -12,7 +12,7 @@ public class Response {
 
     public Response(Status status) {
         this.status = status.getCodigo();
-        this.tipo = "";
+        this.tipo = "BASIC";
         this.dados = status.getMensagemPadrao();
         this.tamanho = this.dados.length();
     }
@@ -36,7 +36,7 @@ public class Response {
     }
 
     public String toMessage() {
-        return ServerGrammar.empacotarEnvelope(status, tipo, dados, "NULL");
+        return ServerGrammar.empacotarEnvelope(status, tipo, dados);
     }
 
     @Override

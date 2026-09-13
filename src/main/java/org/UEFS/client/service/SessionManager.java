@@ -1,11 +1,13 @@
-package org.UEFS.client.Service;
+package org.UEFS.client.service;
+
+import org.UEFS.shared.dto.UserDTO;
 
 public class SessionManager {
     private static SessionManager instance;
 
     private String userToken;
-    private String username;
-    private String userID;
+
+    private UserDTO currentUser;
 
     private SessionManager() {}
 
@@ -23,22 +25,19 @@ public class SessionManager {
         return userToken;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public UserDTO getCurrentUser() {
+        return currentUser;
     }
-    public String getUsername() {
-        return username;
+    public void setCurrentUser(UserDTO currentUser) {
+        this.currentUser = currentUser;
     }
 
-    public void setUserID(String userID) {
-        this.userID = userID;
-    }
-    public String getUserID() {
-        return userID;
+    public boolean isMotorista() {
+        return this.currentUser != null && this.currentUser.perfilMotorista() != null;
     }
 
     public void limparSessao() {
         userToken = null;
-        username = null;
+        currentUser = null;
     }
 }

@@ -1,6 +1,6 @@
 package org.UEFS.shared.dto;
 
-public record UserDTO(
+public record UserDTO (
         String id, String email,
-        String nome, boolean eMotorista
+        String nome, PerfilMotoristaDTO perfilMotorista
 ) {}
