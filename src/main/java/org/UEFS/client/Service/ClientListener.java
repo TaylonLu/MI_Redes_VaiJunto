@@ -18,7 +18,7 @@ public class ClientListener implements Runnable {
             String mensagemDoServidor;
 
             while ((mensagemDoServidor = entrada.readLine()) != null) {
-                router.processarMenasagem(mensagemDoServidor);
+                router.processarMensagem(mensagemDoServidor);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

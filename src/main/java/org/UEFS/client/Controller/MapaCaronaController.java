@@ -18,26 +18,40 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import org.UEFS.client.Service.ClientSocket;
+import org.UEFS.client.Service.SessionManager;
 import org.UEFS.client.utils.Resources;
 import org.UEFS.client.utils.Toast;
-import org.UEFS.vaijunto.Domain.Caronas.Rota;
-import org.UEFS.vaijunto.Domain.FileManager;
-import org.UEFS.vaijunto.Domain.Interfaces.Cidade;
-import org.UEFS.vaijunto.Domain.Interfaces.Trecho;
+import org.UEFS.shared.JsonUtils;
+import org.UEFS.shared.dto.NovaCaronaRequestDTO;
+import org.UEFS.vaijunto.util.FileManager;
+import org.UEFS.shared.Cidade;
+import org.UEFS.shared.dto.Trecho;
+import org.UEFS.shared.dto.ServerGrammar;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.UnaryOperator;
 
 public class MapaCaronaController {
     private final List<Cidade> cidades = new ArrayList<>();
     private final List<Trecho> rotaMotorista = new ArrayList<>();
-    public DatePicker dataCarona;
+
     private Cidade cidadeAnterior = null;
     private double anchorX;
     private double anchorY;
 
+    private final ClientSocket socket = ClientSocket.getInstance();
+
+    @FXML private DatePicker datePickerPartida;
+    @FXML private Spinner<Integer> spinnerHora;
+    @FXML private Spinner<Integer> spinnerMinuto;
     @FXML private Button btnCancelar;
     @FXML private Button btnRecomecar;
     @FXML private Pane containerMapa;
@@ -49,6 +63,14 @@ public class MapaCaronaController {
     @FXML private TextField txtComentarios;
     @FXML private TextField txtDataPartida;
     @FXML private TextField txtVagas;
+
+    private static UnaryOperator<TextFormatter.Change> numberFormatter = change -> {
+        String text = change.getText();
+        if (text.matches("\\d+?")) {
+            return change;
+        }
+        return null;
+    };
 
     @FXML
     void cancelarRota(ActionEvent event) {
@@ -70,9 +92,22 @@ public class MapaCaronaController {
         try {
             int vagas = Integer.parseInt(txtVagas.getText().trim());
             if (vagas <= 0) throw new IllegalArgumentException();
-            String dataStr = txtDataPartida.getText().trim();
 
-            Rota rotaFinal = new Rota(rotaMotorista);
+            String dataStr = txtDataPartida.getText().trim();
+            int vagasTotais = Integer.valueOf(txtVagas.getText());
+
+            NovaCaronaRequestDTO novaCarona = new NovaCaronaRequestDTO(
+                    SessionManager.getInstance().getUserID(),
+                    vagasTotais, coletarDataHora(), rotaMotorista
+            );
+
+            if (socket.connected()) {
+                String token = SessionManager.getInstance().getUserToken();
+                String dados = JsonUtils.toJson(novaCarona);
+
+                String comando = String.format("CRIAR_CARONA|%s|%s|%d", dados, token, dados.length());
+                socket.enviarComando(comando);
+            }
 
             Toast.success("Carona publicada com sucesso!");
             painelPopup.setVisible(false);
@@ -80,6 +115,8 @@ public class MapaCaronaController {
             Toast.error("Numero de vagas deve ser um valor inteiro válido.");
         } catch (IllegalArgumentException e) {
             Toast.error("O número de vagas deve ser de pelo menos 1.");
+        } catch (IOException e) {
+            Toast.error("Erro de comunicação com o servidor...");
         }
     }
 
@@ -109,9 +146,23 @@ public class MapaCaronaController {
         clip.heightProperty().bind(containerMapa.heightProperty());
         containerMapa.setClip(clip);
 
+        txtVagas.setTextFormatter(new TextFormatter<>(numberFormatter));
+        spinnerHora.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 23, 8));
+        spinnerMinuto.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 59, 5));
+
         carregarCidades();
         carregarImagemFundo();
         renderizarMapa();
+    }
+
+    public LocalDateTime coletarDataHora() {
+        LocalDate date = datePickerPartida.getValue();
+        int hora = spinnerHora.getValue();
+        int minuto = spinnerMinuto.getValue();
+
+        return date != null
+                ? LocalDateTime.of(date, LocalTime.of(hora, minuto))
+                : null;
     }
 
     public void carregarCidades() {
@@ -167,14 +218,13 @@ public class MapaCaronaController {
             circulo.getStyleClass().add("cidade-selecionada");
             lblStatus.setText("Origem da carona definida: " + cidadeClicada.nome);
 
-            // Adiciona a primeira cidade na lista visual
             listViewPercurso.getItems().add(cidadeClicada.nome);
         } else {
             boolean saoAdjacentes = cidadeAnterior.estradas.contains(cidadeClicada.id);
 
             if (!saoAdjacentes) {
                 Toast.error("Não há estrada lidando as Cidades diretamente.");
-                lblStatus.setText("❌ Movimento inválido! Não há estrada direta entre " + cidadeAnterior.nome + " e " + cidadeClicada.nome);
+                lblStatus.setText("Movimento inválido! Não há estrada direta entre " + cidadeAnterior.nome + " e " + cidadeClicada.nome);
                 return;
             }
 
@@ -188,7 +238,6 @@ public class MapaCaronaController {
             circulo.getStyleClass().add("cidade-selecionada");
             lblStatus.setText("Trecho adicionado até: " + cidadeClicada.nome);
 
-            // Adiciona as cidades seguintes na lista visual
             listViewPercurso.getItems().add(cidadeClicada.nome);
         }
     }

@@ -38,6 +38,10 @@ public class LoginController {
             }
         };
 
+        tarefaDeRede.setOnSucceeded(_ -> {
+            SceneManager.push("/FXML/MapaCarona.fxml", "Criar Carona");
+        });
+
         tarefaDeRede.setOnFailed(_ -> {
             Throwable erro = tarefaDeRede.getException();
             System.err.println("Erro na rede: " + erro.getMessage());

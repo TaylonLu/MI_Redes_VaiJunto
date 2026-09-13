@@ -1,0 +1,15 @@
+package org.UEFS.vaijunto.exceptions;
+
+import org.UEFS.vaijunto.server.Response;
+
+public class ServerException extends RuntimeException {
+    private final int status;
+    public ServerException(int status, String message) {
+        super(message);
+        this.status = status;
+    }
+
+    public Response toResponse() {
+        return new Response(status, "EXCEPTION", this.getMessage());
+    }
+}

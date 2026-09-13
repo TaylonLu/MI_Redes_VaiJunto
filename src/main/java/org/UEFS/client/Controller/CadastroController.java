@@ -60,7 +60,8 @@ public class CadastroController {
 
         tarefaDeRede.setOnSucceeded(_ -> {
             Toast.success("Bem sucedido");
-            carregando=true;
+            carregando = true;
+            SceneManager.push("/FXML/MapaCarona.fxml", "Criar Carona");
         });
 
         tarefaDeRede.setOnFailed(_ -> {

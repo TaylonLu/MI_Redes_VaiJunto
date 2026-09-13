@@ -1,15 +1,18 @@
 package org.UEFS.vaijunto;
 
-import org.UEFS.vaijunto.Controller.CaronaController;
-import org.UEFS.vaijunto.Controller.ControllerService;
-import org.UEFS.vaijunto.Controller.SessionsController;
-import org.UEFS.vaijunto.Controller.UserController;
-import org.UEFS.vaijunto.Domain.Caronas.CaronaRepo;
-import org.UEFS.vaijunto.Domain.Caronas.CaronaService;
-import org.UEFS.vaijunto.Domain.FileManager;
-import org.UEFS.vaijunto.Domain.Usuarios.UserRepo;
-import org.UEFS.vaijunto.Server.MainServer;
-import org.UEFS.vaijunto.Util.IOUtils;
+import org.UEFS.vaijunto.controller.CaronaController;
+import org.UEFS.vaijunto.controller.ControllerService;
+import org.UEFS.vaijunto.controller.SessionsController;
+import org.UEFS.vaijunto.controller.UserController;
+import org.UEFS.vaijunto.domain.caronas.CaronaRepo;
+import org.UEFS.vaijunto.domain.caronas.CaronaService;
+import org.UEFS.vaijunto.util.FileManager;
+import org.UEFS.vaijunto.domain.usuarios.UserRepo;
+import org.UEFS.vaijunto.server.MainServer;
+import org.UEFS.vaijunto.util.IOUtils;
+
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -50,5 +53,14 @@ public class Main {
 
         server.start();
 
+    }
+
+    public static String getServerIP() {
+        try {
+            return Inet4Address.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            // É melhor lançar um erro claro do que apenas um RuntimeException genérico
+            throw new RuntimeException("Não foi possível determinar o IP do servidor.", e);
+        }
     }
 }

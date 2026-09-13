@@ -1,41 +1,54 @@
 package org.UEFS.client.Service;
 
 import javafx.application.Platform;
+import org.UEFS.client.Controller.UserController;
 import org.UEFS.client.utils.Toast;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 
 public class ClientRouter {
-    public void processarMenasagem(String rawM) {
+    private final Map<String, Consumer<String>> rotas = new HashMap<>();
+
+    public ClientRouter() {
+        configurarRotas();
+    }
+
+    private void configurarRotas() {
+        UserController userController =
+
+        rotas.put("LOGIN_EFETUADO", rawM -> {
+            Toast.success("Login efetuado.");
+
+        });
+
+        rotas.put("CADASTRO_COMPLETO", rawM -> {
+            Toast.success("Cadastro feito.");
+            // TODO: Chamar controller para mudar a tela.
+        });
+    }
+
+
+    public void processarMensagem(String rawM) {
         String[] partes = rawM.split("\\|", 3);
+
         System.out.println(Arrays.toString(partes));
 
         int codigo = Integer.parseInt(partes[0]);
         String tipo = partes[1];
 
-        if (codigo >= 700 ) {
-            Platform.runLater(() -> {
-                Toast.error(rawM);
-            });
-        } else {
-            porTipo(rawM, tipo);
+        if (codigo >= 700) {
+            Platform.runLater(() -> Toast.error(rawM));
+            return;
         }
 
-    }
+        Consumer<String> acao = rotas.getOrDefault(tipo, msg -> {
+            Toast.warning("Comando não implementado: " + tipo);
+        });
 
-    private void porTipo(String rawM, String tipo) {
-        switch (tipo) {
-            case "LOGIN_EFETUADO" -> Platform.runLater(() -> {
-                Toast.success("Login efetuado.");
-                SessionManager.getInstance().setUserToken(rawM);
-            });
-            case "CADASTRO_COMPLETO" -> Platform.runLater(() -> {
-                Toast.success("Cadastro feito.");
-                // TODO: Chamar controller para mudar a tela.
-            });
-            default -> Platform.runLater(() -> {
-                Toast.warning("Não implementado.");
-            });
-        }
+        Platform.runLater(() -> acao.accept(rawM));
+
     }
 }

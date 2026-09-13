@@ -5,6 +5,7 @@ public class SessionManager {
 
     private String userToken;
     private String username;
+    private String userID;
 
     private SessionManager() {}
 
@@ -18,13 +19,22 @@ public class SessionManager {
     public void setUserToken(String userToken) {
         this.userToken = userToken;
     }
+    public String getUserToken() {
+        return userToken;
+    }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
     public String getUsername() {
         return username;
     }
 
-    public String getUserToken() {
-        return userToken;
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
+    public String getUserID() {
+        return userID;
     }
 
     public void limparSessao() {
