@@ -1,4 +1,3 @@
-# Detecta o sistema operacional
 ifeq ($(OS),Windows_NT)
 	OS_TYPE := windows
 else
@@ -8,46 +7,63 @@ endif
 DK := docker compose
 
 COMPOSE := $(DK) \
-		-f compose.yaml \
-		-f compose.$(OS_TYPE).yaml
+	-f compose.yaml \
+	-f compose.$(OS_TYPE).yaml
 
-.PHONY: up up-build down restart logs build server client clean package
+.PHONY: up build up-build down restart logs clean compile
+.PHONY: server server-build server-rebuild
+.PHONY: client client-build client-rebuild
 
 # PROJETO COMPLETO
+
 up:
 	$(COMPOSE) up
+
 build:
 	$(COMPOSE) build
+
+compile:
+	$(COMPOSE) run --rm server mvn clean package
+
 up-build:
 	$(COMPOSE) up --build
+
 down:
 	$(COMPOSE) down
+
 restart:
 	$(COMPOSE) down
 	$(COMPOSE) up --build
+
 rebuild:
-	$(DK) build --no-cache
+	$(COMPOSE) build --no-cache
+
 logs:
 	$(COMPOSE) logs -f
 
-# MAVEN (Atualizado para lidar com a raiz)
 clean:
-	mvn clean
-package:
-	mvn clean package -U
+	$(COMPOSE) run --rm server mvn clean
+
 
 # SERVIDOR
+
 server:
 	$(COMPOSE) up server
+
 server-build:
 	$(COMPOSE) up --build server
+
 server-rebuild:
-	$(DK) build server --no-cache
+	$(COMPOSE) build server --no-cache
+
 
 # CLIENTE
+
 client:
 	$(COMPOSE) up client
+
 client-build:
 	$(COMPOSE) up --build client
+
 client-rebuild:
-	$(DK) build client --no-cache
+	$(COMPOSE) build client --no-cache
