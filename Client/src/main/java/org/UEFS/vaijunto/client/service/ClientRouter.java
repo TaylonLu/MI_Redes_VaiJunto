@@ -35,13 +35,13 @@ public class ClientRouter {
         rotas.put(Status.LOGIN_EFETUADO.getTipo(), res -> {
             Toast.success("Login efetuado.");
             AuthHandler.guardarLogin(res);
-            SceneManager.push(Tela.TELA_INICIAL);
+            SceneManager.clearAndPush(Tela.TELA_PRINCIPAL);
         });
 
         rotas.put(Status.CADASTRO_COMPLETO.getTipo(), res -> {
             Toast.success("Cadastro feito.");
             AuthHandler.guardarLogin(res);
-            SceneManager.push(Tela.TELA_INICIAL);
+            SceneManager.clearAndPush(Tela.TELA_PRINCIPAL);
         });
     }
 

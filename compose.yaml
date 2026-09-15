@@ -21,6 +21,9 @@ services:
       - .:/app
       - ./data:/app/data
       - maven-cache:/root/.m2
+    environment:
+      SERVER_IP: "172.16.230.27"
+      SERVER_PORT: "2602"
 
 volumes:
   maven-cache:

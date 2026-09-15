@@ -195,7 +195,7 @@ public class TelaInicialController {
         EventHandler<WorkerStateEvent> onSucceded = A -> {
             Toast.info("Fazendo logout...");
             NetworkDispatcher.limparLogin();
-            SceneManager.push("/FXML/Inicio.fxml", "Tela de Inicio");
+            SceneManager.clearAndPush(Tela.TELA_INICIO);
         };
 
         NetworkDispatcher.enviarComando("SAIR", onSucceded);

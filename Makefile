@@ -13,6 +13,7 @@ COMPOSE := $(DK) \
 .PHONY: up build up-build down restart logs clean compile
 .PHONY: server server-build server-rebuild
 .PHONY: client client-build client-rebuild
+.PHONY: docker-start docker-status
 
 # PROJETO COMPLETO
 
@@ -67,3 +68,9 @@ client-build:
 
 client-rebuild:
 	$(COMPOSE) build client --no-cache
+
+docker-start:
+	sudo systemctl start docker
+
+docker-status:
+	sudo systemctl status docker

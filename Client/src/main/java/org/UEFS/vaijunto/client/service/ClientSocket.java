@@ -1,5 +1,7 @@
 package org.UEFS.vaijunto.client.service;
 
+import org.UEFS.vaijunto.client.MainClient;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -21,6 +23,10 @@ public class ClientSocket {
         return instance;
     }
 
+    public synchronized void conectar() {
+        conectar(MainClient.IP_SERVIDOR, MainClient.PORTA_SERVIDOR);
+    }
+
     public synchronized void conectar(String host, int port) {
         if (socket == null  || socket.isClosed()) {
             try {
@@ -30,8 +36,9 @@ public class ClientSocket {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        } else {
+            System.out.printf("Socker não é nulo ou não está fechado...");
         }
-
     }
 
     public synchronized void desconectar() throws IOException {

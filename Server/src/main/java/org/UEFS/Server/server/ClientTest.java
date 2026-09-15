@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 public class ClientTest {
     public static void main(String[] args) {
-        String ipServidor = "localhost";
+        String ipServidor = "taylonnotebook.local";
         int porta = 2602;
 
         try {

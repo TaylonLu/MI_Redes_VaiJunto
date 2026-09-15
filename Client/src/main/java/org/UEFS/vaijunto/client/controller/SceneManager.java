@@ -11,6 +11,7 @@ import org.UEFS.vaijunto.client.utils.Resources;
 import org.UEFS.vaijunto.client.utils.Tela;
 import org.UEFS.vaijunto.client.utils.Toast;
 
+import java.io.IOException;
 import java.util.Stack;
 
 public class SceneManager {
@@ -26,7 +27,6 @@ public class SceneManager {
     }
 
     private static Object currentController;
-
     private static final Stack<CenaHistorico> historico = new Stack<>();
     private static Stage primaryStage;
 
@@ -36,6 +36,10 @@ public class SceneManager {
 
     public static void push(Tela tela) {
         push(tela.getCaminho(), tela.getNome());
+    }
+
+    public static void clearAndPush(Tela tela) {
+        clearAndPush(tela.getCaminho(), tela.getNome());
     }
 
     public static void push(String fxmlPath, String titulo) {
@@ -48,14 +52,16 @@ public class SceneManager {
             rootLayer.getChildren().add(novaTela); // Camada 0: A tela do FXML
 
             Scene cenaAtual = primaryStage.getScene();
-            boolean naoEaPrimeiraTela = (cenaAtual != null && cenaAtual.getRoot() != null);
+
+            if (cenaAtual != null && cenaAtual.getRoot() != null) {
+                historico.push(new CenaHistorico(cenaAtual.getRoot(), primaryStage.getTitle(), currentController));
+            }
 
             if (titulo.equals(Tela.TELA_LOGIN.getNome()) || titulo.equals(Tela.TELA_CADASTRO.getNome())) {
                 AnchorPane floatingLayer = new AnchorPane();
                 floatingLayer.setPickOnBounds(false);
 
                 Button btnVoltar = new Button("⬅ Voltar");
-
                 btnVoltar.getStyleClass().add("btn-flutuante");
                 btnVoltar.setOnAction(_ -> pop());
 
@@ -64,20 +70,47 @@ public class SceneManager {
 
                 floatingLayer.getChildren().add(btnVoltar);
                 rootLayer.getChildren().add(floatingLayer);
+            }
 
-                historico.push(new CenaHistorico(cenaAtual.getRoot(), primaryStage.getTitle(), novoController));
+            if (cenaAtual != null) {
                 cenaAtual.setRoot(rootLayer);
             } else {
                 primaryStage.setScene(new Scene(rootLayer, 1024, 672));
             }
 
             currentController = novoController;
-
             primaryStage.setTitle(titulo);
             Toast.install(primaryStage);
 
         } catch (Exception e) {
             throw new RuntimeException("Erro ao carregar FXML no push: " + fxmlPath, e);
+        }
+    }
+
+    public static void clearAndPush(String fxmlPath, String titulo) {
+        try {
+            FXMLLoader loader = new FXMLLoader(Resources.get(fxmlPath));
+            Parent novaTela = loader.load();
+
+            historico.clear();
+            currentController = loader.getController();
+
+            StackPane rootLayer = new StackPane();
+            rootLayer.getChildren().add(novaTela);
+
+            Scene cenaAtual = primaryStage.getScene();
+
+            if (cenaAtual != null) {
+                cenaAtual.setRoot(rootLayer);
+            } else {
+                primaryStage.setScene(new Scene(rootLayer, 1024, 672));
+            }
+
+            primaryStage.setTitle(titulo);
+            Toast.install(primaryStage);
+
+        } catch (Exception e) { // Mudado de IOException para Exception
+            throw new RuntimeException("Erro ao carregar FXML no clearAndPush: " + fxmlPath, e);
         }
     }
 

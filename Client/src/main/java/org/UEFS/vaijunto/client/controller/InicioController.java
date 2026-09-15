@@ -3,6 +3,7 @@ package org.UEFS.vaijunto.client.controller;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import org.UEFS.vaijunto.client.service.ClientSocket;
 import org.UEFS.vaijunto.client.utils.Tela;
 
 public class InicioController {
@@ -15,11 +16,19 @@ public class InicioController {
 
     @FXML
     void irParaCadastro(ActionEvent event) {
+        if (!ClientSocket.getInstance().connected()) {
+            ClientSocket.getInstance().conectar();
+        }
+
         SceneManager.push(Tela.TELA_CADASTRO);
     }
 
     @FXML
     void irParaLogin(ActionEvent event) {
+        if (!ClientSocket.getInstance().connected()) {
+            ClientSocket.getInstance().conectar();
+        }
+
         SceneManager.push(Tela.TELA_LOGIN);
     }
 }
