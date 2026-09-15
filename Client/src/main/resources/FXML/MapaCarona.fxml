@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import org.uefs.custom.CurrencyField?>
+<AnchorPane maxHeight="700.0" maxWidth="1024.0" minHeight="640.0" minWidth="900.0" prefHeight="672.0" prefWidth="1024.0" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.UEFS.vaijunto.client.controller.MapaCaronaController">
+
+    <BorderPane maxWidth="350.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+
+        <!-- ESQUERDA: StackPane controlando os 3 modos -->
+        <left>
+            <StackPane prefWidth="300.0" styleClass="sidebar">
+                <padding>
+                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                </padding>
+
+                <!-- ========================================== -->
+                <!-- MODO 1: CRIAÇÃO (O original que você já tinha) -->
+                <!-- ========================================== -->
+                <VBox fx:id="painelCriacao" managed="${painelCriacao.visible}" spacing="12.0" visible="true">
+                    <Label styleClass="sidebar-title" text="Planejar Carona" />
+                    <Label text="Percurso Selecionado:" />
+                    <ListView fx:id="listViewPercursoCriacao" prefHeight="320.0" prefWidth="250.0" VBox.vgrow="ALWAYS" />
+                    <Label fx:id="lblStatusCriacao" text="Clique na origem da rota." wrapText="true" />
+                    <VBox spacing="8.0">
+                        <Button maxWidth="Infinity" onAction="#confirmarRota" styleClass="btn-primary" text="Confirmar Rota" />
+                        <HBox spacing="8.0">
+                            <Button fx:id="btnRecomecar" maxWidth="Infinity" onAction="#recomecarRota" text="Recomeçar" HBox.hgrow="ALWAYS" />
+                            <Button fx:id="btnCancelar" maxWidth="Infinity" onAction="#voltar" text="Cancelar" HBox.hgrow="ALWAYS" />
+                        </HBox>
+                    </VBox>
+                </VBox>
+
+                <!-- ========================================== -->
+                <!-- MODO 2: EXIBIÇÃO DE DETALHES -->
+                <!-- ========================================== -->
+                <VBox fx:id="painelExibicao" managed="${painelExibicao.visible}" spacing="12.0" visible="false">
+                    <Label styleClass="sidebar-title" text="Detalhes da Carona" />
+                    <VBox spacing="5.0" style="-fx-background-color: #f4f4f4; -fx-padding: 10; -fx-background-radius: 5;">
+                        <Label fx:id="lblExibeMotorista" style="-fx-font-weight: bold;" text="Motorista: -" />
+                        <Label fx:id="lblExibeDataHora" text="Partida: - às -" />
+                        <Label fx:id="lblExibeVagas" text="Vagas disponíveis: -" />
+                        <Label fx:id="lblExibeObs" text="Obs: -" wrapText="true" />
+                    </VBox>
+                    <Label text="Percurso da Carona:" />
+                    <ListView fx:id="listViewPercursoExibicao" prefHeight="300.0" prefWidth="250.0" VBox.vgrow="ALWAYS" />
+                    <Button maxWidth="Infinity" onAction="#voltar" text="Voltar" />
+                </VBox>
+
+                <!-- ========================================== -->
+                <!-- MODO 3: BUSCA DE CARONAS -->
+                <!-- ========================================== -->
+                <VBox fx:id="painelBusca" managed="${painelBusca.visible}" spacing="12.0" visible="false">
+                    <Label styleClass="sidebar-title" text="Buscar Carona" />
+                    <Label text="Instruções: Clique no mapa para definir sua origem e depois o destino." wrapText="true" />
+
+                    <VBox spacing="5.0">
+                        <Label fx:id="lblBuscaOrigem" style="-fx-font-weight: bold; -fx-text-fill: #2c3e50;" text="Origem: (Não selecionada)" />
+                        <Label fx:id="lblBuscaDestino" style="-fx-font-weight: bold; -fx-text-fill: #2c3e50;" text="Destino: (Não selecionado)" />
+                    </VBox>
+
+                    <VBox spacing="4.0">
+                        <Label text="Vagas Necessárias:" />
+                        <TextField fx:id="txtBuscaVagas" promptText="Ex: 1" />
+                    </VBox>
+                    <VBox spacing="4.0">
+                        <Label text="Data Pretendida:" />
+                        <DatePicker fx:id="datePickerBusca" maxWidth="Infinity" promptText="Selecione a data" />
+                    </VBox>
+
+                    <Button maxWidth="Infinity" onAction="#buscarCaronas" styleClass="btn-primary" text="Buscar" />
+                    <Button maxWidth="Infinity" onAction="#limparBusca" text="Limpar Seleção" />
+
+                    <Label text="Resultados:" />
+                    <ListView fx:id="listViewResultadosBusca" prefHeight="200.0" prefWidth="250.0" VBox.vgrow="ALWAYS" />
+
+                    <!-- NOVO BOTÃO DE CONFIRMAR CARONA -->
+                    <Button fx:id="btnConfirmarBusca" maxWidth="Infinity" onAction="#confirmarCaronaSelecionada" styleClass="btn-success" text="Confirmar / Entrar na Carona" visible="false" managed="false" />
+
+                    <Button maxWidth="Infinity" onAction="#voltar" text="Voltar" />
+                </VBox>
+            </StackPane>
+        </left>
+
+        <!-- DIREITA / CENTRO: StackPane para Mapa e Popup sobreposto -->
+        <center>
+            <StackPane fx:id="stackContainer">
+                <!-- Camada 1: O Mapa -->
+                <Pane fx:id="containerMapa" onMouseClicked="#onMapaClicked" onMouseDragged="#onMapaDragged" onMousePressed="#onMapaPressed">
+                    <ImageView fx:id="imagemMapa" />
+                    <Group fx:id="mapaGrupo" />
+               <StackPane.margin>
+                  <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+               </StackPane.margin>
+                </Pane>
+
+                <!-- Camada 2: O Menu Popup de Dados da Carona (Invisível por padrão, usado só na CRIAÇÃO) -->
+                <VBox fx:id="painelPopup" alignment="CENTER" spacing="12.0" styleClass="popup-card">
+                    <!-- ... Todo o conteúdo do popup que já existia ... -->
+                    <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                    </padding>
+                    <Label styleClass="popup-title" text="Detalhes da Carona" />
+                    <VBox spacing="4.0">
+                        <Label text="Número de Assentos (Vagas):" />
+                        <TextField fx:id="txtVagas" promptText="Ex: 3" />
+                    </VBox>
+                    <VBox spacing="4.0">
+                        <Label text="Valor (R$) por trecho"/>
+                        <CurrencyField fx:id="valorTrecho"/>
+                    </VBox>
+                    <VBox spacing="4.0">
+                        <Label text="Data da Partida:" />
+                        <DatePicker fx:id="datePickerPartida" maxWidth="Infinity" promptText="Selecione a data" />
+                    </VBox>
+                    <VBox spacing="4.0">
+                        <Label text="Horário da Partida (Hora : Minuto):" />
+                        <HBox alignment="CENTER_LEFT" spacing="8.0">
+                            <Spinner fx:id="spinnerHora" editable="true" prefWidth="90.0" />
+                            <Label style="-fx-font-size: 14px; -fx-font-weight: bold;" text=":" />
+                            <Spinner fx:id="spinnerMinuto" editable="true" prefWidth="90.0" />
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="4.0">
+                        <Label text="Comentários / Observações:" />
+                        <TextField fx:id="txtComentarios" promptText="Ex: Sem fumar, aceito pets..." />
+                    </VBox>
+                    <HBox alignment="CENTER" spacing="10.0">
+                        <Button onAction="#fecharPopup" text="Voltar" />
+                        <Button onAction="#enviarCaronaServidor" styleClass="btn-success" text="Publicar Carona" />
+                    </HBox>
+                </VBox>
+
+                <StackPane fx:id="painelLoading" alignment="CENTER" style="-fx-background-color: rgba(0, 0, 0, 0.5);" visible="false" managed="false">
+                    <VBox alignment="CENTER" spacing="12.0">
+                        <ProgressIndicator />
+                        <Label text="Processando reserva com o servidor..." style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;" />
+                    </VBox>
+                </StackPane>
+            </StackPane>
+        </center>
+
+    </BorderPane>
+</AnchorPane>

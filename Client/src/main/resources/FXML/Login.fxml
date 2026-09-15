@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<AnchorPane prefWidth="600.0" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.UEFS.vaijunto.client.controller.LoginController">
+    <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+    <top>
+        <HBox alignment="CENTER" prefHeight="227.0" prefWidth="600.0" BorderPane.alignment="CENTER">
+            <ImageView fitHeight="120.0" fitWidth="250.0" pickOnBounds="true" preserveRatio="true">
+                <Image url="@../images/logo.png"/>
+            </ImageView>
+        </HBox>
+    </top>
+    <center>
+        <VBox alignment="TOP_CENTER" prefHeight="140.0" prefWidth="600.0" spacing="15.0" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="10.0"/>
+            </padding>
+            <GridPane alignment="CENTER" hgap="10.0" vgap="10.0">
+                <columnConstraints>
+                    <ColumnConstraints halignment="RIGHT" hgrow="NEVER"/>
+                    <ColumnConstraints hgrow="NEVER"/>
+                </columnConstraints>
+                <rowConstraints>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                </rowConstraints>
+                <Label text="Email:"/>
+                <TextField fx:id="userEmail" GridPane.columnIndex="1"/>
+
+                <Label text="Senha:" GridPane.rowIndex="1"/>
+                <PasswordField fx:id="userPassword" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            </GridPane>
+
+            <Button fx:id="btnConf" onAction="#confirmarDados" text="Confirmar">
+                <VBox.margin>
+                    <Insets top="10.0"/>
+                </VBox.margin>
+            </Button>
+        </VBox>
+    </center>
+    </BorderPane>
+</AnchorPane>

@@ -14,3 +14,30 @@
 14: Couriway Town -> 13, 15
 15: Snowbelle City -> 3, 16
 16: Pokémon League -> 3, 15
+
+
+Cidade lumiose = new Cidade("Lumiose City", 0, 662, 312, List.of(1, 2, 3, 8, 10));
+Cidade dendemille = new Cidade("Dendemille Town", 1, 876, 252, List.of(0, 8, 19));
+Cidade coumarine = new Cidade("Coumarine City", 2, 440, 251, List.of(0, 9));
+Cidade camphrier = new Cidade("Camphrier Town", 3, 525, 485, List.of(0, 4, 5));
+Cidade connectingCave = new Cidade("Connecting Cave", 4, 283, 482, List.of(3, 22));
+Cidade parfumPlace = new Cidade("Parfum Place", 5, 377, 375, List.of(3));
+Cidade geosenge = new Cidade("Geosenge Town", 6, 114, 400, List.of(7, 22));
+Cidade reflectionCave = new Cidade("Reflection Cave", 7, 157, 333, List.of(6));
+Cidade laverre = new Cidade("Laverre City", 8, 661, 96, List.of(0, 1, 24));
+Cidade shalour = new Cidade("Shalour City", 9, 193, 302, List.of(2));
+Cidade santalune = new Cidade("Santalune City", 10, 787, 477, List.of(0, 11, 14));
+Cidade victoryRoad = new Cidade("Victory Road", 11, 939, 461, List.of(10, 12, 13));
+Cidade snowbelle = new Cidade("Snowbelle City", 12, 1085, 468, List.of(11, 18, 20));
+Cidade pokemonLeague = new Cidade("Pokémon League", 13, 940, 369, List.of(11));
+Cidade santaluneForest = new Cidade("Santalune Forest", 14, 847, 541, List.of(10, 15, 16));
+Cidade chamberOfEmptiness = new Cidade("Chamber of Emptiness", 15, 886, 503, List.of(14));
+Cidade aquacorde = new Cidade("Aquacorde Town", 16, 848, 625, List.of(14, 17));
+Cidade vaniville = new Cidade("Vaniville Town", 17, 849, 720, List.of(16));
+Cidade pokemonVillage = new Cidade("Pokémon Village", 18, 1033, 633, List.of(12));
+Cidade anistar = new Cidade("Anistar City", 19, 1125, 318, List.of(1, 20));
+Cidade couriway = new Cidade("Couriway Town", 20, 1194, 384, List.of(12, 19));
+Cidade ambrette = new Cidade("Ambrette Town", 21, 287, 636, List.of(22, 23));
+Cidade cyllage = new Cidade("Cyllage City", 22, 224, 479, List.of(4, 6, 21));
+Cidade glitteringCave = new Cidade("Glittering Cave", 23, 463, 635, List.of(21));
+Cidade pokeballFactory = new Cidade("Pokéball Factory", 24, 660, 49, List.of(8));

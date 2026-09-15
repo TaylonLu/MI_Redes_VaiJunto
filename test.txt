@@ -1,0 +1,1 @@
+CONFIRMAR_RESERVA|[{"passos":[{"inicio":5,"fim":3,"idCarona":"carona_83cadd20-d194-441b-af62-e65439f39bf0","idMotorista":"user_685291de-fe77-4eb3-9892-7d9ce9878e37"}]}]|76d72a7d-582f-47ad-ad51-362d8057ac1c|150

@@ -1,1 +1,50 @@
-{ }
+{
+  "carona_772e493b-ab28-4067-bfa4-4d109ef1bdd3" : {
+    "id" : "carona_772e493b-ab28-4067-bfa4-4d109ef1bdd3",
+    "rota" : {
+      "trechos" : [ "3-5", "5-3", "3-0", "0-2" ],
+      "continua" : true
+    },
+    "id_motorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37",
+    "ocupacaoPorTrecho" : {
+      "3-5" : [ ],
+      "0-2" : [ ],
+      "3-0" : [ ],
+      "5-3" : [ ]
+    },
+    "data" : [ 2026, 9, 10, 6, 5 ],
+    "vagasTotais" : 2,
+    "status" : "AGENDADA"
+  },
+  "carona_113d0bb0-4855-4341-9ae2-c0fafe9c23fd" : {
+    "id" : "carona_113d0bb0-4855-4341-9ae2-c0fafe9c23fd",
+    "rota" : {
+      "trechos" : [ "21-22", "22-4", "4-4" ],
+      "continua" : true
+    },
+    "id_motorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37",
+    "ocupacaoPorTrecho" : {
+      "4-4" : [ ],
+      "21-22" : [ ],
+      "22-4" : [ ]
+    },
+    "data" : [ 2026, 9, 14, 10, 0 ],
+    "vagasTotais" : 4,
+    "status" : "AGENDADA"
+  },
+  "carona_83cadd20-d194-441b-af62-e65439f39bf0" : {
+    "id" : "carona_83cadd20-d194-441b-af62-e65439f39bf0",
+    "rota" : {
+      "trechos" : [ "5-3", "3-4" ],
+      "continua" : true
+    },
+    "id_motorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37",
+    "ocupacaoPorTrecho" : {
+      "3-4" : [ ],
+      "5-3" : [ "user_4b486b3b-d4cc-4103-8740-50c1dcd16521" ]
+    },
+    "data" : [ 2026, 9, 15, 12, 0 ],
+    "vagasTotais" : 3,
+    "status" : "AGENDADA"
+  }
+}
