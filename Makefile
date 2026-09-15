@@ -11,7 +11,7 @@ COMPOSE := $(DK) \
 		-f compose.yaml \
 		-f compose.$(OS_TYPE).yaml
 
-.PHONY: up up-build down restart logs build server client clean
+.PHONY: up up-build down restart logs build server client clean package
 
 # PROJETO COMPLETO
 up:
@@ -29,8 +29,12 @@ rebuild:
 	$(DK) build --no-cache
 logs:
 	$(COMPOSE) logs -f
+
+# MAVEN (Atualizado para lidar com a raiz)
 clean:
 	mvn clean
+package:
+	mvn clean package -U
 
 # SERVIDOR
 server:
