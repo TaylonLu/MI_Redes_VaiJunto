@@ -9,7 +9,7 @@
     "ocupacaoPorTrecho" : {
       "3-4" : [ ],
       "4-22" : [ "user_4b486b3b-d4cc-4103-8740-50c1dcd16521" ],
-      "5-3" : [ ]
+      "5-3" : [ "user_4b486b3b-d4cc-4103-8740-50c1dcd16521" ]
     },
     "data" : [ 2026, 9, 17, 0, 0 ],
     "vagasTotais" : 3,

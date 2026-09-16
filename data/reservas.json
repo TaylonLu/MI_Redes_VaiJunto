@@ -1,4 +1,17 @@
 {
+  "reserva_15af537d-0a6c-4784-9b1c-811c0344d4f8" : {
+    "id" : "reserva_15af537d-0a6c-4784-9b1c-811c0344d4f8",
+    "idPassageiro" : "user_4b486b3b-d4cc-4103-8740-50c1dcd16521",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 5,
+        "fim" : 3,
+        "idCarona" : "carona_e68337a2-b80c-4efe-af66-8b0a637f0622",
+        "idMotorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37"
+      } ]
+    },
+    "status" : "ATIVA"
+  },
   "reserva_2cd8c129-4cd7-4c75-8f0f-16d6706687c6" : {
     "id" : "reserva_2cd8c129-4cd7-4c75-8f0f-16d6706687c6",
     "idPassageiro" : "user_4b486b3b-d4cc-4103-8740-50c1dcd16521",

@@ -12,5 +12,5 @@ COPY . .
 RUN mvn dependency:go-offline
 EXPOSE 8080
 
-CMD ["sh", "-c", "mvn exec:java ... >> /app/logs/server.log 2>&1"]
+CMD ["mvn", "install", "-pl", "Server", "exec:java"]
 #CMD ["nodemon", "--watch", "Server/src", "--watch", "Shared/src", "-e", "java", "--exec", "mvn install -pl Server -am -DskipTests && mvn -pl Server exec:java"]
