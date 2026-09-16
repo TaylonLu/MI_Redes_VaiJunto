@@ -2,6 +2,7 @@ package org.UEFS.Server.domain.interfaces;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.UEFS.Server.controller.ControllerService;
+import org.UEFS.Server.domain.caronas.Carona;
 import org.UEFS.shared.FileManager;
 import org.UEFS.Server.util.IOUtils;
 
@@ -49,6 +50,9 @@ public abstract class DataRepo<T extends Identificavel> {
     }
     public void remover(String id) {
         dados.remove(id);
+    }
+    public List<T> getDadosList() {
+        return new ArrayList<>(dados.values());
     }
 
     public synchronized void salvarNoDisco() {

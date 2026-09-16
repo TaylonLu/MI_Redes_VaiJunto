@@ -11,8 +11,4 @@ public class CaronaRepo extends DataRepo<Carona> {
     public CaronaRepo() {
         super("data/caronas.json", new TypeReference<Map<String, Carona>>() {});
     }
-
-    public List<Carona> getDadosList() {
-        return new ArrayList<>(dados.values());
-    }
 }

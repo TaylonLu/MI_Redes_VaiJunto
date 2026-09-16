@@ -8,12 +8,17 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import org.UEFS.shared.JsonUtils;
 import org.UEFS.shared.dto.SelfUserDTO;
+import org.UEFS.shared.dto.requests.CadastroMotoristaRequest;
+import org.UEFS.shared.dto.requests.GeneralRequest;
 import org.UEFS.shared.dto.responses.CaronaResponse;
+import org.UEFS.shared.dto.responses.ReservaResponse;
 import org.UEFS.vaijunto.client.service.ClientRouter;
 import org.UEFS.vaijunto.client.service.NetworkDispatcher;
 import org.UEFS.vaijunto.client.service.SessionManager;
 import org.UEFS.vaijunto.client.utils.Tela;
 import org.UEFS.vaijunto.client.utils.Toast;
+import org.UEFS.vaijunto.client.view.CaronaListCell; // ajuste o pacote conforme seu projeto
+import org.UEFS.vaijunto.client.view.ReservaListCell; // ajuste o pacote conforme seu projeto
 
 import java.util.List;
 
@@ -21,7 +26,7 @@ public class TelaInicialController {
 
     @FXML private TabPane tabPanePrincipal;
     @FXML private Tab tabCliente;
-    @FXML private ListView<CaronaResponse> listaCaronasInscritas;
+    @FXML private ListView<ReservaResponse> listaCaronasInscritas;
 
     @FXML private Tab tabMotorista;
     @FXML private ListView<CaronaResponse> listaCaronasCriadas;
@@ -49,25 +54,35 @@ public class TelaInicialController {
     @FXML
     public void initialize() {
         usuarioLogado = sessionManager.getCurrentUser();
-        isUsuarioMotorista = usuarioLogado != null && usuarioLogado.perfilMotorista() != null;
+
+        if (usuarioLogado == null) SceneManager.clearAndPush(Tela.TELA_INICIO);
+
+        isUsuarioMotorista = usuarioLogado.perfilMotorista() != null;
 
         lblNome.setText(usuarioLogado.nome());
         lblEmail.setText(usuarioLogado.email());
 
+        // Célula customizada para cada tipo de lista. O duplo clique para abrir o
+        // popup de detalhes é tratado dentro das próprias células (via getItem())
+        listaCaronasInscritas.setCellFactory(lv -> new ReservaListCell());
+        listaCaronasCriadas.setCellFactory(lv -> new CaronaListCell());
+
         ClientRouter.inscrever("MINHAS_CARONAS", res -> {
             List<CaronaResponse> caronasEncontradas = JsonUtils.fromJsonList(res.dados(), CaronaResponse.class);
-            listaCaronasCriadas.getItems().addAll(caronasEncontradas);
+            listaCaronasCriadas.getItems().setAll(caronasEncontradas);
         });
 
-        ClientRouter.inscrever("MINHAS_RESERVAS", res -> {
-            List<CaronaResponse> caronasEncontradas = JsonUtils.fromJsonList(res.dados(), CaronaResponse.class);
-            listaCaronasInscritas.getItems().addAll(caronasEncontradas);
+        ClientRouter.inscrever("RESERVAS_PASSAGEIRO", res -> {
+            List<ReservaResponse> reservasEncontradas = JsonUtils.fromJsonList(res.dados(), ReservaResponse.class);
+            listaCaronasInscritas.getItems().setAll(reservasEncontradas);
         });
-
-        String minhasCaronas = String.format("MINHAS_CARONAS|%s|%s|%d", "", sessionManager.getUserToken(), 0);
-        NetworkDispatcher.enviarComando(minhasCaronas);
 
         atualizarVisualizacaoInterface();
+
+        tabPanePrincipal.sceneProperty().addListener((_, _, newSCene) -> {
+            if (newSCene != null) atualizarDados();
+        });
+
     }
 
     private void atualizarVisualizacaoInterface() {
@@ -84,7 +99,7 @@ public class TelaInicialController {
         } else {
             lblStatus.setText("Status: Passageiro");
 
-            // Exibe botão de intenção de cadastro, oculta o resto
+            // Exibe botão de intenção de cadastro, oculta o resto.
             btnCadastrarMotorista.setVisible(true);
             painelFormularioMotorista.setVisible(false);
             painelVeiculoSalvo.setVisible(false);
@@ -92,6 +107,16 @@ public class TelaInicialController {
             // Oculta aba do motorista
             tabPanePrincipal.getTabs().remove(tabMotorista);
         }
+    }
+
+    private void atualizarDados() {
+        if (isUsuarioMotorista) {
+            String minhasCaronas = String.format("MINHAS_CARONAS|%s|%s|%d", "", sessionManager.getUserToken(), 0);
+            NetworkDispatcher.enviarComando(minhasCaronas);
+        }
+
+        String minhasReservas = String.format("MINHAS_RESERVAS||%s|%d", sessionManager.getUserToken(), 0);
+        NetworkDispatcher.enviarComando(minhasReservas);
     }
 
     // ==========================================
@@ -107,15 +132,15 @@ public class TelaInicialController {
 
     @FXML
     void cancelarInscricao(ActionEvent event) {
-        CaronaResponse caronaSelecionada = listaCaronasInscritas.getSelectionModel().getSelectedItem();
+        ReservaResponse reservaSelecionada = listaCaronasInscritas.getSelectionModel().getSelectedItem();
 
-        if (caronaSelecionada != null) {
+        if (reservaSelecionada != null) {
             // Aqui enviaria a requisição de cancelamento para o servidor via Socket
-            System.out.println("Cancelando inscrição na carona: " + caronaSelecionada);
-            listaCaronasInscritas.getItems().remove(caronaSelecionada);
+            System.out.println("Cancelando reserva: " + reservaSelecionada);
+            listaCaronasInscritas.getItems().remove(reservaSelecionada);
             mostrarAlerta("Sucesso", "Inscrição cancelada com sucesso!");
         } else {
-            mostrarAlerta("Aviso", "Selecione uma carona na lista para cancelar sua inscrição.");
+            mostrarAlerta("Aviso", "Selecione uma reserva na lista para cancelar sua inscrição.");
         }
     }
 
@@ -157,7 +182,6 @@ public class TelaInicialController {
     void cancelarFormularioMotorista(ActionEvent event) {
         painelFormularioMotorista.setVisible(false);
         btnCadastrarMotorista.setVisible(true);
-        // Limpa os campos
         txtModeloCarro.clear();
         txtCorCarro.clear();
         txtPlacaCarro.clear();
@@ -165,24 +189,39 @@ public class TelaInicialController {
 
     @FXML
     void confirmarCadastroMotorista(ActionEvent event) {
-        String modelo = txtModeloCarro.getText();
-        String cor = txtCorCarro.getText();
-        String placa = txtPlacaCarro.getText();
+        String modelo = txtModeloCarro.getText().trim();
+        String cor = txtCorCarro.getText().trim();
+        String placa = txtPlacaCarro.getText().trim();
+        String cnh = txtCnhCarro.getText().trim();
 
         if (modelo.isEmpty() || cor.isEmpty() || placa.isEmpty()) {
             mostrarAlerta("Erro", "Preencha todos os campos do veículo.");
             return;
         }
 
-        // Aqui você envia os dados do veículo para o servidor salvar no BD
         System.out.println("Registrando motorista com carro: " + modelo + ", " + cor + ", " + placa);
 
-        lblVeiculoInfo.setText(String.format("Modelo: %s | Cor: %s | Placa: %s", modelo, cor, placa));
-        isUsuarioMotorista = true;
+        CadastroMotoristaRequest cadastro = new CadastroMotoristaRequest(cnh, placa, modelo, cor);
+        String dados = JsonUtils.toJson(cadastro);
+        String request = GeneralRequest.toMessage(
+                "CADASTRO_MOTORISTA",
+                dados,
+                sessionManager.getUserToken(),
+                dados.length()
+        );
 
-        atualizarVisualizacaoInterface();
-        tabPanePrincipal.getSelectionModel().select(tabMotorista);
-        mostrarAlerta("Parabéns", "Você agora é um motorista!");
+        EventHandler<WorkerStateEvent> onSucceeded = E -> {
+            this.isUsuarioMotorista = true;
+            atualizarVisualizacaoInterface();
+            tabPanePrincipal.getSelectionModel().select(tabMotorista);
+            mostrarAlerta("Parabéns", "Você agora é um motorista!");
+        };
+
+        EventHandler<WorkerStateEvent> onFailed = E -> {
+            Toast.warning("Não foi possível completar o cadastro como motorista.");
+        };
+
+        NetworkDispatcher.enviarComando(request, onSucceeded, onFailed);
     }
 
     // ==========================================

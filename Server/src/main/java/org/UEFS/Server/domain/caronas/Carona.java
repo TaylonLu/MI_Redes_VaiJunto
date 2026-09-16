@@ -135,6 +135,16 @@ public class Carona implements Identificavel {
         return foiRemovido;
     }
 
+    public synchronized boolean removerVariosPassageiros(Set<String> passageiros) {
+        boolean foiRemovido = false;
+
+        for (Set<String> T : ocupacaoPorTrecho.values()) {
+            if (T.removeAll(passageiros)) foiRemovido = true;
+        }
+
+        return foiRemovido;
+    }
+
     public synchronized StatusCarona getStatus() {
         return status;
     }

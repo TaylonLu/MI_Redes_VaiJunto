@@ -209,7 +209,7 @@ public class MapaCaronaController {
 
                 Line linha = new Line(C1.x, C1.y, C2.x, C2.y);
                 linha.getStyleClass().add("estrada-linha");
-                containerMapa.getChildren().add(linha);
+                mapaGrupo.getChildren().add(linha);
             }
 
             Circle circulo = new Circle(C1.x, C1.y, 10);
@@ -223,7 +223,7 @@ public class MapaCaronaController {
 
             circulo.setOnMouseClicked(_ -> handleCidadeClick(C1, circulo));
 
-            containerMapa.getChildren().addAll(circulo, texto);
+            mapaGrupo.getChildren().addAll(circulo, texto);
         }
     }
 
@@ -254,6 +254,7 @@ public class MapaCaronaController {
                 }
                 break;
 
+
             case BUSCA:
                 if (cidadeOrigemBusca == null) {
                     cidadeOrigemBusca = cidadeClicada;
@@ -275,17 +276,17 @@ public class MapaCaronaController {
 
     @FXML void onMapaPressed(MouseEvent event) {
         if (event.getButton() != MouseButton.PRIMARY) return;
-        anchorX = event.getSceneX() - containerMapa.getTranslateX();
-        anchorY = event.getSceneY() - containerMapa.getTranslateY();
+
+        anchorX = event.getSceneX() - mapaGrupo.getTranslateX();
+        anchorY = event.getSceneY() - mapaGrupo.getTranslateY();
         containerMapa.setCursor(Cursor.CLOSED_HAND);
     }
 
     @FXML void onMapaDragged(MouseEvent mouseEvent) {
         if (mouseEvent.getButton() != MouseButton.PRIMARY) return;
-        containerMapa.setTranslateX(mouseEvent.getSceneX() - anchorX);
-        containerMapa.setTranslateY(mouseEvent.getSceneY() - anchorY);
+        mapaGrupo.setTranslateX(mouseEvent.getSceneX() - anchorX);
+        mapaGrupo.setTranslateY(mouseEvent.getSceneY() - anchorY);
     }
-
 
     // ==========================================
     // 3. MODO: CRIAÇÃO DE CARONAS
@@ -522,7 +523,7 @@ public class MapaCaronaController {
     // 6. MÉTODOS UTILITÁRIOS
     // ==========================================
     private void limparMapaDinamico() {
-        containerMapa.getChildren().removeIf(node -> node.getStyleClass().contains("rota-motorista-linha"));
+        mapaGrupo.getChildren().removeIf(node -> node.getStyleClass().contains("rota-motorista-linha"));
         for (Node node : containerMapa.getChildren()) {
             if (node instanceof Circle) {
                 node.getStyleClass().removeAll("cidade-selecionada", "cidade-origem", "cidade-destino");

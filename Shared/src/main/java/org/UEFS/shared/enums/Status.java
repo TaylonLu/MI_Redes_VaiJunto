@@ -8,6 +8,7 @@ public enum Status {
     SUCESSO(200, "SUCESSO", "Operação realizada com sucesso."),
     LOGIN_EFETUADO(201, "LOGIN_EFETUADO", "Login realizado com sucesso."),
     CADASTRO_COMPLETO(202, "CADASTRO_COMPLETO", "Cadastro efetuado com sucesso."),
+    CADASTRO_MOTORISTA_COMPLETO(207, "CADASTRO_MOTORISTA_COMPLETO", "Usuário cadastrado como motorista."),
     RESERVA_CONFIRMADA(203, "RESERVA_CONFIRMADA", "Reserva efetuada com sucesso."),
     RESERVA_CANCELADA(204, "RESERVA_CANCELADA", "Reserva cancelada com sucesso."),
     CARONA_CRIADA(205, "CARONA_CRIADA", "Carona publicada com sucesso."),

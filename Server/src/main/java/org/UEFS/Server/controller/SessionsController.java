@@ -41,6 +41,12 @@ public class SessionsController {
         return sessoesAtivas.get(token);
     }
 
+    public String usuarioLogado(String userID) {
+        if (userID == null || userID.isBlank()) return null;
+
+        return idToToken.get(userID);
+    }
+
     public boolean encerrarSessao(String token) {
         if (token == null || token.isBlank()) return false;
 

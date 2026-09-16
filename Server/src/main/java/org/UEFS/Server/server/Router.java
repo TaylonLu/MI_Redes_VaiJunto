@@ -38,6 +38,7 @@ public class Router {
 
         // (Espaço reservado para a futura rota de confirmar reserva atômica)
         routes.put("CONFIRMAR_RESERVA", caronaController::confirmarReserva);
+        routes.put("CANCELAR_RESERVA", caronaController::cancelarReserva);
     }
 
     public Response processar(Request request) {
@@ -52,5 +53,8 @@ public class Router {
         } catch (Exception e) {
             return new Response(Status.BAD_REQUEST.getCodigo(), "ERRO_INTERNO", "Erro interno do servidor");
         }
+    }
+
+    public void processarSaida() {
     }
 }

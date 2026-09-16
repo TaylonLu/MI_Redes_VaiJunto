@@ -2,6 +2,8 @@ package org.UEFS.Server.controller;
 
 
 import org.UEFS.Server.domain.caronas.*;
+import org.UEFS.Server.domain.reservas.Reserva;
+import org.UEFS.Server.domain.reservas.ReservaRepo;
 import org.UEFS.Server.domain.usuarios.Usuario;
 import org.UEFS.Server.exceptions.*;
 import org.UEFS.shared.JsonUtils;
@@ -11,9 +13,9 @@ import org.UEFS.shared.dto.Trecho;
 import org.UEFS.shared.dto.TrechoOcupacaoDTO;
 import org.UEFS.shared.dto.requests.BuscaCaronaRequest;
 import org.UEFS.shared.dto.requests.NovaCaronaRequest;
-import org.UEFS.shared.dto.requests.ReservaRequest;
 import org.UEFS.shared.dto.responses.CaronaResponse;
 import org.UEFS.shared.dto.responses.PassageiroPorTrechoResponse;
+import org.UEFS.shared.dto.responses.ReservaResponse;
 import org.UEFS.shared.enums.Status;
 import org.UEFS.shared.enums.StatusCarona;
 import org.UEFS.shared.model.Request;
@@ -28,6 +30,7 @@ public class CaronaController {
     private final CaronaService caronaService = serviceProvider.get(CaronaService.class);
 
     private final CaronaRepo repo;
+    private final ReservaRepo reservaRepo = caronaService.getReservaRepo();
     private final UserController userController;
 
     public CaronaController(CaronaRepo repo) {
@@ -84,7 +87,7 @@ public class CaronaController {
         return new Response(Status.CARONA_CANCELADA);
     }
 
-    public Response cancelarItinerario(Request request) {
+    public Response cancelarReserva(Request request) {
         String userID = userController.validarUsuarioLogado(request.getToken());
         String idCarona = request.getDados().trim();
 
@@ -116,11 +119,13 @@ public class CaronaController {
     public Response consultarMinhasReservas(Request request) {
         String userID = userController.validarUsuarioLogado(request.getToken());
 
-        List<CaronaResponse> minhasReservas = buscarCaronasPassageiro(userID);
+        List<ReservaResponse> reservas = reservaRepo.getByUserId(userID).stream()
+                .map(Reserva::toData)
+                .toList();
 
         return new Response(
                 Status.SUCESSO, "RESERVAS_PASSAGEIRO",
-                JsonUtils.toJson(minhasReservas)
+                JsonUtils.toJson(reservas)
         );
     }
 
@@ -141,7 +146,7 @@ public class CaronaController {
                 })
                 .toList();
 
-        boolean sucesso = caronaService.confirmarReservaAtomica(userID, itinerarioEscolhido);
+        boolean sucesso = caronaService.confirmarReservaAtomica(userID, itinerarioEscolhido, itinerario);
 
         return sucesso
                 ? new Response(Status.RESERVA_CONFIRMADA)

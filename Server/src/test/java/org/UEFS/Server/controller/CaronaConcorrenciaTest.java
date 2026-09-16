@@ -1,5 +1,7 @@
 package org.UEFS.Server.controller;
 
+import org.UEFS.Server.domain.reservas.ReservaRepo;
+import org.UEFS.shared.dto.ItinerarioDTO; // <-- Importação adicionada
 import org.UEFS.shared.dto.Trecho;
 import org.UEFS.Server.domain.caronas.*;
 import org.junit.jupiter.api.Test;
@@ -21,15 +23,20 @@ public class CaronaConcorrenciaTest {
         // ==========================================
         Trecho trecho = new Trecho(1, 2);
         Rota rota = new Rota(List.of(trecho));
-        
+
         // Criamos uma carona com capacidade total de APENAS 1 VAGA
         Carona carona = new Carona(rota, "motorista_uuid", 1, LocalDateTime.now().plusDays(1));
-        
+
+        // <-- ATUALIZAÇÃO DOS MOCKS AQUI -->
         CaronaRepo repoMock = mock(CaronaRepo.class);
-        CaronaService caronaService = new CaronaService(repoMock);
+        ReservaRepo reservaRepoMock = mock(ReservaRepo.class);
+        CaronaService caronaService = new CaronaService(repoMock, reservaRepoMock);
 
         ArestaTrecho aresta = new ArestaTrecho(2, carona, trecho);
         List<ArestaTrecho> itinerarioEscolhido = List.of(aresta);
+
+        // <-- DTO FICTÍCIO CRIADO AQUI -->
+        ItinerarioDTO dummyItinerario = new ItinerarioDTO(new ArrayList<>());
 
         int numeroDePassageirosConcorrentes = 10;
         List<Future<Boolean>> resultados;
@@ -44,8 +51,8 @@ public class CaronaConcorrenciaTest {
                 tarefas.add(() -> {
                     // Todas as threads esperam aqui até o sinal verde
                     latchDeLargada.await();
-                    // Dispara a tentativa de reserva atômica concorrente
-                    return caronaService.confirmarReservaAtomica(idPassageiro, itinerarioEscolhido);
+                    // <-- ATUALIZAÇÃO DA CHAMADA AO MÉTODO AQUI -->
+                    return caronaService.confirmarReservaAtomica(idPassageiro, itinerarioEscolhido, dummyItinerario);
                 });
             }
 

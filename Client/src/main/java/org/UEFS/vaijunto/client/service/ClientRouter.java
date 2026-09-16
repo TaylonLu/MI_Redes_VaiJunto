@@ -31,7 +31,6 @@ public class ClientRouter {
     }
 
     private void configurarRotas() {
-
         rotas.put(Status.LOGIN_EFETUADO.getTipo(), res -> {
             Toast.success("Login efetuado.");
             AuthHandler.guardarLogin(res);
@@ -47,6 +46,8 @@ public class ClientRouter {
 
 
     public void processarMensagem(String rawM) {
+        System.out.println("RESPOSTA SERVIDOR: " + rawM);
+
         try {
             GeneralResponse response = GeneralResponse.fromString(rawM);
             System.out.println(response);

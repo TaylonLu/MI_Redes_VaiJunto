@@ -6,6 +6,7 @@ import org.UEFS.Server.controller.SessionsController;
 import org.UEFS.Server.controller.UserController;
 import org.UEFS.Server.domain.caronas.CaronaRepo;
 import org.UEFS.Server.domain.caronas.CaronaService;
+import org.UEFS.Server.domain.reservas.ReservaRepo;
 import org.UEFS.shared.FileManager;
 import org.UEFS.Server.domain.usuarios.UserRepo;
 import org.UEFS.Server.server.MainServer;
@@ -39,13 +40,17 @@ public class Main {
         UserRepo userRepo =  new UserRepo();
         service.register(UserController.class, new UserController(userRepo));
         CaronaRepo caronaRepo = new CaronaRepo();
-        service.register(CaronaService.class, new CaronaService(caronaRepo));
+        ReservaRepo reservaRepo = new ReservaRepo();
+        service.register(CaronaService.class, new CaronaService(caronaRepo, reservaRepo));
         service.register(CaronaController.class, new CaronaController(caronaRepo));
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             IOUtils.fprintln("\n[:yellow]Desligamento detectado. Salvando dados...[::]");
+
             userRepo.salvarNoDisco();
             caronaRepo.salvarNoDisco();
+            reservaRepo.salvarNoDisco();
+
             IOUtils.fprintln("[:green]Dados salvos no disco.[::]");
         }));
 

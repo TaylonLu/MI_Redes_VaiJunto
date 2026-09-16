@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Line?>
-<AnchorPane prefHeight="700.0" prefWidth="1024.0" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.UEFS.vaijunto.client.controller.TelaInicialController">
+
+<AnchorPane prefHeight="700.0" prefWidth="700.0" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.UEFS.vaijunto.client.controller.TelaInicialController">
     <TabPane fx:id="tabPanePrincipal" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
 
         <!-- ABA 1: Área do Cliente -->
@@ -45,27 +53,67 @@
 
         <!-- ABA 3: Perfil do Usuário -->
         <Tab fx:id="tabPerfil" text="Perfil">
-            <VBox alignment="CENTER" spacing="20.0">
+            <VBox alignment="CENTER" prefHeight="740.0" prefWidth="706.0" spacing="20.0">
                 <padding>
                     <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
                 </padding>
 
                 <Label style="-fx-font-size: 22px; -fx-font-weight: bold;" text="Minhas Informações" />
 
-                <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 8; -fx-border-color: #dee2e6; -fx-border-radius: 8;">
-                    <Label fx:id="lblNome" style="-fx-font-size: 16px;" text="Nome: " />
-                    <Label fx:id="lblEmail" style="-fx-font-size: 16px;" text="Email: " />
-                    <Label fx:id="lblStatus" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Status: Passageiro" />
+                <VBox alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="300.0" spacing="10.0" styleClass="vbox-info">
+               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                  <children>
+                     <Label style="-fx-font-size: 16px;" text="Nome:" />
+                          <Label fx:id="lblNome" style="-fx-font-size: 16px;" />
+                  </children>
+               </HBox>
+               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                  <children>
+                     <Label style="-fx-font-size: 16px;" text="Email: " />
+                          <Label fx:id="lblEmail" style="-fx-font-size: 16px;" />
+                  </children>
+               </HBox>
+               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                  <children>
+                     <Label style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Status:" />
+                          <Label fx:id="lblStatus" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                  </children>
+               </HBox>
                 </VBox>
 
                 <!-- Área de Veículo (Para quem já é motorista) -->
-                <VBox fx:id="painelVeiculoSalvo" alignment="CENTER" managed="${painelVeiculoSalvo.visible}" spacing="10.0" visible="false">
-                    <Label style="-fx-font-weight: bold;" text="Meu Veículo:" />
-                    <Label fx:id="lblVeiculoInfo" text="Modelo: - | Cor: - | Placa: -" />
+                <VBox fx:id="painelVeiculoSalvo" alignment="CENTER" managed="${painelVeiculoSalvo.visible}" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="300.0" spacing="10.0" styleClass="vbox-info" visible="false">
+                    <Label style="-fx-font-weight: bold; -fx-font-size: 20;" text="Meu Veículo" />
+               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                  <children>
+                     <Label style="-fx-font-size: 16px;" text="Modelo:" />
+                     <Label fx:id="lblModelo" style="-fx-font-size: 16px;" />
+                  </children>
+               </HBox>
+               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                  <children>
+                     <Label style="-fx-font-size: 16px;" text="Placa:" />
+                     <Label fx:id="lblPlaca" style="-fx-font-size: 16px;" />
+                  </children>
+               </HBox>
+               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                  <children>
+                     <Label style="-fx-font-size: 16px;" text="Cor:" />
+                     <Label fx:id="lblCor" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                  </children>
+               </HBox>
+               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                  <children>
+                     <Label style="-fx-font-size: 16px;" text="CNH:" />
+                     <Label fx:id="lblCnh" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                  </children>
+               </HBox>
                 </VBox>
 
                 <!-- Botão inicial de intenção -->
-                <Button fx:id="btnCadastrarMotorista" onAction="#mostrarFormularioMotorista" styleClass="btn-primary" text="Me Cadastrar como Motorista" />
+                <Button fx:id="btnCadastrarMotorista" onAction="#mostrarFormularioMotorista"
+                        managed="${btnCadastrarMotorista.visible}"
+                        styleClass="btn-primary" text="Me Cadastrar como Motorista" />
 
                 <!-- Formulário de Cadastro do Veículo (Oculto por padrão) -->
                 <VBox fx:id="painelFormularioMotorista" alignment="CENTER" managed="${painelFormularioMotorista.visible}" maxWidth="300.0" spacing="10.0" visible="false">

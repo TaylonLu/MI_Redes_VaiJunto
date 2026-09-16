@@ -12,7 +12,7 @@
 
         <!-- ESQUERDA: StackPane controlando os 3 modos -->
         <left>
-            <StackPane prefWidth="300.0" styleClass="sidebar">
+            <StackPane alignment="CENTER" prefWidth="300.0" styleClass="sidebar">
                 <padding>
                     <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                 </padding>
@@ -20,7 +20,7 @@
                 <!-- ========================================== -->
                 <!-- MODO 1: CRIAÇÃO (O original que você já tinha) -->
                 <!-- ========================================== -->
-                <VBox fx:id="painelCriacao" managed="${painelCriacao.visible}" spacing="12.0" visible="true">
+                <VBox fx:id="painelCriacao" maxHeight="-Infinity" managed="${painelCriacao.visible}" spacing="12.0" visible="true">
                     <Label styleClass="sidebar-title" text="Planejar Carona" />
                     <Label text="Percurso Selecionado:" />
                     <ListView fx:id="listViewPercursoCriacao" prefHeight="320.0" prefWidth="250.0" VBox.vgrow="ALWAYS" />
@@ -37,7 +37,7 @@
                 <!-- ========================================== -->
                 <!-- MODO 2: EXIBIÇÃO DE DETALHES -->
                 <!-- ========================================== -->
-                <VBox fx:id="painelExibicao" managed="${painelExibicao.visible}" spacing="12.0" visible="false">
+                <VBox fx:id="painelExibicao" maxHeight="-Infinity" managed="${painelExibicao.visible}" spacing="12.0" visible="false">
                     <Label styleClass="sidebar-title" text="Detalhes da Carona" />
                     <VBox spacing="5.0" style="-fx-background-color: #f4f4f4; -fx-padding: 10; -fx-background-radius: 5;">
                         <Label fx:id="lblExibeMotorista" style="-fx-font-weight: bold;" text="Motorista: -" />
@@ -53,7 +53,7 @@
                 <!-- ========================================== -->
                 <!-- MODO 3: BUSCA DE CARONAS -->
                 <!-- ========================================== -->
-                <VBox fx:id="painelBusca" managed="${painelBusca.visible}" spacing="12.0" visible="false">
+                <VBox fx:id="painelBusca" maxHeight="-Infinity" managed="${painelBusca.visible}" spacing="12.0" visible="false">
                     <Label styleClass="sidebar-title" text="Buscar Carona" />
                     <Label text="Instruções: Clique no mapa para definir sua origem e depois o destino." wrapText="true" />
 
@@ -90,11 +90,12 @@
             <StackPane fx:id="stackContainer">
                 <!-- Camada 1: O Mapa -->
                 <Pane fx:id="containerMapa" onMouseClicked="#onMapaClicked" onMouseDragged="#onMapaDragged" onMousePressed="#onMapaPressed">
-                    <ImageView fx:id="imagemMapa" />
-                    <Group fx:id="mapaGrupo" />
-               <StackPane.margin>
-                  <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
-               </StackPane.margin>
+                    <Group fx:id="mapaGrupo">
+                        <ImageView fx:id="imagemMapa"/>
+                    </Group>
+                   <StackPane.margin>
+                       <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+                   </StackPane.margin>
                 </Pane>
 
                 <!-- Camada 2: O Menu Popup de Dados da Carona (Invisível por padrão, usado só na CRIAÇÃO) -->

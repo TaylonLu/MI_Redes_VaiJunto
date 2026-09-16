@@ -26,9 +26,15 @@ public class UserController {
         Usuario user = repo.buscaPorEmail(login.email());
 
         if (user == null) throw new RecursoNaoEncontradoException("Usuário não encontrado.");
+        String token;
+        if ((token = sessions.usuarioLogado(user.getId())) != null) {
+            LoginResponse dados = new LoginResponse(token, user.getSelfData());
+            return new Response(Status.LOGIN_EFETUADO, JsonUtils.toJson(dados));
+        }
+
         if (!login.senha().equals(user.getSenha())) throw new DadosIncorretosException("Email ou senha incorretos.");
 
-        String token = sessions.criarSessao(user.getId());
+        token = sessions.criarSessao(user.getId());
 
         LoginResponse dados = new LoginResponse(token, user.getSelfData());
 

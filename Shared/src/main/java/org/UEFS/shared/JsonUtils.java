@@ -58,6 +58,7 @@ public class JsonUtils {
             return mapper.readValue(dados, tipoLista);
 
         } catch (JsonProcessingException e) {
+            System.out.println(dados);
             throw new ServerException(701, "DADOS_INCORRETOS", "Dados da requisição incorretos.");
 
         }

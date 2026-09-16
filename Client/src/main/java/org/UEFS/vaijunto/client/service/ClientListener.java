@@ -21,6 +21,7 @@ public class ClientListener implements Runnable {
             while ((mensagemDoServidor = entrada.readLine()) != null) {
                 router.processarMensagem(mensagemDoServidor);
             }
+            System.out.println("Listener encerrado.");
         } catch (SocketException e) {
             System.out.println("Conexão com o servidor encerrada (Logout ou Fechamento da aplicação).");
         } catch (IOException e) {

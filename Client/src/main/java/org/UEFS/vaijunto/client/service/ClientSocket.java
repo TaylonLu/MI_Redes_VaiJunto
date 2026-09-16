@@ -33,6 +33,10 @@ public class ClientSocket {
                 socket = new Socket(host, port);
                 reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 writer = new PrintWriter(socket.getOutputStream(), true);
+
+                Thread TListener = new Thread(new ClientListener(reader));
+                TListener.setDaemon(true);
+                TListener.start();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

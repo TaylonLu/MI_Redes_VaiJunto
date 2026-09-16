@@ -11,79 +11,9 @@
     -fx-font-weight: bold;
 }
 
-/* Campos de Texto e Senha */
-.text-field, .password-field {
-    -fx-background-color: #FFFFFF;
-    -fx-background-radius: 6px;
-    -fx-border-color: #CCCCCC;
-    -fx-border-radius: 6px;
-    -fx-border-width: 1px;
-    -fx-padding: 8px 12px;
-    -fx-font-size: 13px;
-    -fx-min-width: 220px;
-    -fx-pref-height: 35px;
-}
-
-.text-field:focused, .password-field:focused {
-    -fx-border-color: #2D6A4F;
-    -fx-background-color: #FFFFFF;
-    -fx-effect: dropshadow(three-pass-box, rgba(45, 106, 79, 0.2), 5, 0, 0, 0);
-}
-
-/* Botão Principal */
-.btn-primary {
-    -fx-background-color: #2D6A4F;
-    -fx-text-fill: #FFFFFF;
-    -fx-font-weight: bold;
-    -fx-font-size: 14px;
-    -fx-background-radius: 6px;
-    -fx-padding: 8px 24px;
-    -fx-cursor: hand;
-    -fx-pref-height: 38px;
-    -fx-min-width: 150px;
-}
-
-.btn-primary:hover {
-    -fx-background-color: #1B4332;
-}
-
-.btn-primary:pressed {
-    -fx-background-color: #081C15;
-}
-
-/* Títulos da Tela Inicial */
-.welcome-title {
-    -fx-font-size: 20px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #1B4332;
-}
-
 .welcome-subtitle {
     -fx-font-size: 13px;
     -fx-text-fill: #666666;
-}
-
-/* Botão Secundário (Outlines / Inverso) */
-.btn-secondary {
-    -fx-background-color: transparent;
-    -fx-text-fill: #2D6A4F;
-    -fx-font-weight: bold;
-    -fx-font-size: 14px;
-    -fx-border-color: #2D6A4F;
-    -fx-border-width: 2px;
-    -fx-border-radius: 6px;
-    -fx-background-radius: 6px;
-    -fx-padding: 8px 24px;
-    -fx-cursor: hand;
-    -fx-pref-height: 38px;
-}
-
-.btn-secondary:hover {
-    -fx-background-color: #E8F5E9;
-}
-
-.btn-secondary:pressed {
-    -fx-background-color: #C8E6C9;
 }
 
 .btn-flutuante {
@@ -116,17 +46,23 @@
     -fx-stroke-width: 2px;
 }
 
-/* Cidades clicadas pelo motorista */
-.cidade-selecionada {
-    -fx-fill: #2D6A4F;       /* Verde combinando com seus botões */
-    -fx-stroke: #1B4332;
-    -fx-stroke-width: 2px;
-}
-
 /* Nomes das cidades (Texto) */
 .cidade-texto {
     -fx-fill: #333333;       /* Cor da fonte do nome das cidades */
     -fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.8), 3, 0, 0, 0); /* Sombra branca leve para ler fácil sobre o mapa */
+}
+
+/* Cidades clicadas na busca */
+.cidade-origem {
+    -fx-fill: #E53935;       /* Vermelho vivo */
+    -fx-stroke: #B71C1C;
+    -fx-stroke-width: 2px;
+}
+
+.cidade-destino {
+    -fx-fill: #C62828;       /* Vermelho levemente mais escuro */
+    -fx-stroke: #880E4F;
+    -fx-stroke-width: 2px;
 }
 
 /* Linhas que ligam as cidades (Estradas base) */
@@ -134,12 +70,6 @@
     -fx-stroke: #7f8c8d;     /* Cor cinza para a estrada */
     -fx-stroke-width: 3px;
     -fx-stroke-dash-array: 5 5; /* Faz a linha ser tracejada */
-}
-
-/* Linha da rota que o motorista está criando */
-.rota-motorista-linha {
-    -fx-stroke: #2D6A4F;     /* Verde destacando o percurso */
-    -fx-stroke-width: 5px;
 }
 
 /* =========================================
@@ -150,12 +80,6 @@
     -fx-border-color: #E0E0E0;
     -fx-border-width: 0 2px 0 0; /* Cria uma linha de divisão apenas na direita */
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.1), 10, 0, 2, 0); /* Sombra suave */
-}
-
-.sidebar-title {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #1B4332;
 }
 
 /* =========================================
@@ -176,12 +100,102 @@
     -fx-max-height: 350px;
 }
 
+.btn-success {
+}
+
+/* =========================================
+   Caixa de informações do usuário
+   ========================================= */
+.vbox-info {
+    -fx-background-color: #f8f9fa;
+    -fx-padding: 15;
+    -fx-background-radius: 8;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 8;
+}
+
+/* Campos de Texto e Senha */
+.text-field:focused, .password-field:focused {
+    -fx-border-color: #D32F2F; /* Novo tom avermelhado */
+    -fx-background-color: #FFFFFF;
+    -fx-effect: dropshadow(three-pass-box, rgba(211, 47, 47, 0.2), 5, 0, 0, 0);
+}
+
+/* Botão Principal */
+.btn-primary {
+    -fx-background-color: #D32F2F; /* Novo tom avermelhado */
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 24px;
+    -fx-cursor: hand;
+    -fx-pref-height: 38px;
+    -fx-min-width: 150px;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #B71C1C; /* Hover avermelhado escuro */
+}
+
+.btn-primary:pressed {
+    -fx-background-color: #880E4F; /* Pressed avermelhado muito escuro */
+}
+
+/* Títulos da Tela Inicial */
+.welcome-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #B71C1C; /* Título avermelhado */
+}
+
+/* Botão Secundário (Outlines / Inverso) */
+.btn-secondary {
+    -fx-background-color: transparent;
+    -fx-text-fill: #D32F2F; /* Texto avermelhado */
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-border-color: #D32F2F; /* Borda avermelhada */
+    -fx-border-width: 2px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 24px;
+    -fx-cursor: hand;
+    -fx-pref-height: 38px;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #FFEBEE; /* Fundo hover rosa clarinho */
+}
+
+.btn-secondary:pressed {
+    -fx-background-color: #FFCDD2; /* Fundo pressed rosa claro */
+}
+
+/* Cidades clicadas pelo motorista */
+.cidade-selecionada {
+    -fx-fill: #D32F2F;       /* Vermelho combinando com seus botões */
+    -fx-stroke: #B71C1C;
+    -fx-stroke-width: 2px;
+}
+
+/* Linha da rota que o motorista está criando */
+.rota-motorista-linha {
+    -fx-stroke: #D32F2F;     /* Vermelho destacando o percurso */
+    -fx-stroke-width: 5px;
+}
+
+/* Barra Lateral (Esquerda) */
+.sidebar-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #B71C1C; /* Vermelho escuro */
+}
+
+/* Menu Popup de Confirmação */
 .popup-title {
     -fx-font-size: 18px;
     -fx-font-weight: bold;
-    -fx-text-fill: #2D6A4F;
+    -fx-text-fill: #D32F2F; /* Vermelho */
     -fx-padding: 0 0 10 0;
-}
-
-.btn-success {
 }

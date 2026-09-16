@@ -62,6 +62,13 @@
     "nome" : "Eu",
     "motorista" : null
   },
+  "user_c4571d48-ae9b-4fd0-bd88-afb6badf2433" : {
+    "id" : "user_c4571d48-ae9b-4fd0-bd88-afb6badf2433",
+    "email" : "",
+    "senha" : "123",
+    "nome" : "paulo",
+    "motorista" : null
+  },
   "user_685291de-fe77-4eb3-9892-7d9ce9878e37" : {
     "id" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37",
     "email" : "user@br.com",

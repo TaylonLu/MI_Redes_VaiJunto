@@ -1,17 +1,23 @@
 package org.UEFS.Server.domain.caronas;
 
-import org.UEFS.shared.dto.requests.BuscaCaronaRequest;
+import org.UEFS.Server.domain.reservas.Reserva;
+import org.UEFS.Server.domain.reservas.ReservaRepo;
 import org.UEFS.shared.dto.ItinerarioDTO;
 import org.UEFS.shared.dto.PassoItinerarioDTO;
 import org.UEFS.shared.dto.Trecho;
+import org.UEFS.shared.dto.requests.BuscaCaronaRequest;
+import org.UEFS.shared.enums.StatusCarona;
+import org.UEFS.shared.enums.StatusReserva;
 
 import java.util.*;
 
 public class CaronaService {
    private final CaronaRepo caronaRepo;
+   private final ReservaRepo reservaRepo;
 
-   public CaronaService(CaronaRepo repositorio) {
+   public CaronaService(CaronaRepo repositorio, ReservaRepo reservaRepo) {
        this.caronaRepo = repositorio;
+       this.reservaRepo = reservaRepo;
    }
 
     public List<ItinerarioDTO> toItinerariosDTO(List<List<ArestaTrecho>> caminhosDoGrafo) {
@@ -82,7 +88,7 @@ public class CaronaService {
         }
     }
 
-    public synchronized boolean confirmarReservaAtomica(String idPassageiro, List<ArestaTrecho> itinerarioEscolhido) {
+    public synchronized boolean confirmarReservaAtomica(String idPassageiro, List<ArestaTrecho> itinerarioEscolhido, ItinerarioDTO itinerarioDTO) {
         for (ArestaTrecho aresta : itinerarioEscolhido) {
             if (aresta.carona().semVaga(aresta.trecho())) return false;
         }
@@ -92,7 +98,28 @@ public class CaronaService {
             if (!sucesso) return false;
         }
 
+        reservaRepo.salvar(new Reserva(idPassageiro, itinerarioDTO));
+
         return true;
+    }
+
+    public synchronized void cancelarCaronaEItinerarios(Carona caronaCancelada) {
+        caronaCancelada.setStatus(StatusCarona.CANCELADA);
+
+        List<Reserva> reservasAfetadas = reservaRepo.getDadosList().stream()
+                .filter(R -> R.getStatus() == StatusReserva.ATIVA && R.contemCarona(caronaCancelada.getId()))
+                .toList();
+
+        for (Reserva reserva : reservasAfetadas) {
+            reserva.setStatus(StatusReserva.CANCELADA);
+
+            for (var passo : reserva.getItinerario().passos()) {
+                if (passo.idCarona().equals(caronaCancelada.getId())) continue;
+                Carona caronaConectada = caronaRepo.getByID(passo.idCarona());
+                if (caronaConectada != null)
+                    caronaConectada.removerPassageiroCompletamente(reserva.getIdPassageiro());
+            }
+        }
     }
 
     private boolean atendeRequisito(Carona carona, BuscaCaronaRequest busca) {
@@ -121,5 +148,9 @@ public class CaronaService {
         }
 
         return achouOrigem && chegouDestino && temVagas;
+    }
+
+    public ReservaRepo getReservaRepo() {
+        return reservaRepo;
     }
 }

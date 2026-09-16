@@ -4,8 +4,10 @@ services:
       context: .
       dockerfile: Docker/Server/Dockerfile
     container_name: vai-junto-server
+    init: true
+    stop_grace_period: 30s
     ports:
-      - "8080:8080"
+      - "2602:2602"
     tty: true
     volumes:
       - .:/app
@@ -20,9 +22,10 @@ services:
     volumes:
       - .:/app
       - ./data:/app/data
+      - ./logs:/app/logs
       - maven-cache:/root/.m2
     environment:
-      SERVER_IP: "172.16.230.27"
+      SERVER_IP: "10.65.137.41"
       SERVER_PORT: "2602"
 
 volumes:

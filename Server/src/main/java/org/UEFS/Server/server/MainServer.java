@@ -69,6 +69,7 @@ public class MainServer {
             while ((requisicao = entrada.readLine()) != null) {
                 if (requisicao.equalsIgnoreCase("SAIR")) {
                     System.out.println("Saindo...");
+
                     break;
                 }
 

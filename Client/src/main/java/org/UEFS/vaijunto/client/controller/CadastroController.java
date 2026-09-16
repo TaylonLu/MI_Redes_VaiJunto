@@ -38,7 +38,6 @@ public class CadastroController {
 
         userPassword.textProperty().addListener(_ -> atualizarCoresDasSenhas());
         userPasswordConf.textProperty().addListener(_ -> atualizarCoresDasSenhas());
-
     }
 
     @FXML

@@ -15,6 +15,18 @@ public class InicioController {
     private Button btnLogin;
 
     @FXML
+    public void initialize() {
+        btnCadastro.sceneProperty().addListener((_, _, newScene) -> {
+            if (newScene != null) {
+                if (!ClientSocket.getInstance().connected()) {
+                    ClientSocket.getInstance().conectar();
+                }
+            }
+        });
+    }
+
+
+    @FXML
     void irParaCadastro(ActionEvent event) {
         if (!ClientSocket.getInstance().connected()) {
             ClientSocket.getInstance().conectar();

@@ -10,7 +10,7 @@ COMPOSE := $(DK) \
 	-f compose.yaml \
 	-f compose.$(OS_TYPE).yaml
 
-.PHONY: up build up-build down restart logs clean compile
+.PHONY: up build up-build down restart logs clean clean-install compile
 .PHONY: server server-build server-rebuild
 .PHONY: client client-build client-rebuild
 .PHONY: docker-start docker-status
@@ -40,11 +40,12 @@ rebuild:
 	$(COMPOSE) build --no-cache
 
 logs:
-	$(COMPOSE) logs -f
+	$(COMPOSE) logs -f server
 
 clean:
 	$(COMPOSE) run --rm server mvn clean
-
+clean-install:
+	$(COMPOSE) run --rm server mvn clean install
 
 # SERVIDOR
 

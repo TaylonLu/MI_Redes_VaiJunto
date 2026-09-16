@@ -51,17 +51,17 @@ public class FileManager {
         }
     }
 
-    public static <T> void salvarObjetos(String arquivoDestino, Map<String, T> mapa) throws IOException {
+    public <T> void salvarObjetos(String arquivoDestino, Map<String, T> mapa) throws IOException {
         File arquivo = resolverArquivo(arquivoDestino);
         mapper.writerWithDefaultPrettyPrinter().writeValue(arquivo, mapa);
     }
 
-    public static void salvarObjetos(String arquivoDestino, Object dados) throws IOException {
+    public void salvarObjetos(String arquivoDestino, Object dados) throws IOException {
         File arquivo = resolverArquivo(arquivoDestino);
         mapper.writerWithDefaultPrettyPrinter().writeValue(arquivo, dados);
     }
 
-    public static <U> U carregarObjetos(String arquivoOrigem, TypeReference<U> tipo) throws IOException {
+    public <U> U carregarObjetos(String arquivoOrigem, TypeReference<U> tipo) throws IOException {
         File arquivo = resolverArquivo(arquivoOrigem);
 
         if (!arquivo.exists() || arquivo.length() == 0) {

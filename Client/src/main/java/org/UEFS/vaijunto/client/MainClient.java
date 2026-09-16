@@ -39,13 +39,6 @@ public class MainClient extends Application {
             System.err.println("Não foi possível conectar ao servidor: " + e.getMessage());
         }
 
-        if (CSocket.connected()) {
-            BufferedReader reader = CSocket.getReader();
-            Thread TListener = new Thread(new ClientListener(reader));
-            TListener.setDaemon(true);
-            TListener.start();
-        }
-
         SceneManager.inicializar(primaryStage);
         SceneManager.push(Tela.TELA_INICIO);
         primaryStage.show();
