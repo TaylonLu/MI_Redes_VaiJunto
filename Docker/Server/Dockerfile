@@ -1,16 +1,35 @@
-FROM maven:3.9-eclipse-temurin-24
-
-RUN apt-get update \
-    && apt-get install -y nodejs npm \
-    && npm install -g nodemon \
-    && rm -rf /var/lib/apt/lists/*
+# ==========================================
+# Estágio 1: Build (Compilação do Projeto)
+# ==========================================
+FROM maven:3.9-eclipse-temurin-24 AS builder
 
 WORKDIR /app
 
-COPY . .
+# 1. Copia apenas os arquivos do Maven/POMs primeiro para aproveitar o CACHE de dependências
+COPY pom.xml .
+COPY Shared/pom.xml Shared/
+COPY Server/pom.xml Server/
+COPY Custom/pom.xml Custom/
 
-RUN mvn dependency:go-offline
+# Baixa as dependências e guarda em cache (só roda de novo se algum pom.xml mudar)
+RUN mvn dependency:go-offline -B
+
+# 2. Agora copia todo o código fonte e gera o .jar do Server
+COPY . .
+RUN mvn clean package -pl Server -am -DskipTests
+
+# ==========================================
+# Estágio 2: Runtime (Execução Leve)
+# ==========================================
+FROM eclipse-temurin:24-jre-alpine
+
+WORKDIR /app
+
+# Cria diretório de logs e copia o JAR compilado no estágio anterior
+RUN mkdir -p /app/logs
+COPY --from=builder /app/Server/target/*.jar app.jar
+
 EXPOSE 8080
 
-CMD ["sh", "-c", "mvn exec:java ... >> /app/logs/server.log 2>&1"]
-#CMD ["nodemon", "--watch", "Server/src", "--watch", "Shared/src", "-e", "java", "--exec", "mvn install -pl Server -am -DskipTests && mvn -pl Server exec:java"]
+# Executa diretamente o JAR com flags de performance
+CMD ["java", "-Djava.awt.headless=true", "-jar", "app.jar"]

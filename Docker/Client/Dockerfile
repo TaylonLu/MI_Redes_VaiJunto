@@ -1,24 +1,46 @@
-FROM maven:3.9-eclipse-temurin-24
+# ==========================================
+# Estágio 1: Build da aplicação
+# ==========================================
+FROM maven:3.9-eclipse-temurin-24 AS builder
 
-RUN apt-get update && apt-get install -y \
+WORKDIR /app
+
+# Cache de dependências do Maven
+COPY pom.xml .
+COPY Shared/pom.xml Shared/
+COPY Custom/pom.xml Custom/
+COPY Client/pom.xml Client/
+
+RUN mvn dependency:go-offline -B
+
+# Compila o módulo Client e suas dependências
+COPY . .
+RUN mvn clean package -pl Client -am -DskipTests
+
+# ==========================================
+# Estágio 2: Runtime com dependências de GUI
+# ==========================================
+FROM eclipse-temurin:24-jdk-ubuntu
+
+# Instala apenas as bibliotecas gráficas essenciais para o JavaFX
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgtk-3-0 \
     libx11-6 \
     libxext6 \
     libxrender1 \
     libxtst6 \
     libxi6 \
-    libgtk-3-0 \
     libgl1 \
     libglx0 \
     libglib2.0-0 \
-    nodejs \
-    npm \
-    && npm install -g nodemon \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY . .
+# Copia o JAR compilado no estágio anterior
+COPY --from=builder /app/Client/target/*.jar app.jar
 
-RUN mvn dependency:go-offline
+# Define a variável de ambiente para conexão gráfica (X11 ou Display virtual)
+ENV DISPLAY=:0
 
-CMD ["sh", "-c", "nodemon --watch Client/src --watch Custom/src --watch Shared/src -e java,fxml --exec 'mvn install -pl Client -am -DskipTests && mvn -pl Client javafx:run'"]
+CMD ["java", "-jar", "app.jar"]
