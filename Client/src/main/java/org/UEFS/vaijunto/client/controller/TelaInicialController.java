@@ -39,6 +39,7 @@ public class TelaInicialController {
     @FXML private Label lblEmail;
     @FXML private Label lblStatus;
 
+
     // DADOS DO MOTORISTA
     @FXML private Label lblModelo;
     @FXML private Label lblPlaca;
