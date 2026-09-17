@@ -1,4 +1,4 @@
-package org.UEFS.Server.server;
+package Test;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
