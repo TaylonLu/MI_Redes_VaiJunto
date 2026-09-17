@@ -55,9 +55,9 @@
     },
     "id_motorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8",
     "ocupacaoPorTrecho" : {
-      "0-8" : [ "user_4b486b3b-d4cc-4103-8740-50c1dcd16521", "user_5c1641bf-8af5-4def-8d91-2730342f19a2" ],
-      "8-1" : [ "user_4b486b3b-d4cc-4103-8740-50c1dcd16521", "user_5c1641bf-8af5-4def-8d91-2730342f19a2" ],
-      "1-19" : [ ]
+      "0-8" : [ "user_5c1641bf-8af5-4def-8d91-2730342f19a2" ],
+      "8-1" : [ "user_5c1641bf-8af5-4def-8d91-2730342f19a2" ],
+      "1-19" : [ "user_6ab42ff0-7321-492f-a556-004ad47808c3", "user_bb32877f-240c-43af-9176-595e940be11d", "user_e56d23de-e414-443e-be8e-cefc79fdccdf" ]
     },
     "data" : [ 2026, 9, 19, 0, 0 ],
     "vagasTotais" : 3,

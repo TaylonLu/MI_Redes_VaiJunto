@@ -18,8 +18,8 @@ import org.UEFS.vaijunto.client.service.NetworkDispatcher;
 import org.UEFS.vaijunto.client.service.SessionManager;
 import org.UEFS.vaijunto.client.utils.Tela;
 import org.UEFS.vaijunto.client.utils.Toast;
-import org.UEFS.vaijunto.client.view.CaronaListCell; // ajuste o pacote conforme seu projeto
-import org.UEFS.vaijunto.client.view.ReservaListCell; // ajuste o pacote conforme seu projeto
+import org.UEFS.vaijunto.client.view.CaronaListCell;
+import org.UEFS.vaijunto.client.view.ReservaListCell;
 
 import java.util.List;
 
@@ -72,8 +72,6 @@ public class TelaInicialController {
         lblNome.setText(usuarioLogado.nome());
         lblEmail.setText(usuarioLogado.email());
 
-        // Célula customizada para cada tipo de lista. O duplo clique para abrir o
-        // popup de detalhes é tratado dentro das próprias células (via getItem())
         listaCaronasInscritas.setCellFactory(lv -> new ReservaListCell());
         listaCaronasCriadas.setCellFactory(lv -> new CaronaListCell());
 
@@ -101,7 +99,6 @@ public class TelaInicialController {
             lblCnh.setText(motorista.cnh());
             lblModelo.setText(motorista.modeloCarro());
             lblPlaca.setText(motorista.placaCarro());
-            lblCor.setText(motorista.corCarro());
         }
 
         lblNome.setText(usuarioLogado.nome());
@@ -123,12 +120,10 @@ public class TelaInicialController {
         } else {
             lblStatus.setText("Passageiro");
 
-            // Exibe botão de intenção de cadastro, oculta o resto.
             btnCadastrarMotorista.setVisible(true);
             painelFormularioMotorista.setVisible(false);
             painelVeiculoSalvo.setVisible(false);
 
-            // Oculta aba do motorista
             tabPanePrincipal.getTabs().remove(tabMotorista);
         }
     }
@@ -159,7 +154,6 @@ public class TelaInicialController {
         ReservaResponse reservaSelecionada = listaCaronasInscritas.getSelectionModel().getSelectedItem();
 
         if (reservaSelecionada != null) {
-            // Aqui enviaria a requisição de cancelamento para o servidor via Socket
             System.out.println("Cancelando reserva: " + reservaSelecionada);
 
             String dados = JsonUtils.toJson(reservaSelecionada);
@@ -190,7 +184,6 @@ public class TelaInicialController {
         CaronaResponse caronaSelecionada = listaCaronasCriadas.getSelectionModel().getSelectedItem();
 
         if (caronaSelecionada != null) {
-            // Aqui enviaria a requisição de cancelamento para o servidor
             String requisicao = String.format("CANCELAR_CARONA|%s|%s|%d",
                     caronaSelecionada.id(),
                     sessionManager.getUserToken(),

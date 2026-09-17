@@ -26,9 +26,7 @@ import java.util.function.IntFunction;
  */
 public final class ReservaDetalhesDialog {
 
-    private ReservaDetalhesDialog() {
-        // classe utilitária, não deve ser instanciada
-    }
+    private ReservaDetalhesDialog() {  }
 
     public static void mostrar(ReservaResponse reserva) {
         mostrar(reserva, null);

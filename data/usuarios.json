@@ -97,6 +97,13 @@
     "nome" : "Passageiro Teste 35",
     "motorista" : null
   },
+  "user_76ac9ec7-db5c-46a4-9d01-62a60576d9a1" : {
+    "id" : "user_76ac9ec7-db5c-46a4-9d01-62a60576d9a1",
+    "email" : "client_auto_f0f3e9@teste.com",
+    "senha" : "senha123",
+    "nome" : "Usuário Automatizado",
+    "motorista" : null
+  },
   "user_87c32994-0754-4d7b-afc3-1c77e85ed92f" : {
     "id" : "user_87c32994-0754-4d7b-afc3-1c77e85ed92f",
     "email" : "stress_26@teste.com",

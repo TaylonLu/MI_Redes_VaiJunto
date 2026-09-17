@@ -49,7 +49,7 @@ public class SceneManager {
             Object novoController = loader.getController();
 
             StackPane rootLayer = new StackPane();
-            rootLayer.getChildren().add(novaTela); // Camada 0: A tela do FXML
+            rootLayer.getChildren().add(novaTela);
 
             Scene cenaAtual = primaryStage.getScene();
 

@@ -1,17 +1,4 @@
 {
-  "reserva_66d24c85-b619-4555-b5c3-d163436161c9" : {
-    "id" : "reserva_66d24c85-b619-4555-b5c3-d163436161c9",
-    "idPassageiro" : "user_4b486b3b-d4cc-4103-8740-50c1dcd16521",
-    "itinerario" : {
-      "passos" : [ {
-        "inicio" : 4,
-        "fim" : 22,
-        "idCarona" : "carona_e608b7b2-dfe8-403e-8006-8e5af573d70c",
-        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
-      } ]
-    },
-    "status" : "CANCELADA"
-  },
   "reserva_a7bc6302-fcbf-488f-b531-18898039539c" : {
     "id" : "reserva_a7bc6302-fcbf-488f-b531-18898039539c",
     "idPassageiro" : "user_4b486b3b-d4cc-4103-8740-50c1dcd16521",
@@ -29,6 +16,84 @@
       } ]
     },
     "status" : "CANCELADA"
+  },
+  "reserva_28a88f8b-5048-4a33-920b-a2adb0cfa557" : {
+    "id" : "reserva_28a88f8b-5048-4a33-920b-a2adb0cfa557",
+    "idPassageiro" : "user_bb32877f-240c-43af-9176-595e940be11d",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 1,
+        "fim" : 19,
+        "idCarona" : "carona_5bbe5089-5910-43cc-9008-a8abdae1fec5",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      } ]
+    },
+    "status" : "ATIVA"
+  },
+  "reserva_8bfc4b82-fd02-46af-ba56-13489c780670" : {
+    "id" : "reserva_8bfc4b82-fd02-46af-ba56-13489c780670",
+    "idPassageiro" : "user_91f154c0-144a-4848-8101-b4ce57fe7672",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 18,
+        "fim" : 12,
+        "idCarona" : "carona_d4d09745-2fb5-478e-9f0a-0f2be0c79c17",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      } ]
+    },
+    "status" : "CANCELADA"
+  },
+  "reserva_66d24c85-b619-4555-b5c3-d163436161c9" : {
+    "id" : "reserva_66d24c85-b619-4555-b5c3-d163436161c9",
+    "idPassageiro" : "user_4b486b3b-d4cc-4103-8740-50c1dcd16521",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 4,
+        "fim" : 22,
+        "idCarona" : "carona_e608b7b2-dfe8-403e-8006-8e5af573d70c",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      } ]
+    },
+    "status" : "CANCELADA"
+  },
+  "reserva_eb257031-9f99-4a36-be41-957265c0c75d" : {
+    "id" : "reserva_eb257031-9f99-4a36-be41-957265c0c75d",
+    "idPassageiro" : "user_4b486b3b-d4cc-4103-8740-50c1dcd16521",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 0,
+        "fim" : 8,
+        "idCarona" : "carona_5bbe5089-5910-43cc-9008-a8abdae1fec5",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      } ]
+    },
+    "status" : "CANCELADA"
+  },
+  "reserva_8893b312-9404-41c4-b943-93d1639d9089" : {
+    "id" : "reserva_8893b312-9404-41c4-b943-93d1639d9089",
+    "idPassageiro" : "user_e56d23de-e414-443e-be8e-cefc79fdccdf",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 1,
+        "fim" : 19,
+        "idCarona" : "carona_5bbe5089-5910-43cc-9008-a8abdae1fec5",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      } ]
+    },
+    "status" : "ATIVA"
+  },
+  "reserva_16fb43d2-0265-4819-953b-728f7e9164b6" : {
+    "id" : "reserva_16fb43d2-0265-4819-953b-728f7e9164b6",
+    "idPassageiro" : "user_6ab42ff0-7321-492f-a556-004ad47808c3",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 1,
+        "fim" : 19,
+        "idCarona" : "carona_5bbe5089-5910-43cc-9008-a8abdae1fec5",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      } ]
+    },
+    "status" : "ATIVA"
   },
   "reserva_6b02b294-f6c1-4ca3-9694-8a4755304e0e" : {
     "id" : "reserva_6b02b294-f6c1-4ca3-9694-8a4755304e0e",
@@ -116,19 +181,6 @@
       } ]
     },
     "status" : "ATIVA"
-  },
-  "reserva_8bfc4b82-fd02-46af-ba56-13489c780670" : {
-    "id" : "reserva_8bfc4b82-fd02-46af-ba56-13489c780670",
-    "idPassageiro" : "user_91f154c0-144a-4848-8101-b4ce57fe7672",
-    "itinerario" : {
-      "passos" : [ {
-        "inicio" : 18,
-        "fim" : 12,
-        "idCarona" : "carona_d4d09745-2fb5-478e-9f0a-0f2be0c79c17",
-        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
-      } ]
-    },
-    "status" : "CANCELADA"
   },
   "reserva_56503e73-2917-41bb-9c10-f1f12753640d" : {
     "id" : "reserva_56503e73-2917-41bb-9c10-f1f12753640d",

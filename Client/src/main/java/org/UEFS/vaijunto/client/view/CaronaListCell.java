@@ -52,14 +52,6 @@ public class CaronaListCell extends ListCell<CaronaResponse> {
         setStyle("-fx-background-color: transparent;"); // evita fundo duplicado (célula + card)
         montarLayout();
 
-        // IMPORTANTE: por padrão, o maxWidth de qualquer Region (inclusive um ListCell)
-        // é "infinito" — nada impede a célula de crescer. Combinado ao VirtualFlow
-        // interno da ListView recalculando o layout a cada seleção/clique, isso gera
-        // um loop de realimentação (a célula cresce, o próximo layout usa esse valor
-        // maior como base, cresce de novo...) até "estourar" a tela.
-        //
-        // A correção: travar a largura da PRÓPRIA CÉLULA (não só do card interno) à
-        // largura da ListView, e capar o máximo exatamente nesse valor.
         listViewProperty().addListener((obs, ligaAnterior, novaListView) -> {
             if (novaListView != null) {
                 prefWidthProperty().bind(novaListView.widthProperty().subtract(MARGEM_LARGURA));
@@ -67,14 +59,9 @@ public class CaronaListCell extends ListCell<CaronaResponse> {
             }
         });
 
-        // O card interno só precisa acompanhar a largura JÁ TRAVADA da célula —
-        // não precisa (e não deve) olhar de novo para a ListView.
         root.setMaxWidth(Double.MAX_VALUE);
         root.prefWidthProperty().bind(widthProperty());
 
-        // Duplo clique abre o popup com os detalhes — usa getItem() (o dado desta
-        // célula específica) em vez do modelo de seleção da ListView, para nunca
-        // correr o risco de abrir os detalhes de uma carona diferente da clicada.
         setOnMouseClicked(evento -> {
             if (evento.getClickCount() == 2 && evento.getButton() == MouseButton.PRIMARY) {
                 CaronaResponse carona = getItem();

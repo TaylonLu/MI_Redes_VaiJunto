@@ -244,10 +244,7 @@ public class MapaCaronaController {
 
                     Line linhaRota = new Line(cidadeAnteriorCriacao.x, cidadeAnteriorCriacao.y, cidadeClicada.x, cidadeClicada.y);
                     linhaRota.getStyleClass().add("rota-motorista-linha");
-                    // IMPORTANTE: precisa entrar em mapaGrupo (não containerMapa) para se
-                    // mover junto com o mapa ao arrastar, e para o limparMapaDinamico()
-                    // (que também olha em mapaGrupo) conseguir removê-la depois.
-                    mapaGrupo.getChildren().add(0, linhaRota);
+                    mapaGrupo.getChildren().addFirst(linhaRota);
 
                     rotaMotorista.add(new Trecho(cidadeAnteriorCriacao.id, cidadeClicada.id));
                     cidadeAnteriorCriacao = cidadeClicada;
@@ -271,7 +268,7 @@ public class MapaCaronaController {
                 break;
 
             default:
-                break; // Exibição ignora cliques no mapa
+                break;
         }
     }
 
@@ -495,7 +492,6 @@ public class MapaCaronaController {
                 Line linha = new Line(origem.x, origem.y, destino.x, destino.y);
                 linha.getStyleClass().add("rota-motorista-linha");
                 linha.setStyle(String.format("-fx-stroke: %s; -fx-stroke-width: 7;", cores[corIndex]));
-                // Mesma correção: precisa ir para mapaGrupo, não containerMapa.
                 mapaGrupo.getChildren().add(indexInsercao, linha);
             }
         }
@@ -521,7 +517,6 @@ public class MapaCaronaController {
     // 5. MODO: EXIBIÇÃO DE DETALHES
     // ==========================================
     private void carregarDadosCaronaExibicao(Object dadosCarona) {
-        // MOCK para exemplo (Substitua pelos dados do seu DTO)
         int vagasTotais = 4;
         List<TrechoOcupacaoDTO> ocupacoes = new ArrayList<>();
 
@@ -558,7 +553,6 @@ public class MapaCaronaController {
                 Line linha = new Line(origem.x, origem.y, destino.x, destino.y);
                 linha.getStyleClass().add("rota-motorista-linha");
                 linha.setStyle("-fx-stroke: #2980b9; -fx-stroke-width: 4;");
-                // Mesma correção: precisa ir para mapaGrupo, não containerMapa.
                 mapaGrupo.getChildren().add(0, linha);
             }
         }
@@ -570,9 +564,6 @@ public class MapaCaronaController {
     // ==========================================
     private void limparMapaDinamico() {
         mapaGrupo.getChildren().removeIf(node -> node.getStyleClass().contains("rota-motorista-linha"));
-        // Os círculos das cidades também moram em mapaGrupo (não containerMapa) desde
-        // que o arraste do mapa passou a mover mapaGrupo — sem essa correção, os
-        // estilos de seleção (cidade-selecionada/origem/destino) nunca eram limpos.
         for (Node node : mapaGrupo.getChildren()) {
             if (node instanceof Circle) {
                 node.getStyleClass().removeAll("cidade-selecionada", "cidade-origem", "cidade-destino");
@@ -587,14 +578,13 @@ public class MapaCaronaController {
 
     public void receberRespostaReserva(GeneralResponse resposta) {
         Platform.runLater(() -> {
-            // Esconde o loading independentemente do resultado
             painelLoading.setVisible(false);
             painelLoading.setManaged(false);
 
             if (resposta.codigo() >= 200 && resposta.codigo() < 300) {
                 if ("RESERVA_CONFIRMADA".equals(resposta.tipo()) || resposta.dados().contains("RESERVA_CONFIRMADA")) {
                     Toast.success("Reserva confirmada com sucesso!");
-                    SceneManager.pop(); // Retorna para a tela anterior
+                    SceneManager.pop();
                 } else {
                     Toast.warning("Conflito: " + resposta.dados());
                 }

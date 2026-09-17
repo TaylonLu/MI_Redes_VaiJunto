@@ -6,7 +6,7 @@ import java.net.SocketException;
 
 public class ClientListener implements Runnable {
     private final BufferedReader entrada;
-    private final ClientRouter router; // Seu roteador do lado do cliente
+    private final ClientRouter router;
 
     public ClientListener(BufferedReader entrada) {
         this.entrada = entrada;
