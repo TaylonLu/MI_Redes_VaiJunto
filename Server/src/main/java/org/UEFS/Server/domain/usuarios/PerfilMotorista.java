@@ -51,6 +51,6 @@ public class PerfilMotorista {
     }
     @JsonIgnore
     public PerfilMotoristaDTO getData() {
-        return new PerfilMotoristaDTO(cnh, placaCarro, modeloCarro, notaAvaliacao);
+        return new PerfilMotoristaDTO(cnh, placaCarro, modeloCarro, corCarro, notaAvaliacao);
     }
 }

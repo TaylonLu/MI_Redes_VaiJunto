@@ -7,6 +7,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import org.UEFS.shared.JsonUtils;
+import org.UEFS.shared.dto.PerfilMotoristaDTO;
 import org.UEFS.shared.dto.SelfUserDTO;
 import org.UEFS.shared.dto.requests.CadastroMotoristaRequest;
 import org.UEFS.shared.dto.requests.GeneralRequest;
@@ -67,9 +68,6 @@ public class TelaInicialController {
 
         isUsuarioMotorista = usuarioLogado.perfilMotorista() != null;
 
-        lblNome.setText(usuarioLogado.nome());
-        lblEmail.setText(usuarioLogado.email());
-
         // Célula customizada para cada tipo de lista. O duplo clique para abrir o
         // popup de detalhes é tratado dentro das próprias células (via getItem())
         listaCaronasInscritas.setCellFactory(lv -> new ReservaListCell());
@@ -90,7 +88,16 @@ public class TelaInicialController {
         tabPanePrincipal.sceneProperty().addListener((_, _, newSCene) -> {
             if (newSCene != null) atualizarDados();
         });
+    }
 
+    private void atualizarDadosUser() {
+        if (isUsuarioMotorista) {
+            PerfilMotoristaDTO motorista = sessionManager.getCurrentUser().perfilMotorista();
+            lblCnh.setText(motorista.cnh());
+            lblModelo.setText(motorista.modeloCarro());
+            lblPlaca.setText(motorista.placaCarro());
+            lblCor.setText(motorista.corCarro());
+        }
     }
 
     private void atualizarVisualizacaoInterface() {
