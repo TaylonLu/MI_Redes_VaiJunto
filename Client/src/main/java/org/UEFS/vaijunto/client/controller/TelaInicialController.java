@@ -7,6 +7,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import org.UEFS.shared.JsonUtils;
+import org.UEFS.shared.dto.PerfilMotoristaDTO;
 import org.UEFS.shared.dto.SelfUserDTO;
 import org.UEFS.shared.dto.requests.CadastroMotoristaRequest;
 import org.UEFS.shared.dto.requests.GeneralRequest;
@@ -83,6 +84,7 @@ public class TelaInicialController {
         ClientRouter.inscrever("RESERVAS_PASSAGEIRO", res -> {
             List<ReservaResponse> reservasEncontradas = JsonUtils.fromJsonList(res.dados(), ReservaResponse.class);
             listaCaronasInscritas.getItems().setAll(reservasEncontradas);
+            atualizarDadosUser();
         });
 
         atualizarVisualizacaoInterface();
@@ -90,7 +92,20 @@ public class TelaInicialController {
         tabPanePrincipal.sceneProperty().addListener((_, _, newSCene) -> {
             if (newSCene != null) atualizarDados();
         });
+    }
 
+    private void atualizarDadosUser() {
+        if (isUsuarioMotorista) {
+            PerfilMotoristaDTO motorista = sessionManager.getCurrentUser().perfilMotorista();
+            lblCnh.setText(motorista.cnh());
+            lblModelo.setText(motorista.modeloCarro());
+            lblPlaca.setText(motorista.placaCarro());
+            lblCor.setText(motorista.corCarro());
+        }
+
+        lblNome.setText(usuarioLogado.nome());
+        lblEmail.setText(usuarioLogado.email());
+        lblStatus.setText("Motorista");
     }
 
     private void atualizarVisualizacaoInterface() {
