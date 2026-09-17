@@ -167,7 +167,8 @@ Detalhamento das etapas:
 
 Para validar a atomicidade do backend e a ausência de corrupção de memória, o projeto conta com um roteiro de testes de alta carga:
 
-- **`StressTest` / `ReservaStressTest`** — simulador que gera tráfego de rede, instanciando múltiplos Sockets cliente em paralelo.
+- **`ClientTest`** — simula um cadastro e uma requisição de cliente para o servidor.
+- **`ReservaStressTest`** — simulador que gera tráfego de rede, instanciando múltiplos Sockets cliente em paralelo.
 - **Prevenção de overbooking** — dezenas de clientes disputam simultaneamente uma única vaga disponível.
 - **Resultado esperado** — graças ao bloqueio síncrono com checagem em duas fases, apenas um cliente recebe a resposta de sucesso (status 200); os demais recebem a resposta `CARONA_LOTADA`, comprovando a ausência de condições de corrida.
 
