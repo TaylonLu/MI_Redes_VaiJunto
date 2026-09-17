@@ -199,3 +199,10 @@
     -fx-text-fill: #D32F2F; /* Vermelho */
     -fx-padding: 0 0 10 0;
 }
+
+/*.list-view:filled:selected:focused {*/
+/*    -fx-background-color: #947f7f;*/
+/*}*/
+/*.list-view:filled:selected {*/
+/*    -fx-background-color: #a22b53;*/
+/*}*/

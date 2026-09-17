@@ -61,59 +61,43 @@
                 <Label style="-fx-font-size: 22px; -fx-font-weight: bold;" text="Minhas Informações" />
 
                 <VBox alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="300.0" spacing="10.0" styleClass="vbox-info">
-               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
-                  <children>
-                     <Label style="-fx-font-size: 16px;" text="Nome:" />
-                          <Label fx:id="lblNome" style="-fx-font-size: 16px;" />
-                  </children>
-               </HBox>
-               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
-                  <children>
-                     <Label style="-fx-font-size: 16px;" text="Email: " />
-                          <Label fx:id="lblEmail" style="-fx-font-size: 16px;" />
-                  </children>
-               </HBox>
-               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
-                  <children>
-                     <Label style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Status:" />
-                          <Label fx:id="lblStatus" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-                  </children>
-               </HBox>
+                    <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                        <Label style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Nome:"/>
+                        <Label fx:id="lblNome" style="-fx-font-size: 16px;"/>
+                    </HBox>
+                    <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                        <Label style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Email: "/>
+                        <Label fx:id="lblEmail" style="-fx-font-size: 16px;"/>
+                    </HBox>
+                    <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                        <Label style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Status:"/>
+                        <Label fx:id="lblStatus" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                    </HBox>
                 </VBox>
 
                 <!-- Área de Veículo (Para quem já é motorista) -->
-                <VBox fx:id="painelVeiculoSalvo" alignment="CENTER" managed="${painelVeiculoSalvo.visible}" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="300.0" spacing="10.0" styleClass="vbox-info" visible="false">
-                    <Label style="-fx-font-weight: bold; -fx-font-size: 20;" text="Meu Veículo" />
-               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
-                  <children>
-                     <Label style="-fx-font-size: 16px;" text="Modelo:" />
-                     <Label fx:id="lblModelo" style="-fx-font-size: 16px;" />
-                  </children>
-               </HBox>
-               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
-                  <children>
-                     <Label style="-fx-font-size: 16px;" text="Placa:" />
-                     <Label fx:id="lblPlaca" style="-fx-font-size: 16px;" />
-                  </children>
-               </HBox>
-               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
-                  <children>
-                     <Label style="-fx-font-size: 16px;" text="Cor:" />
-                     <Label fx:id="lblCor" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-                  </children>
-               </HBox>
-               <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
-                  <children>
-                     <Label style="-fx-font-size: 16px;" text="CNH:" />
-                     <Label fx:id="lblCnh" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-                  </children>
-               </HBox>
+                <VBox fx:id="painelVeiculoSalvo" alignment="CENTER_LEFT" managed="${painelVeiculoSalvo.visible}" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="300.0" spacing="10.0" styleClass="vbox-info" visible="false">
+                    <Label maxHeight="-Infinity" prefWidth="280.0" style="-fx-font-weight: bold; -fx-font-size: 20; -fx-alignment: center;" text="Meu Veículo" textAlignment="CENTER" />
+                    <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                        <Label alignment="CENTER" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Modelo:"/>
+                        <Label fx:id="lblModelo" style="-fx-font-size: 16px;"/>
+                    </HBox>
+                    <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                        <Label alignment="CENTER" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Placa:"/>
+                        <Label fx:id="lblPlaca" style="-fx-font-size: 16px;"/>
+                    </HBox>
+                    <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                        <Label alignment="CENTER" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Cor:"/>
+                        <Label fx:id="lblCor" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                    </HBox>
+                    <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity">
+                        <Label alignment="CENTER" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="CNH:"/>
+                        <Label fx:id="lblCnh" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                    </HBox>
                 </VBox>
 
                 <!-- Botão inicial de intenção -->
-                <Button fx:id="btnCadastrarMotorista" onAction="#mostrarFormularioMotorista"
-                        managed="${btnCadastrarMotorista.visible}"
-                        styleClass="btn-primary" text="Me Cadastrar como Motorista" />
+                <Button fx:id="btnCadastrarMotorista" managed="${btnCadastrarMotorista.visible}" onAction="#mostrarFormularioMotorista" styleClass="btn-primary" text="Me Cadastrar como Motorista" />
 
                 <!-- Formulário de Cadastro do Veículo (Oculto por padrão) -->
                 <VBox fx:id="painelFormularioMotorista" alignment="CENTER" managed="${painelFormularioMotorista.visible}" maxWidth="300.0" spacing="10.0" visible="false">

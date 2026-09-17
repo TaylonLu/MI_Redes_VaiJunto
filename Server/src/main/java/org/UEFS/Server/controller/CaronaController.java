@@ -7,10 +7,7 @@ import org.UEFS.Server.domain.reservas.ReservaRepo;
 import org.UEFS.Server.domain.usuarios.Usuario;
 import org.UEFS.Server.exceptions.*;
 import org.UEFS.shared.JsonUtils;
-import org.UEFS.shared.dto.ItinerarioDTO;
-import org.UEFS.shared.dto.OtherUserDTO;
-import org.UEFS.shared.dto.Trecho;
-import org.UEFS.shared.dto.TrechoOcupacaoDTO;
+import org.UEFS.shared.dto.*;
 import org.UEFS.shared.dto.requests.BuscaCaronaRequest;
 import org.UEFS.shared.dto.requests.NovaCaronaRequest;
 import org.UEFS.shared.dto.responses.CaronaResponse;
@@ -18,6 +15,7 @@ import org.UEFS.shared.dto.responses.PassageiroPorTrechoResponse;
 import org.UEFS.shared.dto.responses.ReservaResponse;
 import org.UEFS.shared.enums.Status;
 import org.UEFS.shared.enums.StatusCarona;
+import org.UEFS.shared.enums.StatusReserva;
 import org.UEFS.shared.model.Request;
 import org.UEFS.shared.model.Response;
 
@@ -82,6 +80,8 @@ public class CaronaController {
     public Response cancelarCarona(Request request) {
         Carona C = encontrarCaronaValidado(request.getToken(), request.getDados());
 
+        caronaService.cancelarCaronaEItinerarios(C);
+
         C.setStatus(StatusCarona.CANCELADA);
 
         return new Response(Status.CARONA_CANCELADA);
@@ -89,17 +89,25 @@ public class CaronaController {
 
     public Response cancelarReserva(Request request) {
         String userID = userController.validarUsuarioLogado(request.getToken());
-        String idCarona = request.getDados().trim();
+        ReservaResponse reserva = JsonUtils.fromJson(request.getDados(), ReservaResponse.class);
 
-        Carona carona = repo.getByID(idCarona);
-        if (carona == null) {
-            throw new RecursoNaoEncontradoException("ID de carona dado não corresponde a nenhuma no banco de dados");
+        Set<String> caronasUnicas = reserva.itinerario().passos().stream()
+                .map(PassoItinerarioDTO::idCarona)
+                .collect(Collectors.toSet());
+
+        for (String idCarona : caronasUnicas) {
+            Carona carona = repo.getByID(idCarona);
+            if (carona != null)
+                carona.removerPassageiroCompletamente(userID);
         }
 
-        boolean removeu = carona.removerPassageiroCompletamente(userID);
-        if (!removeu) throw new ReservaNaoEncontradaException();
+        Reserva reservaReal = reservaRepo.getByID(reserva.idReserva());
+        if (reservaReal != null) {
+            reservaReal.setStatus(StatusReserva.CANCELADA);
+        }
 
-        List<CaronaResponse> minhasReservas = buscarCaronasPassageiro(userID);
+
+        List<ReservaResponse> minhasReservas = buscarReservasPassageiro(userID);
         return new Response(Status.RESERVA_CANCELADA, JsonUtils.toJson(minhasReservas));
     }
 
@@ -140,6 +148,7 @@ public class CaronaController {
                     if (carona == null) {
                         throw new IncorrectRequestException("Carona não encontrada.");
                     }
+
                     Trecho trechoObj = new Trecho(passo.inicio(), passo.fim());
 
                     return new ArestaTrecho(passo.fim(), carona, trechoObj);
@@ -153,11 +162,10 @@ public class CaronaController {
                 : new Response(Status.CONFLITO_RESERVA);
     }
 
-    private List<CaronaResponse> buscarCaronasPassageiro(String userID) {
-        return repo.getDadosList().stream()
-                .filter(carona -> carona.getOcupacaoPorTrecho().values().stream()
-                        .anyMatch(passageiros -> passageiros.contains(userID)))
-                .map(this::toCaronaResponseDTO)
+    private List<ReservaResponse> buscarReservasPassageiro(String userID) {
+        return reservaRepo.getByUserId(userID).stream()
+                .filter(R -> R.getStatus() == StatusReserva.ATIVA)
+                .map(Reserva::toData)
                 .toList();
     }
 

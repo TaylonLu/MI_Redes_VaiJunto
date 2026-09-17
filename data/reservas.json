@@ -1,25 +1,143 @@
 {
-  "reserva_15af537d-0a6c-4784-9b1c-811c0344d4f8" : {
-    "id" : "reserva_15af537d-0a6c-4784-9b1c-811c0344d4f8",
-    "idPassageiro" : "user_4b486b3b-d4cc-4103-8740-50c1dcd16521",
-    "itinerario" : {
-      "passos" : [ {
-        "inicio" : 5,
-        "fim" : 3,
-        "idCarona" : "carona_e68337a2-b80c-4efe-af66-8b0a637f0622",
-        "idMotorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37"
-      } ]
-    },
-    "status" : "ATIVA"
-  },
-  "reserva_2cd8c129-4cd7-4c75-8f0f-16d6706687c6" : {
-    "id" : "reserva_2cd8c129-4cd7-4c75-8f0f-16d6706687c6",
+  "reserva_66d24c85-b619-4555-b5c3-d163436161c9" : {
+    "id" : "reserva_66d24c85-b619-4555-b5c3-d163436161c9",
     "idPassageiro" : "user_4b486b3b-d4cc-4103-8740-50c1dcd16521",
     "itinerario" : {
       "passos" : [ {
         "inicio" : 4,
         "fim" : 22,
-        "idCarona" : "carona_e68337a2-b80c-4efe-af66-8b0a637f0622",
+        "idCarona" : "carona_e608b7b2-dfe8-403e-8006-8e5af573d70c",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      } ]
+    },
+    "status" : "CANCELADA"
+  },
+  "reserva_a7bc6302-fcbf-488f-b531-18898039539c" : {
+    "id" : "reserva_a7bc6302-fcbf-488f-b531-18898039539c",
+    "idPassageiro" : "user_4b486b3b-d4cc-4103-8740-50c1dcd16521",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 12,
+        "fim" : 11,
+        "idCarona" : "carona_d4d09745-2fb5-478e-9f0a-0f2be0c79c17",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      }, {
+        "inicio" : 11,
+        "fim" : 13,
+        "idCarona" : "carona_d4d09745-2fb5-478e-9f0a-0f2be0c79c17",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      } ]
+    },
+    "status" : "CANCELADA"
+  },
+  "reserva_6b02b294-f6c1-4ca3-9694-8a4755304e0e" : {
+    "id" : "reserva_6b02b294-f6c1-4ca3-9694-8a4755304e0e",
+    "idPassageiro" : "user_f5274e87-3d48-41d7-b70c-b659eea960c7",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 22,
+        "fim" : 21,
+        "idCarona" : "carona_c22ab997-32fe-48e3-92c4-0f63d9a70fcc",
+        "idMotorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37"
+      } ]
+    },
+    "status" : "ATIVA"
+  },
+  "reserva_35f241ba-7aee-46a3-8304-561afbc89433" : {
+    "id" : "reserva_35f241ba-7aee-46a3-8304-561afbc89433",
+    "idPassageiro" : "user_4b486b3b-d4cc-4103-8740-50c1dcd16521",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 10,
+        "fim" : 0,
+        "idCarona" : "carona_95bcf2be-14c0-445f-b514-b4af4dee15e6",
+        "idMotorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37"
+      }, {
+        "inicio" : 0,
+        "fim" : 8,
+        "idCarona" : "carona_5bbe5089-5910-43cc-9008-a8abdae1fec5",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      }, {
+        "inicio" : 8,
+        "fim" : 1,
+        "idCarona" : "carona_5bbe5089-5910-43cc-9008-a8abdae1fec5",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      } ]
+    },
+    "status" : "ATIVA"
+  },
+  "reserva_51f3ca8a-d0b5-4ecd-a5df-06a3a8eec058" : {
+    "id" : "reserva_51f3ca8a-d0b5-4ecd-a5df-06a3a8eec058",
+    "idPassageiro" : "user_4b486b3b-d4cc-4103-8740-50c1dcd16521",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 0,
+        "fim" : 3,
+        "idCarona" : "carona_e608b7b2-dfe8-403e-8006-8e5af573d70c",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      }, {
+        "inicio" : 3,
+        "fim" : 4,
+        "idCarona" : "carona_e608b7b2-dfe8-403e-8006-8e5af573d70c",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      }, {
+        "inicio" : 4,
+        "fim" : 22,
+        "idCarona" : "carona_e608b7b2-dfe8-403e-8006-8e5af573d70c",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      }, {
+        "inicio" : 22,
+        "fim" : 21,
+        "idCarona" : "carona_c22ab997-32fe-48e3-92c4-0f63d9a70fcc",
+        "idMotorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37"
+      }, {
+        "inicio" : 21,
+        "fim" : 23,
+        "idCarona" : "carona_c22ab997-32fe-48e3-92c4-0f63d9a70fcc",
+        "idMotorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37"
+      } ]
+    },
+    "status" : "CANCELADA"
+  },
+  "reserva_bcf2a5eb-7337-49cc-8405-7d3e9c195fb7" : {
+    "id" : "reserva_bcf2a5eb-7337-49cc-8405-7d3e9c195fb7",
+    "idPassageiro" : "user_5c1641bf-8af5-4def-8d91-2730342f19a2",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 0,
+        "fim" : 8,
+        "idCarona" : "carona_5bbe5089-5910-43cc-9008-a8abdae1fec5",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      }, {
+        "inicio" : 8,
+        "fim" : 1,
+        "idCarona" : "carona_5bbe5089-5910-43cc-9008-a8abdae1fec5",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      } ]
+    },
+    "status" : "ATIVA"
+  },
+  "reserva_8bfc4b82-fd02-46af-ba56-13489c780670" : {
+    "id" : "reserva_8bfc4b82-fd02-46af-ba56-13489c780670",
+    "idPassageiro" : "user_91f154c0-144a-4848-8101-b4ce57fe7672",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 18,
+        "fim" : 12,
+        "idCarona" : "carona_d4d09745-2fb5-478e-9f0a-0f2be0c79c17",
+        "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
+      } ]
+    },
+    "status" : "CANCELADA"
+  },
+  "reserva_56503e73-2917-41bb-9c10-f1f12753640d" : {
+    "id" : "reserva_56503e73-2917-41bb-9c10-f1f12753640d",
+    "idPassageiro" : "user_747819c7-1b6a-4a9d-99fd-89c7b7c61233",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 22,
+        "fim" : 21,
+        "idCarona" : "carona_c22ab997-32fe-48e3-92c4-0f63d9a70fcc",
         "idMotorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37"
       } ]
     },

@@ -2,6 +2,6 @@ services:
 
   client:
     environment:
-        DISPLAY: ":0"
+        DISPLAY: ${DISPLAY}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix

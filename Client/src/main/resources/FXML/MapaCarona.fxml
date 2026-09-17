@@ -78,7 +78,7 @@
                     <ListView fx:id="listViewResultadosBusca" prefHeight="200.0" prefWidth="250.0" VBox.vgrow="ALWAYS" />
 
                     <!-- NOVO BOTÃO DE CONFIRMAR CARONA -->
-                    <Button fx:id="btnConfirmarBusca" maxWidth="Infinity" onAction="#confirmarCaronaSelecionada" styleClass="btn-success" text="Confirmar / Entrar na Carona" visible="false" managed="false" />
+                    <Button fx:id="btnVerDetalhes" maxWidth="Infinity" onAction="#abrirDetalhesEConfirmar" styleClass="btn-success" text="Ver Detalhes da Carona" visible="false" managed="false" />
 
                     <Button maxWidth="Infinity" onAction="#voltar" text="Voltar" />
                 </VBox>

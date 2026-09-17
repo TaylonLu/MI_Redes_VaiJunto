@@ -82,7 +82,7 @@ public class Carona implements Identificavel {
 
     public int vagas(Trecho T) {
         return this.ocupacaoPorTrecho.containsKey(T)
-                ? this.ocupacaoPorTrecho.get(T).size()
+                ? vagasTotais - this.ocupacaoPorTrecho.get(T).size()
                 : -1;
     }
 
@@ -114,6 +114,7 @@ public class Carona implements Identificavel {
 
         for (Trecho T : trechosDesejados) {
             ocupacaoPorTrecho.get(T).add(idPassageiro);
+            System.out.println("Adicionado " + idPassageiro + " na carona.");
         }
 
         return true;

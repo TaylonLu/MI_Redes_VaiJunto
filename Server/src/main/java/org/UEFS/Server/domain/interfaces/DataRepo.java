@@ -15,6 +15,8 @@ public abstract class DataRepo<T extends Identificavel> {
     protected final Map<String, T> dados = new ConcurrentHashMap<>();
     protected final String caminho_arquivo;
 
+    private static final Object DISK_LOCK = new Object();
+
     public DataRepo(String caminho, TypeReference<Map<String, T>> typeReference) {
         this.caminho_arquivo = caminho;
         try {
@@ -35,6 +37,7 @@ public abstract class DataRepo<T extends Identificavel> {
     public T getByID(String id) {
         return dados.get(id);
     }
+
     public Collection<T> getData() {
         return dados.values();
     }
@@ -55,13 +58,15 @@ public abstract class DataRepo<T extends Identificavel> {
         return new ArrayList<>(dados.values());
     }
 
-    public synchronized void salvarNoDisco() {
-        try {
-            ControllerService.getInstance()
-                    .get(FileManager.class)
-                    .salvarObjetos(caminho_arquivo, dados);
-        } catch (IOException e) {
-            System.err.println("Erro ao persistir dados no arquivo:" + e.getMessage());
+    public void salvarNoDisco() {
+        synchronized (DISK_LOCK) {
+            try {
+                ControllerService.getInstance()
+                        .get(FileManager.class)
+                        .salvarObjetos(caminho_arquivo, dados);
+            } catch (IOException e) {
+                System.err.println("Erro ao persistir dados no arquivo:" + e.getMessage());
+            }
         }
     }
 }

@@ -28,7 +28,7 @@ public class MainServer {
 
     public MainServer(int port) {
         this.port = port;
-        this.threadPool = Executors.newFixedThreadPool(4);
+        this.threadPool = Executors.newFixedThreadPool(10);
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::finish));
     }

@@ -32,6 +32,7 @@ import org.UEFS.vaijunto.client.service.NetworkDispatcher;
 import org.UEFS.vaijunto.client.service.SessionManager;
 import org.UEFS.vaijunto.client.utils.Resources;
 import org.UEFS.vaijunto.client.utils.Toast;
+import org.UEFS.vaijunto.client.view.CaronaDetalhesDialog;
 import org.uefs.custom.CurrencyField;
 
 import java.io.InputStream;
@@ -78,7 +79,7 @@ public class MapaCaronaController {
     @FXML private TextField txtBuscaVagas;
     @FXML private DatePicker datePickerBusca;
     @FXML private ListView<ItinerarioDTO> listViewResultadosBusca;
-    @FXML private Button btnConfirmarBusca;
+    @FXML private Button btnVerDetalhes;
 
     // --- Modo: Exibição ---
     @FXML private VBox painelExibicao;
@@ -151,11 +152,11 @@ public class MapaCaronaController {
         listViewResultadosBusca.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 desenharRotaMulticoloridaNoMapa(newVal);
-                btnConfirmarBusca.setVisible(true);
-                btnConfirmarBusca.setManaged(true);
+                btnVerDetalhes.setVisible(true);
+                btnVerDetalhes.setManaged(true);
             } else {
-                btnConfirmarBusca.setVisible(false);
-                btnConfirmarBusca.setManaged(false);
+                btnVerDetalhes.setVisible(false);
+                btnVerDetalhes.setManaged(false);
             }
         });
     }
@@ -236,15 +237,17 @@ public class MapaCaronaController {
                     lblStatusCriacao.setText("Origem definida: " + cidadeClicada.nome);
                     listViewPercursoCriacao.getItems().add(cidadeClicada.nome);
                 } else {
-                    boolean saoAdjacentes = cidadeAnteriorCriacao.estradas.contains(cidadeClicada.id);
-                    if (!saoAdjacentes) {
+                    if (!saoAdjacentes(cidadeAnteriorCriacao, cidadeClicada)) {
                         Toast.error("Não há estrada direta entre " + cidadeAnteriorCriacao.nome + " e " + cidadeClicada.nome);
                         return;
                     }
 
                     Line linhaRota = new Line(cidadeAnteriorCriacao.x, cidadeAnteriorCriacao.y, cidadeClicada.x, cidadeClicada.y);
                     linhaRota.getStyleClass().add("rota-motorista-linha");
-                    containerMapa.getChildren().add(1, linhaRota);
+                    // IMPORTANTE: precisa entrar em mapaGrupo (não containerMapa) para se
+                    // mover junto com o mapa ao arrastar, e para o limparMapaDinamico()
+                    // (que também olha em mapaGrupo) conseguir removê-la depois.
+                    mapaGrupo.getChildren().add(0, linhaRota);
 
                     rotaMotorista.add(new Trecho(cidadeAnteriorCriacao.id, cidadeClicada.id));
                     cidadeAnteriorCriacao = cidadeClicada;
@@ -270,6 +273,15 @@ public class MapaCaronaController {
             default:
                 break; // Exibição ignora cliques no mapa
         }
+    }
+
+    /**
+     * Verifica se duas cidades são conectadas por uma estrada, considerando a
+     * ligação como via dupla: basta UM dos dois lados listar o outro na sua
+     * lista de {@code estradas}.
+     */
+    private boolean saoAdjacentes(Cidade a, Cidade b) {
+        return a.estradas.contains(b.id) || b.estradas.contains(a.id);
     }
 
     @FXML void onMapaClicked(MouseEvent event) { containerMapa.setCursor(Cursor.DEFAULT); }
@@ -383,8 +395,26 @@ public class MapaCaronaController {
         listViewResultadosBusca.getItems().clear();
     }
 
+    public void receberRespostaBusca(GeneralResponse resposta) {
+        if (resposta.codigo() >= 200 && resposta.codigo() < 300) {
+            List<ItinerarioDTO> resultados = JsonUtils.fromJsonList(resposta.dados(), ItinerarioDTO.class);
+
+            Platform.runLater(() -> {
+                listViewResultadosBusca.getItems().clear();
+                if (resultados.isEmpty()) {
+                    Toast.warning("Nenhuma carona encontrada para esse trajeto.");
+                } else {
+                    listViewResultadosBusca.getItems().addAll(resultados);
+                    Toast.success(resultados.size() + " rotas encontradas!");
+                }
+            });
+        } else {
+            Platform.runLater(() -> Toast.error("Erro na busca: " + resposta.dados()));
+        }
+    }
+
     @FXML
-    void confirmarCaronaSelecionada(ActionEvent event) {
+    void abrirDetalhesEConfirmar(ActionEvent event) {
         ItinerarioDTO itinerarioSelecionado = listViewResultadosBusca.getSelectionModel().getSelectedItem();
 
         if (itinerarioSelecionado == null) {
@@ -392,6 +422,12 @@ public class MapaCaronaController {
             return;
         }
 
+        boolean confirmou = CaronaDetalhesDialog.mostrar(itinerarioSelecionado);
+
+        if (confirmou) confirmarReservaServidor(itinerarioSelecionado);
+    }
+
+    private void confirmarReservaServidor(ItinerarioDTO itinerarioSelecionado) {
         try {
             painelLoading.setVisible(true);
             painelLoading.setManaged(true);
@@ -415,24 +451,6 @@ public class MapaCaronaController {
         }
     }
 
-    public void receberRespostaBusca(GeneralResponse resposta) {
-        if (resposta.codigo() >= 200 && resposta.codigo() < 300) {
-            List<ItinerarioDTO> resultados = JsonUtils.fromJsonList(resposta.dados(), ItinerarioDTO.class);
-
-            Platform.runLater(() -> {
-                listViewResultadosBusca.getItems().clear();
-                if (resultados.isEmpty()) {
-                    Toast.warning("Nenhuma carona encontrada para esse trajeto.");
-                } else {
-                    listViewResultadosBusca.getItems().addAll(resultados);
-                    Toast.success(resultados.size() + " rotas encontradas!");
-                }
-            });
-        } else {
-            Platform.runLater(() -> Toast.error("Erro na busca: " + resposta.dados()));
-        }
-    }
-
     @FXML
     void limparBusca(ActionEvent event) {
         cidadeOrigemBusca = null;
@@ -449,9 +467,20 @@ public class MapaCaronaController {
         limparMapaDinamico();
         if (itinerario == null || itinerario.passos() == null || itinerario.passos().isEmpty()) return;
 
+        reaplicarDestaquesBusca();
+
         String[] cores = {"#27ae60", "#e74c3c", "#9b59b6", "#f39c12", "#3498db"};
         int corIndex = 0;
+
         String motoristaAtual = itinerario.passos().getFirst().idMotorista();
+
+        int indexInsercao = 0;
+        for (int i = 0; i < mapaGrupo.getChildren().size(); i++) {
+            if (mapaGrupo.getChildren().get(i) instanceof Circle) {
+                indexInsercao = i;
+                break;
+            }
+        }
 
         for (PassoItinerarioDTO passo : itinerario.passos()) {
             if (!passo.idMotorista().equals(motoristaAtual)) {
@@ -465,8 +494,24 @@ public class MapaCaronaController {
             if (origem != null && destino != null) {
                 Line linha = new Line(origem.x, origem.y, destino.x, destino.y);
                 linha.getStyleClass().add("rota-motorista-linha");
-                linha.setStyle(String.format("-fx-stroke: %s; -fx-stroke-width: 5.5;", cores[corIndex]));
-                containerMapa.getChildren().add(1, linha);
+                linha.setStyle(String.format("-fx-stroke: %s; -fx-stroke-width: 7;", cores[corIndex]));
+                // Mesma correção: precisa ir para mapaGrupo, não containerMapa.
+                mapaGrupo.getChildren().add(indexInsercao, linha);
+            }
+        }
+    }
+
+    private void reaplicarDestaquesBusca() {
+        if (modoAtual != ModoTela.BUSCA) return;
+
+        for (Node node : mapaGrupo.getChildren()) {
+            if (node instanceof Circle circulo && circulo.getUserData() instanceof Cidade c) {
+                if (c.equals(cidadeOrigemBusca) && !circulo.getStyleClass().contains("cidade-origem")) {
+                    circulo.getStyleClass().add("cidade-origem");
+                }
+                if (c.equals(cidadeDestinoBusca) && !circulo.getStyleClass().contains("cidade-destino")) {
+                    circulo.getStyleClass().add("cidade-destino");
+                }
             }
         }
     }
@@ -513,7 +558,8 @@ public class MapaCaronaController {
                 Line linha = new Line(origem.x, origem.y, destino.x, destino.y);
                 linha.getStyleClass().add("rota-motorista-linha");
                 linha.setStyle("-fx-stroke: #2980b9; -fx-stroke-width: 4;");
-                containerMapa.getChildren().add(1, linha);
+                // Mesma correção: precisa ir para mapaGrupo, não containerMapa.
+                mapaGrupo.getChildren().add(0, linha);
             }
         }
     }
@@ -524,7 +570,10 @@ public class MapaCaronaController {
     // ==========================================
     private void limparMapaDinamico() {
         mapaGrupo.getChildren().removeIf(node -> node.getStyleClass().contains("rota-motorista-linha"));
-        for (Node node : containerMapa.getChildren()) {
+        // Os círculos das cidades também moram em mapaGrupo (não containerMapa) desde
+        // que o arraste do mapa passou a mover mapaGrupo — sem essa correção, os
+        // estilos de seleção (cidade-selecionada/origem/destino) nunca eram limpos.
+        for (Node node : mapaGrupo.getChildren()) {
             if (node instanceof Circle) {
                 node.getStyleClass().removeAll("cidade-selecionada", "cidade-origem", "cidade-destino");
             }
@@ -543,7 +592,6 @@ public class MapaCaronaController {
             painelLoading.setManaged(false);
 
             if (resposta.codigo() >= 200 && resposta.codigo() < 300) {
-                // Verifica o tipo ou status retornado pelo servidor
                 if ("RESERVA_CONFIRMADA".equals(resposta.tipo()) || resposta.dados().contains("RESERVA_CONFIRMADA")) {
                     Toast.success("Reserva confirmada com sucesso!");
                     SceneManager.pop(); // Retorna para a tela anterior

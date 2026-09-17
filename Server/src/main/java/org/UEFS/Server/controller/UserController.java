@@ -58,6 +58,7 @@ public class UserController {
         Usuario novoUser = new Usuario(cadastro.email(), cadastro.senha(), cadastro.nome());
 
         repo.salvar(novoUser);
+        repo.salvarNoDisco();
 
         String token = sessions.criarSessao(novoUser.getId());
 
@@ -78,6 +79,7 @@ public class UserController {
         user.tornarMotorista(cadastro.cnh(), cadastro.placaCarro(), cadastro.modeloCarro(), cadastro.corCarro());
 
         repo.salvar(user);
+        repo.salvarNoDisco();
 
         String payload = JsonUtils.toJson(user.getSelfData());
         return new Response(Status.CADASTRO_COMPLETO, payload);

@@ -32,9 +32,17 @@ public class TelaInicialController {
     @FXML private ListView<CaronaResponse> listaCaronasCriadas;
 
     @FXML private Tab tabPerfil;
+
+    // DADOS USUÁRIO
     @FXML private Label lblNome;
     @FXML private Label lblEmail;
     @FXML private Label lblStatus;
+
+    // DADOS DO MOTORISTA
+    @FXML private Label lblModelo;
+    @FXML private Label lblPlaca;
+    @FXML private Label lblCor;
+    @FXML private Label lblCnh;
 
     // Elementos de Gestão do Veículo
     @FXML private Button btnCadastrarMotorista;
@@ -87,7 +95,7 @@ public class TelaInicialController {
 
     private void atualizarVisualizacaoInterface() {
         if (isUsuarioMotorista) {
-            lblStatus.setText("Status: Motorista");
+            lblStatus.setText("Motorista");
 
             btnCadastrarMotorista.setVisible(false);
             painelFormularioMotorista.setVisible(false);
@@ -97,7 +105,7 @@ public class TelaInicialController {
                 tabPanePrincipal.getTabs().add(1, tabMotorista);
             }
         } else {
-            lblStatus.setText("Status: Passageiro");
+            lblStatus.setText("Passageiro");
 
             // Exibe botão de intenção de cadastro, oculta o resto.
             btnCadastrarMotorista.setVisible(true);
@@ -137,6 +145,12 @@ public class TelaInicialController {
         if (reservaSelecionada != null) {
             // Aqui enviaria a requisição de cancelamento para o servidor via Socket
             System.out.println("Cancelando reserva: " + reservaSelecionada);
+
+            String dados = JsonUtils.toJson(reservaSelecionada);
+            String requisicao = String.format("CANCELAR_RESERVA|%s|%s|%d", dados, sessionManager.getUserToken(), dados.length());
+
+            NetworkDispatcher.enviarComando(requisicao);
+
             listaCaronasInscritas.getItems().remove(reservaSelecionada);
             mostrarAlerta("Sucesso", "Inscrição cancelada com sucesso!");
         } else {
@@ -161,7 +175,14 @@ public class TelaInicialController {
 
         if (caronaSelecionada != null) {
             // Aqui enviaria a requisição de cancelamento para o servidor
-            System.out.println("Cancelando a viagem criada: " + caronaSelecionada);
+            String requisicao = String.format("CANCELAR_CARONA|%s|%s|%d",
+                    caronaSelecionada.id(),
+                    sessionManager.getUserToken(),
+                    caronaSelecionada.id().length()
+            );
+
+            NetworkDispatcher.enviarComando(requisicao);
+
             listaCaronasCriadas.getItems().remove(caronaSelecionada);
             mostrarAlerta("Sucesso", "Viagem cancelada e passageiros notificados (no backend)!");
         } else {

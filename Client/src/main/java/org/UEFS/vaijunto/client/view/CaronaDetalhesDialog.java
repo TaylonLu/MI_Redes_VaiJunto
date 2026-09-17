@@ -1,28 +1,19 @@
-package org.UEFS.vaijunto.client.view; // ajuste o pacote conforme a organização do seu projeto
+package org.UEFS.vaijunto.client.view;
 
 import javafx.geometry.Insets;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-
+import org.UEFS.shared.dto.ItinerarioDTO;
+import org.UEFS.shared.dto.OtherUserDTO;
+import org.UEFS.shared.dto.PassoItinerarioDTO;
+import org.UEFS.shared.dto.TrechoOcupacaoDTO;
 import org.UEFS.shared.dto.responses.CaronaResponse;
-import org.UEFS.shared.dto.TrechoOcupacaoDTO; // ajuste o import conforme o pacote real
-import org.UEFS.shared.dto.OtherUserDTO;       // ajuste o import conforme o pacote real
 
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
-/**
- * Popup com todos os detalhes de uma carona específica: dados gerais,
- * status, e a lista completa de trechos com os respectivos passageiros.
- *
- * Uso:
- *   CaronaDetalhesDialog.mostrar(caronaSelecionada);
- */
 public final class CaronaDetalhesDialog {
 
     private static final DateTimeFormatter DATA_FORMATTER =
@@ -30,14 +21,93 @@ public final class CaronaDetalhesDialog {
 
     private CaronaDetalhesDialog() {}
 
-    public static void mostrar(CaronaResponse carona) {
-        Dialog<Void> dialog = new Dialog<>();
+    /**
+     * Exibe o dialog de detalhes para um Itinerário vindo da busca.
+     * Retorna true se o usuário clicar no botão "Confirmar Participação".
+     */
+    public static boolean mostrar(ItinerarioDTO itinerario) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Detalhes do Itinerário");
+        dialog.setHeaderText(null);
+
+        ButtonType btnConfirmar = new ButtonType("Confirmar Participação", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(btnConfirmar, ButtonType.CLOSE);
+        dialog.getDialogPane().setPrefWidth(440);
+        dialog.getDialogPane().setContent(montarConteudoItinerario(itinerario));
+
+        Optional<ButtonType> resultado = dialog.showAndWait();
+        return resultado.isPresent() && resultado.get() == btnConfirmar;
+    }
+
+    /**
+     * Exibe o dialog para uma CaronaResponse individual.
+     */
+    public static boolean mostrar(CaronaResponse carona, boolean comConfirmacao) {
+        Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Detalhes da Carona");
         dialog.setHeaderText(null);
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        ButtonType btnConfirmar = new ButtonType("Confirmar Participação", ButtonBar.ButtonData.OK_DONE);
+        if (comConfirmacao) {
+            dialog.getDialogPane().getButtonTypes().addAll(btnConfirmar, ButtonType.CLOSE);
+        } else {
+            dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        }
+
         dialog.getDialogPane().setPrefWidth(440);
         dialog.getDialogPane().setContent(montarConteudo(carona));
-        dialog.showAndWait();
+
+        Optional<ButtonType> resultado = dialog.showAndWait();
+        return resultado.isPresent() && resultado.get() == btnConfirmar;
+    }
+
+    public static void mostrar(CaronaResponse carona) {
+        mostrar(carona, false);
+    }
+
+    private static VBox montarConteudoItinerario(ItinerarioDTO itinerario) {
+        VBox raiz = new VBox(12);
+        raiz.setPadding(new Insets(10));
+
+        Label lblTitulo = new Label("Resumo do Itinerário");
+        lblTitulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #212529;");
+
+        long qtdMotoristas = itinerario.passos().stream().map(PassoItinerarioDTO::idMotorista).distinct().count();
+        String tipoViagem = qtdMotoristas <= 1 ? "Carona Direta" : "Viagem com Baldeação (" + qtdMotoristas + " veículos)";
+
+        Label lblTipo = new Label("Tipo: " + tipoViagem);
+        lblTipo.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
+
+        Label lblTrechosTitulo = new Label("Trechos do Percurso");
+        lblTrechosTitulo.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #212529;");
+
+        VBox listaTrechos = new VBox(10);
+        for (int i = 0; i < itinerario.passos().size(); i++) {
+            PassoItinerarioDTO passo = itinerario.passos().get(i);
+            VBox caixa = new VBox(4);
+            caixa.setPadding(new Insets(8));
+            caixa.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 6; -fx-border-color: #dee2e6; -fx-border-radius: 6;");
+
+            Label lblPasso = new Label(String.format("Passo %d: Cidade %d ➔ Cidade %d", i + 1, passo.inicio(), passo.fim()));
+            lblPasso.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #212529;");
+
+            Label lblMotorista = new Label("Motorista ID: " + passo.idMotorista());
+            lblMotorista.setStyle("-fx-font-size: 11px; -fx-text-fill: #555;");
+
+            Label lblCarona = new Label("Carona ID: " + passo.idCarona());
+            lblCarona.setStyle("-fx-font-size: 11px; -fx-text-fill: #888;");
+
+            caixa.getChildren().addAll(lblPasso, lblMotorista, lblCarona);
+            listaTrechos.getChildren().add(caixa);
+        }
+
+        ScrollPane scroll = new ScrollPane(listaTrechos);
+        scroll.setFitToWidth(true);
+        scroll.setPrefHeight(220);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+
+        raiz.getChildren().addAll(lblTitulo, lblTipo, new Separator(), lblTrechosTitulo, scroll);
+        return raiz;
     }
 
     private static VBox montarConteudo(CaronaResponse carona) {
@@ -90,8 +160,7 @@ public final class CaronaDetalhesDialog {
     private static VBox montarLinhaTrecho(TrechoOcupacaoDTO trecho, int vagasTotais) {
         VBox caixa = new VBox(4);
         caixa.setPadding(new Insets(8));
-        caixa.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 6; " +
-                "-fx-border-color: #dee2e6; -fx-border-radius: 6;");
+        caixa.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 6; -fx-border-color: #dee2e6; -fx-border-radius: 6;");
 
         Label lblTrecho = new Label(String.format("Trecho %d – %d (%d/%d vagas)",
                 trecho.trecho().inicio(), trecho.trecho().fim(),
