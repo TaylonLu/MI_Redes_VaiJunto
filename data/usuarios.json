@@ -83,6 +83,13 @@
     "nome" : "Passageiro Teste 33",
     "motorista" : null
   },
+  "user_09d387e6-8ff3-4e91-ab05-2b79217e8692" : {
+    "id" : "user_09d387e6-8ff3-4e91-ab05-2b79217e8692",
+    "email" : "programa@gmail.com",
+    "senha" : "123",
+    "nome" : "pedro nunes",
+    "motorista" : null
+  },
   "user_976a1d14-2e0f-4b70-8a87-7d7aa935fa34" : {
     "id" : "user_976a1d14-2e0f-4b70-8a87-7d7aa935fa34",
     "email" : "stress_40@teste.com",
@@ -127,14 +134,14 @@
   },
   "user_380dfde6-4515-410b-9594-395d5c4adcb8" : {
     "id" : "user_380dfde6-4515-410b-9594-395d5c4adcb8",
-    "email" : "tay@lu",
-    "senha" : "senha",
-    "nome" : "nicklegal",
+    "email" : "cliente1@gmail,com",
+    "senha" : "senhadousuario",
+    "nome" : "Cliente 1",
     "motorista" : {
       "cnh" : "1234",
       "placaCarro" : "AAA-1234",
-      "modeloCarro" : "fiat",
-      "notaAvaliacao" : -1.0
+      "modeloCarro" : "Fiat",
+      "notaAvaliacao" : 4.7
     }
   },
   "user_6581cd16-352d-4bbd-be46-8ed4c2d1a210" : {

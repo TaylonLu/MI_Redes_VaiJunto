@@ -1,6 +1,7 @@
 package org.UEFS.Server.controller;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -57,5 +58,15 @@ public class SessionsController {
         }
         return false;
 
+    }
+
+    /**
+     * Retorna o token de usuário guardado na memória ou cria uma sessão nova caso não exista.
+     * @param id endereço do usuário
+     * @return token de usuário
+     */
+    public String getSession(String id) {
+        String token = usuarioLogado(id);
+        return token == null ? criarSessao(id) : token;
     }
 }

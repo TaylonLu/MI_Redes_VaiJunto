@@ -142,7 +142,7 @@ public class CaronaService {
                 if (passo.idCarona().equals(caronaCancelada.getId())) continue;
                 Carona caronaConectada = caronaRepo.getByID(passo.idCarona());
                 if (caronaConectada != null)
-                    caronaConectada.removerPassageiroCompletamente(reserva.getIdPassageiro());
+                    caronaConectada.removerPassageiro(reserva.getIdPassageiro());
             }
         }
     }

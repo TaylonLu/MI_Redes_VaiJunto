@@ -6,7 +6,7 @@
 
     <groupId>org.UEFS.vaiJunto</groupId>
     <artifactId>vaiJunto-parent</artifactId>
-    <version>1.5</version>
+    <version>2.0</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -15,9 +15,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>26</javafx.version>
         <javafx-fxml.version>26</javafx-fxml.version>
-        <jackson.version>2.22.2</jackson.version>
+        <jackson.version>2.22.3</jackson.version>
         <junit.version>5.10.2</junit.version>
-        <mockito.version>5.11.0</mockito.version>
+
+        <javalin.version>7.2.3</javalin.version>
+        <slf4j-simple.version>2.0.13</slf4j-simple.version>
     </properties>
 
     <modules>
@@ -48,6 +50,18 @@
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jsr310</artifactId>
                 <version>${jackson.version}</version>
+            </dependency>
+
+            <!-- Http -->
+            <dependency>
+                <groupId>io.javalin</groupId>
+                <artifactId>javalin</artifactId>
+                <version>${javalin.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+                <version>${slf4j-simple.version}</version>
             </dependency>
 
             <!-- Testes -->
@@ -114,6 +128,13 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>-XX:+EnableDynamicAgentLoading -Dnet.bytebuddy.experimental=true</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>org.UEFS.vaiJunto.Main</mainClass>
                 </configuration>
             </plugin>
         </plugins>

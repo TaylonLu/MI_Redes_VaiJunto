@@ -129,7 +129,7 @@
         "idMotorista" : "user_380dfde6-4515-410b-9594-395d5c4adcb8"
       } ]
     },
-    "status" : "ATIVA"
+    "status" : "CANCELADA"
   },
   "reserva_51f3ca8a-d0b5-4ecd-a5df-06a3a8eec058" : {
     "id" : "reserva_51f3ca8a-d0b5-4ecd-a5df-06a3a8eec058",
@@ -181,6 +181,19 @@
       } ]
     },
     "status" : "ATIVA"
+  },
+  "reserva_02380cfa-56ee-4fbd-9273-52b5706c5ae0" : {
+    "id" : "reserva_02380cfa-56ee-4fbd-9273-52b5706c5ae0",
+    "idPassageiro" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37",
+    "itinerario" : {
+      "passos" : [ {
+        "inicio" : 6,
+        "fim" : 22,
+        "idCarona" : "carona_f61ab602-5901-4cdb-93f3-18d246d5cafd",
+        "idMotorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37"
+      } ]
+    },
+    "status" : "CANCELADA"
   },
   "reserva_56503e73-2917-41bb-9c10-f1f12753640d" : {
     "id" : "reserva_56503e73-2917-41bb-9c10-f1f12753640d",

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="Demo SQLite" uuid="25609309-7d15-462c-850f-bba6679e1cbf">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite::memory:</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+      <init-script>CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY, name VARCHAR(50), city VARCHAR(50));
+INSERT INTO users (id, name, city) VALUES (1, 'Alice', 'Berlin') ON CONFLICT DO NOTHING;
+INSERT INTO users (id, name, city) VALUES (2, 'Bob', 'Tokyo') ON CONFLICT DO NOTHING;
+INSERT INTO users (id, name, city) VALUES (3, 'Carol', 'Paris') ON CONFLICT DO NOTHING;</init-script>
+    </data-source>
+  </component>
+</project>

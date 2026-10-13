@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record NovaCaronaRequest(
-    String idMotorista, int capacidade, double valorPorTrecho,
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    LocalDateTime data,
-    List<Trecho> trechos
+        String idMotorista, int vagas, double valorPorTrecho,
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+         LocalDateTime dataPartida,
+        List<Trecho> trechos
 ) {}

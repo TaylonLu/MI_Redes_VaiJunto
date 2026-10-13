@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VaiJunto - SPA</title>
+    <link rel="stylesheet" href="../css/inicio.css">
+</head>
+<body>
+
+<!-- TELA INICIAL -->
+<div id="screen-inicio" class="screen active">
+    <img src="../images/logo.png" alt="Logo VaiJunto" class="logo">
+
+    <h1 class="welcome-title">Bem-vindo ao VaiJunto!</h1>
+    <p class="welcome-subtitle">Escolha como deseja prosseguir para continuar</p>
+
+    <div class="btn-container">
+        <button class="btn-primary" onclick="navigateTo('screen-login')">Entrar (Login)</button>
+        <button class="btn-secondary" onclick="navigateTo('screen-cadastro')">Criar nova conta</button>
+    </div>
+</div>
+
+<!-- TELA DE LOGIN -->
+<div id="screen-login" class="screen">
+    <img src="/images/logo.png" alt="Logo VaiJunto" class="logo">
+
+    <form onsubmit="event.preventDefault(); efetuarLogin();">
+        <div class="form-grid">
+            <label class="form-label" for="login-email">Email:</label>
+            <input type="email" id="login-email" class="form-control"
+                   placeholder="Digite seu email" autocomplete="email" required>
+
+            <label class="form-label" for="login-senha">Senha:</label>
+            <input type="password" id="login-senha" class="form-control"
+                   placeholder="Digite sua senha" autocomplete="current-password" required>
+        </div>
+
+        <p id="login-erro" class="form-erro" role="alert" hidden></p>
+
+        <div class="btn-container">
+            <button type="submit" class="btn-primary">Confirmar</button>
+            <button type="button" class="btn-secondary" onclick="navigateTo('screen-inicio')">Voltar</button>
+        </div>
+    </form>
+</div>
+
+<!-- TELA DE CADASTRO -->
+<div id="screen-cadastro" class="screen">
+    <img src="../images/logo.png" alt="Logo VaiJunto" class="logo">
+
+    <form onsubmit="event.preventDefault(); efetuarCadastro()">
+        <div class="form-grid0">
+            <label class="form-label" for="cad-nome">Nome:</label>
+            <input type="text" id="cad-nome" class="form-control" placeholder="Seu nome completo">
+
+            <label class="form-label" for="cad-email">Email:</label>
+            <input type="email" id="cad-email" class="form-control" placeholder="Seu melhor email">
+
+            <label class="form-label" for="cad-senha">Senha:</label>
+            <input type="password" id="cad-senha" class="form-control" placeholder="Crie uma senha">
+
+            <label class="form-label" for="cad-senha-conf">Repita a Senha:</label>
+            <input type="password" id="cad-senha-conf" class="form-control" placeholder="Confirme a senha">
+        </div>
+    </form>
+
+    <p id="cadastro-erro"  class="form-erro" role="alert" hidden></p>
+
+    <div class="btn-container">
+        <button class="btn-primary" onclick="efetuarCadastro()">Confirmar</button>
+        <button class="btn-secondary" onclick="navigateTo('screen-inicio')">Voltar</button>
+    </div>
+</div>
+
+<script src="../script/inicio.js"></script>
+</body>
+</html>

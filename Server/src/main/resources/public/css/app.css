@@ -1,0 +1,432 @@
+:root {
+    --papel: #eef1f4;
+    --cartao: #fff;
+    --tinta: #14202b;
+    --suave: #5b6b7a;
+    --rota: #1d5fd1;
+    --faixa: #f2b705;
+    --erro: #b3261e;
+    --ok: #1e8e4e;
+    --borda: #d5dbe1;
+    --fonte: "Segoe UI", system-ui, -apple-system, Arial, sans-serif
+}
+
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0;
+    background: var(--papel);
+    color: var(--tinta);
+    font-family: var(--fonte);
+    line-height: 1.5
+}
+
+[hidden] {
+    display: none !important
+}
+
+h1 {
+    font-size: 1.5rem;
+    margin: 0 0 1rem;
+    letter-spacing: -.02em
+}
+
+h2 {
+    font-size: 1.15rem;
+    margin: 0 0 .5rem
+}
+
+h3 {
+    font-size: 1rem;
+    margin: .75rem 0 .4rem
+}
+
+small, .vazio {
+    color: var(--suave)
+}
+
+.topo {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: .5rem 1.25rem;
+    background: var(--cartao);
+    border-bottom: 1px solid var(--borda)
+}
+
+.marca {
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--rota);
+    letter-spacing: -.02em
+}
+
+.abas {
+    display: flex;
+    gap: .25rem;
+    flex-wrap: wrap
+}
+
+.abas button {
+    padding: .6rem 1rem;
+    font: inherit;
+    font-weight: 600;
+    color: var(--suave);
+    background: none;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    cursor: pointer
+}
+
+.abas button[aria-selected=true] {
+    color: var(--rota);
+    border-bottom-color: var(--faixa)
+}
+
+.pagina {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 4rem
+}
+
+.lista {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    display: grid;
+    gap: .6rem
+}
+
+.card {
+    display: grid;
+    gap: .4rem;
+    padding: .8rem 1rem;
+    background: var(--cartao);
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    cursor: pointer
+}
+
+.card[aria-selected=true] {
+    border-color: var(--rota);
+    box-shadow: 0 0 0 2px var(--rota)
+}
+
+.topo-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .5rem
+}
+
+.selo {
+    padding: .1rem .6rem;
+    border-radius: 10px;
+    color: #fff;
+    font-size: .75rem
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem
+}
+
+.chip {
+    padding: .15rem .5rem;
+    border-radius: 6px;
+    color: #fff;
+    font-size: .75rem
+}
+
+.barra {
+    display: flex;
+    gap: 2px;
+    height: 14px;
+    background: #eee;
+    border-radius: 4px
+}
+
+.barra span {
+    border-radius: 3px
+}
+
+.acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin-top: .75rem
+}
+
+.btn {
+    display: inline-block;
+    padding: .65rem 1.1rem;
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    color: var(--rota);
+    background: #fff;
+    border: 2px solid var(--rota);
+    border-radius: 4px;
+    cursor: pointer
+}
+
+.primario {
+    color: #fff;
+    background: var(--rota)
+}
+
+.verde {
+    color: #fff;
+    background: var(--ok);
+    border-color: var(--ok)
+}
+
+.perigo {
+    color: #fff;
+    background: var(--erro);
+    border-color: var(--erro)
+}
+
+.pequeno {
+    padding: .2rem .7rem;
+    font-size: .85rem;
+    justify-self: start
+}
+
+.btn:focus-visible, input:focus-visible, .card:focus-visible, .abas button:focus-visible {
+    outline: 3px solid var(--faixa);
+    outline-offset: 2px
+}
+
+.campo {
+    display: grid;
+    gap: .25rem;
+    margin-bottom: .75rem;
+    font-weight: 600
+}
+
+input {
+    width: 100%;
+    padding: .6rem .7rem;
+    font: inherit;
+    font-weight: 400;
+    border: 1.5px solid #9aa7b3;
+    border-radius: 4px
+}
+
+dl {
+    display: grid;
+    grid-template-columns:max-content 1fr;
+    gap: .35rem 1rem;
+    margin: 0
+}
+
+dt {
+    color: var(--suave)
+}
+
+dd {
+    margin: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere
+}
+
+.info {
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    background: var(--cartao);
+    border-left: 6px solid var(--rota);
+    border-radius: 4px
+}
+
+.faixa {
+    margin: 1.5rem 0;
+    border: 0;
+    border-top: 4px dashed var(--faixa)
+}
+
+dialog {
+    width: min(30rem, 92vw);
+    padding: 1.25rem;
+    border: 0;
+    border-radius: 8px
+}
+
+dialog::backdrop {
+    background: #0008
+}
+
+.caixa {
+    display: grid;
+    gap: .15rem;
+    padding: .6rem .8rem;
+    margin-bottom: .5rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px
+}
+
+.corpo {
+    max-height: 55vh;
+    overflow: auto
+}
+
+#toasts {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    display: grid;
+    gap: .5rem;
+    z-index: 30
+}
+
+.toast {
+    padding: .7rem 1rem;
+    color: #fff;
+    background: #37474f;
+    border-radius: 6px;
+    font-weight: 600
+}
+
+.toast.sucesso {
+    background: var(--ok)
+}
+
+.toast.erro {
+    background: var(--erro)
+}
+
+.toast.aviso {
+    background: #b26a00
+}
+
+/* Tela do mapa */
+.mapa-pagina {
+    display: grid;
+    grid-template-columns:20rem 1fr;
+    height: 100vh
+}
+
+.lateral {
+    padding: 1rem;
+    overflow: auto;
+    background: var(--cartao);
+    border-right: 1px solid var(--borda)
+}
+
+.lateral .btn {
+    width: 100%;
+    margin-bottom: .5rem
+}
+
+.mapa {
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+    background: #cfd8dc
+}
+
+#mundo {
+    position: absolute;
+    left: 0;
+    top: 0
+}
+
+#mundo img {
+    display: block;
+    user-select: none
+}
+
+#svg {
+    position: absolute;
+    left: 0;
+    top: 0
+}
+
+.estrada {
+    stroke: #6b7a88;
+    stroke-width: 3
+}
+
+#rotas line {
+    stroke-linecap: round
+}
+
+.cidade circle {
+    fill: #fff;
+    stroke: var(--tinta);
+    stroke-width: 2;
+    cursor: pointer
+}
+
+.cidade text {
+    font: 700 12px var(--fonte);
+    fill: var(--tinta);
+    stroke: #fff;
+    stroke-width: 3;
+    paint-order: stroke;
+    opacity: 0;
+    pointer-events: none
+}
+
+.cidade:hover text, .cidade.sel text, .cidade.origem text, .cidade.destino text {
+    opacity: 1
+}
+
+.cidade.sel circle {
+    fill: var(--rota)
+}
+
+.cidade.origem circle {
+    fill: #27ae60
+}
+
+.cidade.destino circle {
+    fill: #e74c3c
+}
+
+#carregando {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: .75rem;
+    color: #fff;
+    font-weight: 700;
+    background: #0008;
+    z-index: 20
+}
+
+.giro {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 4px solid #fff4;
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: gira 1s linear infinite
+}
+
+@keyframes gira {
+    to {
+        transform: rotate(360deg)
+    }
+}
+
+@media (max-width: 50rem) {
+    .mapa-pagina {
+        grid-template-columns:1fr;
+        grid-template-rows:auto 1fr;
+        height: 100dvh
+    }
+
+    .lateral {
+        max-height: 45vh
+    }
+}

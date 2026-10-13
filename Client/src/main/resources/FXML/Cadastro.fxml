@@ -10,7 +10,7 @@
       <top>
          <HBox alignment="CENTER" prefHeight="150.0" BorderPane.alignment="CENTER">
             <ImageView fitHeight="120.0" fitWidth="250.0" pickOnBounds="true" preserveRatio="true">
-               <Image url="@../images/logo.png" />
+               <Image url="@../../../../../Server/src/main/resources/public/images/logo.png" />
             </ImageView>
          </HBox>
       </top>
