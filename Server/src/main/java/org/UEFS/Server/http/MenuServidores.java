@@ -1,7 +1,8 @@
-package org.UEFS.Server.server;
+package org.UEFS.Server.http;
 
-import org.UEFS.Server.controller.relogio.EstadoLocal;
-import org.UEFS.Server.controller.relogio.ServerConstant;
+import org.UEFS.Server.controller.ControllerService;
+import org.UEFS.Server.http.relogio.EstadoLocal;
+import org.UEFS.Server.http.relogio.ServerConstant;
 import org.UEFS.Server.util.IOUtils;
 
 import java.net.InetSocketAddress;
@@ -22,14 +23,18 @@ public class MenuServidores {
 
     private final EstadoLocal estado;
 
-    private final ExecutorService BG = Executors.newSingleThreadExecutor(R -> {
-       Thread T = new Thread(R, "menu-regiao-critica");
-       T.setDaemon(true);
-       return T;
+    private static final ExecutorService BG = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "menu-regiao-critica");
+        t.setDaemon(true);
+        return t;
     });
 
     private final AtomicBoolean solicitando = new AtomicBoolean(false);
     private final AtomicBoolean naRegiao = new AtomicBoolean(false);
+
+    public MenuServidores() {
+        this.estado = ControllerService.getInstance().get(EstadoLocal.class);
+    }
 
     public MenuServidores(EstadoLocal estado) {
         this.estado = estado;
@@ -62,12 +67,10 @@ public class MenuServidores {
                 case "9" -> IOUtils.limparTela();
                 case "0" -> rodando = false;
                 default -> fprintln("[:red]:: Opção inválida.[::]");
-
             }
-
-            BG.shutdownNow();
-            fprintln("[:yellow]| Menu encerrado (o servidor continua rodando).[::]");
         }
+        BG.shutdownNow();
+        fprintln("[:yellow]| Menu encerrado (o servidor continua rodando).[::]");
     }
 
     private void definirMeuId() {
@@ -171,7 +174,6 @@ public class MenuServidores {
 
         fprintf("[:yellow]| Testando (timeout de %ds por servidor)...[::]%n", TIMEOUT_TEST_MS / 1000);
 
-        // Testa todos em paralelo para não somar os timeouts
         List<CompletableFuture<Boolean>> testes = new ArrayList<>();
         for (String id : lista)
             testes.add(CompletableFuture.supplyAsync(() -> alcancavel(id)));
@@ -189,10 +191,10 @@ public class MenuServidores {
         fprintf("[:cyan]Outros servidores:[::]    %d%n", ServerConstant.getServidores().size());
         fprintf("[:cyan]N:[::]                    %d%n", ServerConstant.getN());
         fprintf("[:cyan]Aguardando respostas:[::] %s%n", solicitando.get() ? "[:yellow]sim[::]" : "não");
-        fprintf("[:cyan]Na região crítica:[::]    %s%n", naRegiao.get() ? "[:green]sim[::]" : "não");
+        fprintf("[:cyan]Na região crítica:    %s%n", naRegiao.get() ? "[:green]sim[::]" : "não[::]");
     }
 
-    // ------------------------------------------------- região crítica
+    // ------------------------------------------------- região crítica7
 
     private void solicitarRegiao() {
         if (ServerConstant.getMEU_ID() == null) {
@@ -214,6 +216,7 @@ public class MenuServidores {
 
         fprintf("[:yellow]| Solicitando região crítica a %d servidor(es)... (o menu continua disponível)[::]%n", outros);
         BG.submit(() -> {
+            System.out.println("Solicitando...");
             try {
                 estado.solicitarRegiaoCritica();
                 naRegiao.set(true);
@@ -236,7 +239,6 @@ public class MenuServidores {
         naRegiao.set(false);
         fprintln("[:green]| Região crítica liberada; respostas adiadas foram enviadas.[::]");
     }
-
 
 
     // === MENU === //
@@ -297,5 +299,9 @@ public class MenuServidores {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private boolean isOcupadoSilencioso() {
+        return solicitando.get() || naRegiao.get();
     }
 }

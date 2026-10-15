@@ -48,6 +48,22 @@
     "status" : "CANCELADA",
     "data" : [ 2026, 9, 19, 0, 0 ]
   },
+  "carona_f1ed5f62-6f80-4958-819f-c2e49c284b1b" : {
+    "id" : "carona_f1ed5f62-6f80-4958-819f-c2e49c284b1b",
+    "rota" : {
+      "trechos" : [ "3-0", "0-2", "2-9" ],
+      "continua" : true
+    },
+    "id_motorista" : "user_685291de-fe77-4eb3-9892-7d9ce9878e37",
+    "ocupacaoPorTrecho" : {
+      "3-0" : [ ],
+      "0-2" : [ ],
+      "2-9" : [ ]
+    },
+    "vagasTotais" : 3,
+    "status" : "AGENDADA",
+    "data" : [ 2026, 10, 16, 17, 16 ]
+  },
   "carona_e608b7b2-dfe8-403e-8006-8e5af573d70c" : {
     "id" : "carona_e608b7b2-dfe8-403e-8006-8e5af573d70c",
     "rota" : {

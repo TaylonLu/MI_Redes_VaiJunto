@@ -3,14 +3,13 @@
 # Uso:   make -f Makefile.local <alvo> [PORT=2603]
 # Dica:  alias mk='make -f Makefile.local'   ->   mk run PORT=2603
 
-# Ajuste aqui se o seu projeto for diferente
-MVN        ?= mvn
-MODULE     ?= Server
-PORT       ?= 2602
-RUN_FLAGS  ?= -q
+MVN        	?= mvn
+MODULE     	?= Server
+PORT       	?= 2602
+RUN_FLAGS  	?= -q
 
 # Comando que sobe o servidor (a porta chega ao Main via -Dserver.port)
-RUN := $(MVN) $(RUN_FLAGS) -pl $(MODULE) exec:java -Dserver.port=$(PORT)
+RUN := $(MVN) $(RUN_FLAGS) -pl $(MODULE) exec:java -Dserver.ip=$(IP) -Dserver.port=$(PORT)
 
 .DEFAULT_GOAL := help
 .PHONY: help compile run run-only clean rebuild test

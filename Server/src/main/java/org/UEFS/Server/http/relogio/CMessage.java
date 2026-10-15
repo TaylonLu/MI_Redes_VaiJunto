@@ -1,4 +1,4 @@
-package org.UEFS.Server.controller.relogio;
+package org.UEFS.Server.http.relogio;
 
 public record CMessage(MessageType tipo, String remetente, long timeStamp)
 {

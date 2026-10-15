@@ -1,3 +1,3 @@
-package org.UEFS.Server.controller.relogio;
+package org.UEFS.Server.http.relogio;
 
 public enum MessageType { REQUEST, REPLY }

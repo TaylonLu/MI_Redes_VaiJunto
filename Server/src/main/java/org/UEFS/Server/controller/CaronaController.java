@@ -346,4 +346,9 @@ public class CaronaController {
 
         context.json(caronas);
     }
+
+
+    public CaronaRepo getCaronaRepo() {
+        return repo;
+    }
 }

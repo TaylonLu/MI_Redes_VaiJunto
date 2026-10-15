@@ -54,6 +54,14 @@ Preencham, por exemplo, assim (cada um hospeda algumas regiões e acessa duas ou
 | valenwood | | | 3008 |
 | summerset_islands | | | 3009 |
 
+| Região | Dono | Endereço (IP ou host) | Porta |
+|---|---|---|---|
+|Kalos | | | 2602 |
+|Unova | | | 2603 |
+|Kanto | | | 2604 |
+|Jotoh | | | 2605 |
+
+
 Para testar o consórcio de verdade, escolham a divisão de modo que existam **fronteiras entre os dois donos**
 (por exemplo, um fica com `morrowind` e `skyrim` e o outro com `high_rock`; assim a cadeia Morrowind → Skyrim → High Rock cruza as máquinas).
 

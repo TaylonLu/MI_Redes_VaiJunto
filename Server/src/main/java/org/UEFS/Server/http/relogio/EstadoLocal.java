@@ -1,4 +1,4 @@
-package org.UEFS.Server.controller.relogio;
+package org.UEFS.Server.http.relogio;
 
 import io.javalin.http.LockedResponse;
 
@@ -41,7 +41,7 @@ public class EstadoLocal {
 
         try {
             requestTimeStamp = CLOCK.addAndGet(1);
-            requesting = (true);
+            requesting = true;
             pendingReplies.addAll(ServerConstant.getServidores());
 
             long meuTimeStamp = requestTimeStamp;
@@ -58,7 +58,12 @@ public class EstadoLocal {
 
             long nanos = TimeUnit.SECONDS.toNanos(10);
             while (!pendingReplies.isEmpty()) {
-                respostasRecebidas.await();
+                if (nanos <= 0L) {
+                    falhou = true;
+                    break;
+                }
+
+                nanos = respostasRecebidas.awaitNanos(nanos);
             }
 
             if (falhou) {
@@ -211,5 +216,9 @@ public class EstadoLocal {
         CMessage reply = new CMessage(MessageType.REPLY, ServerConstant.getMEU_ID(), ts);
         for (String id : paraResponder)
             send(reply, id, 1);
+    }
+
+    public long getClock() {
+        return CLOCK.get();
     }
 }

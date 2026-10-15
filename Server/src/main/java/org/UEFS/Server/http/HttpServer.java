@@ -10,11 +10,13 @@ import io.javalin.security.RouteRole;
 import org.UEFS.Server.controller.CaronaController;
 import org.UEFS.Server.controller.ControllerService;
 import org.UEFS.Server.controller.UserController;
-import org.UEFS.Server.controller.relogio.EstadoLocal;
-import org.UEFS.Server.controller.relogio.ServerConstant;
+import org.UEFS.Server.http.relogio.CMessage;
+import org.UEFS.Server.http.relogio.EstadoLocal;
 import org.UEFS.Server.exceptions.*;
-import org.UEFS.Server.server.MenuServidores;
+import org.UEFS.Server.http.relogio.ServerConstant;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -27,6 +29,7 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.delete;
 
 public class HttpServer {
+    private static final Logger log = LoggerFactory.getLogger(HttpServer.class);
     private final ControllerService service = ControllerService.getInstance();
     private final UserController userC = service.get(UserController.class);
     private final CaronaController caronaC = service.get(CaronaController.class);
@@ -55,7 +58,7 @@ public class HttpServer {
     }
 
     public void Start() {
-        Javalin.create(config -> {
+        Javalin server = Javalin.create(config -> {
             configurarServidor(config);
             configurarArquivosEstativos(config);
             configurarAcesso(config);
@@ -63,7 +66,10 @@ public class HttpServer {
             configurarErros(config);
         }).start(PORT);
 
+        log.info("Iniciando servidor em {}:{}", server.javalinServlet().getServletConfig().getServletName(), PORT);
+        ServerConstant.loadServersIps();
 
+        new Thread(new MenuServidores()::executar, "menu").start();
     }
 
     private void configurarErros(JavalinConfig config) {
@@ -75,16 +81,18 @@ public class HttpServer {
     }
 
     private void erro(@NotNull Context ctx, int status, Exception e) {
-        System.err.println(ctx.method() + " " + ctx.path() + " -> " + status + " " + e.getMessage());
+        log.error("{} {} -> {} {}", ctx.method(), ctx.path(), status, e.getMessage());
         ctx.status(status).json(Map.of("erro", Objects.requireNonNullElse(e.getMessage(), "Erro")));
     }
 
     private void configurarRotas(JavalinConfig config) {
+        EstadoLocal estado = service.get(EstadoLocal.class);
+        ServerManager manager = service.get(ServerManager.class);
+
         /* ROTAS DE GET */
         config.routes.get("/", ctx -> ctx.redirect("/pages/principal.html"), Acesso.PUBLIC);
         config.routes.get("/inicio", ctx -> ctx.redirect("/pages/inicio.html"), Acesso.PUBLIC);
         config.routes.get("/usuarios/{id}", userC::getByID, Acesso.ADMIN);
-
 
         config.routes.apiBuilder(() -> path("/api", () -> {
             /* ROTAS DE POST */
@@ -104,6 +112,18 @@ public class HttpServer {
                 get("/minhas",  caronaC::consultarCaronas,  Acesso.MOTORISTA);
                 post(           caronaC::criarCarona,       Acesso.MOTORISTA);
                 delete("/{id}", caronaC::cancelarCarona,    Acesso.MOTORISTA);
+            });
+
+            path("/server", () -> {
+               post(ctx -> {
+                   CMessage msg = ctx.bodyAsClass(CMessage.class);
+                   estado.ReceberRequest(msg);
+                   ctx.status(200);
+               });
+
+               get("/health", manager::health);
+
+               get("/trechos", manager::trechos);
             });
         }));
     }
