@@ -1,5 +1,6 @@
 package org.UEFS.vaijunto.client.controller;
 
+import javafx.collections.transformation.SortedList;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -74,6 +75,7 @@ public class TelaInicialController {
 
         listaCaronasInscritas.setCellFactory(lv -> new ReservaListCell());
         listaCaronasCriadas.setCellFactory(lv -> new CaronaListCell());
+
 
         ClientRouter.inscrever("MINHAS_CARONAS", res -> {
             List<CaronaResponse> caronasEncontradas = JsonUtils.fromJsonList(res.dados(), CaronaResponse.class);

@@ -24,7 +24,7 @@ public class CaronaConcorrenciaTest {
         Trecho trecho = new Trecho(1, 2);
         Rota rota = new Rota(List.of(trecho));
 
-        // Criamos uma carona com capacidade total de APENAS 1 VAGA
+        // Criamos uma carona com vagas total de APENAS 1 VAGA
         Carona carona = new Carona(rota, "motorista_uuid", 1, LocalDateTime.now().plusDays(1));
 
         // <-- ATUALIZAÇÃO DOS MOCKS AQUI -->

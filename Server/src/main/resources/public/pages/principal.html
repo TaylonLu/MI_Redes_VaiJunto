@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VaiJunto</title>
+    <link rel="stylesheet" href="../css/app.css">
+<!--    <script src="/script/estaLogado.js"></script>-->
+</head>
+<body>
+<header class="topo">
+    <span class="marca">VaiJunto</span>
+    <nav class="abas" role="tablist">
+        <button role="tab" data-aba="cliente" aria-selected="true">Área do Cliente</button>
+        <button role="tab" data-aba="motorista" aria-selected="false" hidden>Área do Motorista</button>
+        <button role="tab" data-aba="perfil" aria-selected="false">Perfil</button>
+    </nav>
+</header>
+
+<main class="pagina">
+    <section id="aba-cliente" class="painel">
+        <h1>Caronas que me inscrevi</h1>
+        <ul id="lista-reservas" class="lista"></ul>
+        <div class="acoes">
+            <a class="btn primario" href="/pages/mapa.html?modo=busca">Procurar nova carona</a>
+            <button id="cancelar-reserva" class="btn perigo" type="button">Cancelar inscrição selecionada</button>
+        </div>
+    </section>
+
+    <section id="aba-motorista" class="painel" hidden>
+        <h1>Caronas que eu criei</h1>
+        <ul id="lista-caronas" class="lista"></ul>
+        <div class="acoes">
+            <a class="btn verde" href="/pages/mapa.html?modo=criacao">Criar nova carona</a>
+            <button id="cancelar-carona" class="btn perigo" type="button">Cancelar viagem selecionada</button>
+        </div>
+    </section>
+
+    <section id="aba-perfil" class="painel" hidden>
+        <h1>Minhas informações</h1>
+        <dl class="info">
+            <dt>Nome</dt><dd id="nome"></dd>
+            <dt>Email</dt><dd id="email"></dd>
+            <dt>Status</dt><dd id="status"></dd>
+        </dl>
+
+        <div id="veiculo" hidden>
+            <h2>Meu veículo</h2>
+            <dl class="info">
+                <dt>Modelo</dt><dd id="modelo"></dd>
+                <dt>Placa</dt><dd id="placa"></dd>
+                <dt>Cor</dt><dd id="cor"></dd>
+                <dt>CNH</dt><dd id="cnh"></dd>
+            </dl>
+        </div>
+
+        <button id="abrir-form" class="btn primario" type="button">Me cadastrar como motorista</button>
+
+        <form id="form-motorista" hidden>
+            <h2>Dados do veículo</h2>
+            <label class="campo">Modelo <input name="modeloCarro" placeholder="Ex: Fiat Uno" required></label>
+            <label class="campo">Cor <input name="corCarro" placeholder="Ex: Prata" required></label>
+            <label class="campo">Placa <input name="placaCarro" placeholder="Ex: ABC-1234" required></label>
+            <label class="campo">CNH <input name="cnh" inputmode="numeric" required></label>
+            <div class="acoes">
+                <button id="cancelar-form" class="btn" type="button">Cancelar</button>
+                <button class="btn verde" type="submit">Confirmar cadastro</button>
+            </div>
+        </form>
+
+        <hr class="faixa">
+        <button id="logout" class="btn" type="button">Sair do sistema (logout)</button>
+    </section>
+</main>
+
+<dialog id="dialogo"></dialog>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="/script/comum.js"></script>
+<script src="/script/principal.js"></script>
+</body>
+</html>

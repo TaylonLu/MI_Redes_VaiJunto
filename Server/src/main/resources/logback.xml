@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Colocar em: Server/src/main/resources/logback.xml
+
+  Propriedades (todas opcionais, passadas com -D):
+    server.port          porta da instância, usada no nome do arquivo (o Main define via System.setProperty)
+    log.level            nível geral: TRACE, DEBUG, INFO (padrão), WARN, ERROR
+    log.console.level    nível mostrado no terminal; padrão OFF para não atrapalhar o menu
+    log.dir              pasta dos logs (padrão: logs)
+-->
+<configuration>
+
+    <property name="LOG_DIR"  value="${log.dir:-logs}"/>
+    <property name="LOG_PORT" value="${server.port:-2602}"/>
+    <property name="PATTERN"  value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{20} - %msg%n"/>
+
+    <!-- Arquivo com rotação diária e por tamanho -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/server-${LOG_PORT}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/server-${LOG_PORT}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>14</maxHistory>
+            <totalSizeCap>200MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Terminal: desligado por padrão (OFF bloqueia tudo). Ligue com -Dlog.console.level=INFO -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${log.console.level:-OFF}</level>
+        </filter>
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Bibliotecas barulhentas -->
+    <logger name="org.eclipse.jetty" level="WARN"/>
+    <logger name="io.javalin"        level="INFO"/>
+
+    <root level="${log.level:-INFO}">
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+</configuration>

@@ -6,6 +6,9 @@ import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.UEFS.shared.model.ServerException;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -58,9 +61,28 @@ public class JsonUtils {
             return mapper.readValue(dados, tipoLista);
 
         } catch (JsonProcessingException e) {
-            System.out.println(dados);
             throw new ServerException(701, "DADOS_INCORRETOS", "Dados da requisição incorretos.");
 
+        }
+    }
+
+    public static <T> List<T> fromJsonList(File arquivo, Class<T> tipoElemento) {
+        try {
+            CollectionType tipoLista = mapper.getTypeFactory().constructCollectionType(List.class, tipoElemento);
+
+            return mapper.readValue(arquivo, tipoLista);
+        } catch (IOException e) {
+            throw new ServerException(701, "DADOS_INCORRETOS", "Dados da requisição incorretos.");
+        }
+    }
+
+    public static <T> List<T> fromJsonList(InputStream input, Class<T> elemento) {
+        try {
+            CollectionType tipoLista = mapper.getTypeFactory().constructCollectionType(List.class, elemento);
+
+            return mapper.readValue(input, tipoLista);
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao ler input de json.");
         }
     }
 }

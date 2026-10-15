@@ -15,17 +15,15 @@
         <maven.compiler.source>24</maven.compiler.source>
         <maven.compiler.target>24</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <javafx.version>26</javafx.version>
-        <jackson.version>2.22.2</jackson.version>
-        <junit.version>5.10.2</junit.version>
         <mockito.version>5.11.0</mockito.version>
+        <server.ip>localhost</server.ip>
+        <server.port>2602</server.port>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.UEFS.vaiJunto</groupId>
             <artifactId>Shared</artifactId>
-            <version>1.5</version>
-            <scope>compile</scope>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -43,6 +41,16 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.6.3</version>
         </dependency>
     </dependencies>
 
@@ -64,9 +72,6 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>org.UEFS.Server.Main</mainClass>
-                    <arguments>
-                        <argument>2602</argument>
-                    </arguments>
                 </configuration>
             </plugin>
         </plugins>

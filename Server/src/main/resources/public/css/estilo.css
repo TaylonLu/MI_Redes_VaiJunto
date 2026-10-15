@@ -1,0 +1,119 @@
+:root {
+    --papel: #eef1f4;
+    --cartao: #ffffff;
+    --tinta: #14202b;
+    --suave: #5b6b7a;
+    --rota: #1d5fd1;
+    --faixa: #f2b705;
+    --erro: #b3261e;
+    --fonte: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--papel);
+    color: var(--tinta);
+    font-family: var(--fonte);
+    line-height: 1.5;
+}
+
+.topo {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #d5dbe1;
+    background: var(--cartao);
+}
+
+.marca {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--rota);
+}
+
+.conteudo {
+    max-width: 34rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+}
+
+h1 {
+    margin: 0 0 0.25rem;
+    font-size: 2rem;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.apoio { margin: 0 0 1.75rem; color: var(--suave); }
+
+label { display: block; margin-bottom: 0.35rem; font-weight: 600; }
+
+.linha { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+input {
+    flex: 1 1 14rem;
+    min-width: 0;
+    padding: 0.7rem 0.8rem;
+    font: inherit;
+    border: 1.5px solid #9aa7b3;
+    border-radius: 4px;
+    background: var(--cartao);
+}
+
+button {
+    padding: 0.7rem 1.2rem;
+    font: inherit;
+    font-weight: 700;
+    color: #fff;
+    background: var(--rota);
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover { background: #174ba5; }
+button:disabled { background: #8a9bb8; cursor: progress; }
+
+input:focus-visible,
+button:focus-visible {
+    outline: 3px solid var(--faixa);
+    outline-offset: 2px;
+}
+
+/* Faixa tracejada, como a marcação central de uma estrada */
+.faixa {
+    margin: 2rem 0;
+    border: 0;
+    border-top: 4px dashed var(--faixa);
+}
+
+.vazio { color: var(--suave); margin: 0; }
+
+.cartao {
+    padding: 1.1rem 1.25rem;
+    background: var(--cartao);
+    border-left: 6px solid var(--rota);
+    border-radius: 4px;
+}
+
+.cartao.erro { border-left-color: var(--erro); }
+.cartao.erro p { margin: 0; color: var(--erro); font-weight: 600; }
+
+.cartao h2 { margin: 0 0 0.75rem; font-size: 1.1rem; }
+
+dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.4rem 1.25rem;
+    margin: 0;
+}
+
+dt { color: var(--suave); }
+dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+
+@media (max-width: 30rem) {
+    h1 { font-size: 1.6rem; }
+    dl { grid-template-columns: 1fr; gap: 0; }
+    dd { margin-bottom: 0.6rem; }
+}

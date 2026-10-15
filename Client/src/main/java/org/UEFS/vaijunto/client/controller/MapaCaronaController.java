@@ -187,7 +187,7 @@ public class MapaCaronaController {
     private void carregarCidades() {
         try {
             this.cidades.clear();
-            this.cidades.addAll(Objects.requireNonNull(FileManager.carregarDeJson("data/cidades.json")));
+            this.cidades.addAll(Objects.requireNonNull(FileManager.carregarDeJson("dataPartida/cidades.json")));
         } catch (RuntimeException e) {
             System.err.println("Erro ao carregar cidades.json: " + e.getMessage());
         }
@@ -312,7 +312,7 @@ public class MapaCaronaController {
     @FXML
     void enviarCaronaServidor(ActionEvent event) {
         if (txtVagas.getText().isEmpty() || datePickerPartida.getValue() == null) {
-            Toast.warning("Por favor, informe a data de partida e o número de vagas.");
+            Toast.warning("Por favor, informe a dataPartida de partida e o número de vagas.");
             return;
         }
 
@@ -321,7 +321,7 @@ public class MapaCaronaController {
             LocalDateTime dataPartida = getDate();
 
             if (dataPartida.isBefore(LocalDateTime.now())) {
-                Toast.error("A data e hora de partida não pode estar no passado.");
+                Toast.error("A dataPartida e hora de partida não pode estar no passado.");
                 return;
             }
 
@@ -371,7 +371,7 @@ public class MapaCaronaController {
             return;
         }
         if (txtBuscaVagas.getText().isEmpty() || datePickerBusca.getValue() == null) {
-            Toast.warning("Informe a quantidade de vagas e a data pretendida para a busca.");
+            Toast.warning("Informe a quantidade de vagas e a dataPartida pretendida para a busca.");
             return;
         }
 

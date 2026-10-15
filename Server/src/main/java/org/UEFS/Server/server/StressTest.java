@@ -45,7 +45,7 @@ public class StressTest {
 
         // 1.3 Cria a Carona (com VAGAS_DISPONIVEIS)
         String jsonCarona = String.format(
-                "{\"idMotorista\":\"%s\",\"capacidade\":%d,\"data\":\"2026-10-10T10:00:00\",\"trechos\":[{\"inicio\":1,\"fim\":2}]}",
+                "{\"idMotorista\":\"%s\",\"vagas\":%d,\"dataPartida\":\"2026-10-10T10:00:00\",\"trechos\":[{\"inicio\":1,\"fim\":2}]}",
                 motoristaId, VAGAS_DISPONIVEIS
         );
         enviarRequisicaoSimples("CRIAR_CARONA", jsonCarona, motoristaToken);

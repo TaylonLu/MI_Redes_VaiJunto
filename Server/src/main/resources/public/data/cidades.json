@@ -1,0 +1,254 @@
+[
+  {
+    "nome": "Lumiose City",
+    "id": 0,
+    "posX": 662,
+    "posY": 312,
+    "ligacoes": [
+      1,
+      2,
+      3,
+      8,
+      10
+    ]
+  },
+  {
+    "nome": "Dendemille Town",
+    "id": 1,
+    "posX": 876,
+    "posY": 252,
+    "ligacoes": [
+      0,
+      8,
+      19
+    ]
+  },
+  {
+    "nome": "Coumarine City",
+    "id": 2,
+    "posX": 440,
+    "posY": 251,
+    "ligacoes": [
+      0,
+      9
+    ]
+  },
+  {
+    "nome": "Camphrier Town",
+    "id": 3,
+    "posX": 525,
+    "posY": 485,
+    "ligacoes": [
+      0,
+      4,
+      5
+    ]
+  },
+  {
+    "nome": "Connecting Cave",
+    "id": 4,
+    "posX": 283,
+    "posY": 482,
+    "ligacoes": [
+      3,
+      22
+    ]
+  },
+  {
+    "nome": "Parfum Place",
+    "id": 5,
+    "posX": 377,
+    "posY": 375,
+    "ligacoes": [
+      3
+    ]
+  },
+  {
+    "nome": "Geosenge Town",
+    "id": 6,
+    "posX": 114,
+    "posY": 400,
+    "ligacoes": [
+      7,
+      22
+    ]
+  },
+  {
+    "nome": "Reflection Cave",
+    "id": 7,
+    "posX": 157,
+    "posY": 333,
+    "ligacoes": [
+      6
+    ]
+  },
+  {
+    "nome": "Laverre City",
+    "id": 8,
+    "posX": 661,
+    "posY": 96,
+    "ligacoes": [
+      0,
+      1,
+      24
+    ]
+  },
+  {
+    "nome": "Shalour City",
+    "id": 9,
+    "posX": 193,
+    "posY": 302,
+    "ligacoes": [
+      2
+    ]
+  },
+  {
+    "nome": "Santalune City",
+    "id": 10,
+    "posX": 787,
+    "posY": 477,
+    "ligacoes": [
+      0,
+      11,
+      14
+    ]
+  },
+  {
+    "nome": "Victory Road",
+    "id": 11,
+    "posX": 939,
+    "posY": 461,
+    "ligacoes": [
+      10,
+      12,
+      13
+    ]
+  },
+  {
+    "nome": "Snowbelle City",
+    "id": 12,
+    "posX": 1085,
+    "posY": 468,
+    "ligacoes": [
+      11,
+      18,
+      20
+    ]
+  },
+  {
+    "nome": "Pokémon League",
+    "id": 13,
+    "posX": 940,
+    "posY": 369,
+    "ligacoes": [
+      11
+    ]
+  },
+  {
+    "nome": "Santalune Forest",
+    "id": 14,
+    "posX": 847,
+    "posY": 541,
+    "ligacoes": [
+      10,
+      15,
+      16
+    ]
+  },
+  {
+    "nome": "Chamber of Emptiness",
+    "id": 15,
+    "posX": 886,
+    "posY": 503,
+    "ligacoes": [
+      14
+    ]
+  },
+  {
+    "nome": "Aquacorde Town",
+    "id": 16,
+    "posX": 848,
+    "posY": 625,
+    "ligacoes": [
+      14,
+      17
+    ]
+  },
+  {
+    "nome": "Vaniville Town",
+    "id": 17,
+    "posX": 849,
+    "posY": 720,
+    "ligacoes": [
+      16
+    ]
+  },
+  {
+    "nome": "Pokémon Village",
+    "id": 18,
+    "posX": 1033,
+    "posY": 633,
+    "ligacoes": [
+      12
+    ]
+  },
+  {
+    "nome": "Anistar City",
+    "id": 19,
+    "posX": 1125,
+    "posY": 318,
+    "ligacoes": [
+      1,
+      20
+    ]
+  },
+  {
+    "nome": "Couriway Town",
+    "id": 20,
+    "posX": 1194,
+    "posY": 384,
+    "ligacoes": [
+      12,
+      19
+    ]
+  },
+  {
+    "nome": "Ambrette Town",
+    "id": 21,
+    "posX": 287,
+    "posY": 636,
+    "ligacoes": [
+      22,
+      23
+    ]
+  },
+  {
+    "nome": "Cyllage City",
+    "id": 22,
+    "posX": 224,
+    "posY": 479,
+    "ligacoes": [
+      4,
+      6,
+      21
+    ]
+  },
+  {
+    "nome": "Glittering Cave",
+    "id": 23,
+    "posX": 463,
+    "posY": 635,
+    "ligacoes": [
+      21
+    ]
+  },
+  {
+    "nome": "Pokéball Factory",
+    "id": 24,
+    "posX": 660,
+    "posY": 49,
+    "ligacoes": [
+      8
+    ]
+  }
+]

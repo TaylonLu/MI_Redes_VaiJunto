@@ -22,7 +22,7 @@
                 </padding>
                 <VBox alignment="CENTER" spacing="10.0">
                     <ImageView fitHeight="140.0" fitWidth="280.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@../images/logo.png" />
+                        <Image url="@../../../../../Server/src/main/resources/public/images/logo.png" />
                     </ImageView>
                     <Label styleClass="welcome-title" text="Bem-vindo ao VaiJunto!" />
                     <Label styleClass="welcome-subtitle" text="Escolha como deseja prosseguir para continuar" />

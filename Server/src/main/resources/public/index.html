@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VaiJunto - Consultar usuário</title>
+    <link rel="stylesheet" href="/css/estilo.css">
+    <script src="/script/estaLogado.js"></script>
+</head>
+<body>
+<header class="topo">
+    <span class="marca">VaiJunto</span>
+</header>
+
+<main class="conteudo">
+    <h1>Consultar usuário</h1>
+    <p class="apoio">Informe o id para ver os dados cadastrados.</p>
+
+    <form id="form-busca" autocomplete="off">
+        <label for="campo-id">Id do usuário</label>
+        <div class="linha">
+            <input id="campo-id" name="id" type="text" required
+                   placeholder="user_380dfde6-4515-...">
+            <button type="submit" id="botao-buscar">Buscar usuário</button>
+        </div>
+    </form>
+
+    <hr class="faixa">
+
+    <section id="resultado" aria-live="polite">
+        <p class="vazio">Digite um id para ver os dados do usuário.</p>
+    </section>
+</main>
+
+<script src="/script/app.js"></script>
+</body>
+</html>

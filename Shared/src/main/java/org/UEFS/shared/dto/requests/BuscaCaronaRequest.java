@@ -7,5 +7,4 @@ public record BuscaCaronaRequest(
         int destinoDesejado,
         int vagasRequeridas,
         LocalDateTime data_desejada
-) {
-}
+) { }

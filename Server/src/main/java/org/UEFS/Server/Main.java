@@ -4,34 +4,41 @@ import org.UEFS.Server.controller.CaronaController;
 import org.UEFS.Server.controller.ControllerService;
 import org.UEFS.Server.controller.SessionsController;
 import org.UEFS.Server.controller.UserController;
+import org.UEFS.Server.http.ServerManager;
+import org.UEFS.Server.http.relogio.EstadoLocal;
+import org.UEFS.Server.http.relogio.ServerConstant;
 import org.UEFS.Server.domain.caronas.CaronaRepo;
 import org.UEFS.Server.domain.caronas.CaronaService;
 import org.UEFS.Server.domain.reservas.ReservaRepo;
+import org.UEFS.Server.http.HttpServer;
 import org.UEFS.shared.FileManager;
 import org.UEFS.Server.domain.usuarios.UserRepo;
-import org.UEFS.Server.server.MainServer;
 import org.UEFS.Server.util.IOUtils;
 
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
+import java.net.*;
+import java.util.Collections;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
-            IOUtils.fprintln("[:red]Erro: Número de argumentos inválido. Uso: java MainServer <porta>[::]");
-            return;
+        String portaVal = System.getProperty("server.port"); // vem de -Dserver.port=...
+        String ipVal = ipLocal();
+
+        System.out.println("O ip vindo de InetAddress: " + ipVal);
+
+        if (portaVal == null || ipVal == null) {
+            if (args.length < 1) {
+                IOUtils.fprintln("[:red]Erro: informe a porta ou servidor corretos.[::]");
+                return;
+            }
+            portaVal = args[args.length - 1];
         }
 
-        if (!args[0].matches("^\\d+$")) { // Removido o suporte a negativos
+        if (!portaVal.matches("^\\d+$")) {
             IOUtils.fprintln("[:red]Erro: O argumento deve ser um número inteiro.[::]");
             return;
         }
 
-        int port = Integer.parseInt(args[0]);
-        if (port <= 1024 || port > 65535) {
-            IOUtils.fprintln("[:red]Erro: A porta deve estar entre 1025 e 65535.[::]");
-            return;
-        }
+        int port = Integer.parseInt(portaVal);
 
         ControllerService service = ControllerService.getInstance();
 
@@ -44,6 +51,9 @@ public class Main {
         service.register(CaronaService.class, new CaronaService(caronaRepo, reservaRepo));
         service.register(CaronaController.class, new CaronaController(caronaRepo));
 
+        service.register(EstadoLocal.class, new EstadoLocal());
+        service.register(ServerManager.class, new ServerManager());
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             IOUtils.fprintln("\n[:yellow]Desligamento detectado. Salvando dados...[::]");
 
@@ -54,18 +64,35 @@ public class Main {
             IOUtils.fprintln("[:green]Dados salvos no disco.[::]");
         }));
 
-        MainServer server = new MainServer(port);
+//        MainServer server = new MainServer(port);
+//
+//        server.start();
 
-        server.start();
+        EstadoLocal estado = new EstadoLocal();
+        ServerConstant.setMeuId(ipVal + ":" + portaVal.trim());
+        service.register(EstadoLocal.class, estado);
 
+        HttpServer server = new HttpServer(port);
+        server.Start();
     }
 
     public static String getServerIP() {
         try {
             return Inet4Address.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
-            // É melhor lançar um erro claro do que apenas um RuntimeException genérico
             throw new RuntimeException("Não foi possível determinar o IP do servidor.", e);
         }
+    }
+
+    static String ipLocal() throws SocketException {
+        for (NetworkInterface ni : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+            if (!ni.isUp() || ni.isLoopback() || ni.isVirtual()) continue;
+            for (InetAddress addr : Collections.list(ni.getInetAddresses())) {
+                if (addr instanceof Inet4Address) {
+                    return addr.getHostAddress();
+                }
+            }
+        }
+        return "localhost";
     }
 }

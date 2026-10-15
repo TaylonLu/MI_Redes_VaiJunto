@@ -1,0 +1,151 @@
+/* Configuração Geral da Tela */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #ffffff;
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: #333333;
+}
+
+/* Estrutura SPA */
+.screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* Imagem Logo */
+.logo {
+    width: 250px;
+    height: 120px;
+    object-fit: contain;
+    margin-bottom: 20px;
+}
+
+/* Títulos e Textos */
+.welcome-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #B71C1C;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.welcome-subtitle {
+    font-size: 13px;
+    color: #666666;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.form-label {
+    color: #333333;
+    font-size: 13px;
+    font-weight: bold;
+    text-align: right;
+}
+
+/* Formulários (Grid estilo GridPane do JavaFX) */
+.form-grid {
+    display: grid;
+    grid-template-columns: minmax(100px, auto) 1fr;
+    gap: 15px 10px;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #D32F2F;
+    background-color: #FFFFFF;
+    box-shadow: 0 0 5px rgba(211, 47, 47, 0.2);
+}
+
+/* Botões */
+.btn-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-width: 280px;
+    align-items: center;
+}
+
+.btn-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+}
+
+.btn-primary {
+    background-color: #D32F2F;
+    color: #FFFFFF;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 6px;
+    padding: 8px 24px;
+    cursor: pointer;
+    height: 38px;
+    min-width: 150px;
+    border: none;
+    width: 100%;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #B71C1C;
+}
+
+.btn-primary:active {
+    background-color: #880E4F;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: #D32F2F;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #D32F2F;
+    border-radius: 6px;
+    padding: 6px 24px; /* Ajuste pelo tamanho da borda */
+    cursor: pointer;
+    height: 38px;
+    width: 100%;
+    transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+    background-color: #FFEBEE;
+}
+
+.btn-secondary:active {
+    background-color: #FFCDD2;
+}

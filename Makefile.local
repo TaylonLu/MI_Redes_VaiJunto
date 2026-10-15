@@ -1,0 +1,45 @@
+# Makefile.local — módulo do servidor SEM docker (Maven direto na máquina)
+#
+# Uso:   make -f Makefile.local <alvo> [PORT=2603]
+# Dica:  alias mk='make -f Makefile.local'   ->   mk run PORT=2603
+
+MVN        	?= mvn
+MODULE     	?= Server
+PORT       	?= 2602
+RUN_FLAGS  	?= -q
+
+# Comando que sobe o servidor (a porta chega ao Main via -Dserver.port)
+RUN := $(MVN) $(RUN_FLAGS) -pl $(MODULE) exec:java -Dserver.ip=$(IP) -Dserver.port=$(PORT)
+
+.DEFAULT_GOAL := help
+.PHONY: help compile run run-only clean rebuild test
+
+help:
+	@echo "Servidor local (sem docker)"
+	@echo ""
+	@echo "  make -f Makefile.local compile            compila o servidor (e o shared) sem rodar testes"
+	@echo "  make -f Makefile.local run                compila e inicia na porta padrao ($(PORT))"
+	@echo "  make -f Makefile.local run PORT=2603      compila e inicia na porta 2603"
+	@echo "  make -f Makefile.local run-only PORT=2603 inicia sem recompilar"
+	@echo "  make -f Makefile.local clean              limpa os diretorios target"
+	@echo "  make -f Makefile.local rebuild            clean + compile"
+	@echo "  make -f Makefile.local test               roda os testes"
+	@echo ""
+	@echo "Variaveis: PORT=$(PORT)  MODULE=$(MODULE)  MVN=$(MVN)"
+
+compile:
+	$(MVN) -pl $(MODULE) -am install -DskipTests
+
+run: compile
+	$(RUN)
+
+run-only:
+	$(RUN)
+
+clean:
+	$(MVN) -pl $(MODULE) -am clean
+
+rebuild: clean compile
+
+test:
+	$(MVN) -pl $(MODULE) -am test

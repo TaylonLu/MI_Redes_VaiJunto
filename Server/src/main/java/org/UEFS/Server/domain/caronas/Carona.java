@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.UEFS.shared.dto.TrechoOcupacaoDTO;
 import org.UEFS.shared.enums.StatusCarona;
 import org.UEFS.Server.domain.interfaces.Identificavel;
 import org.UEFS.shared.dto.Trecho;
@@ -48,7 +47,7 @@ public class Carona implements Identificavel {
             @JsonProperty("rota") Rota rota,
             @JsonProperty("id_motorista") String id_motorista,
             @JsonProperty("ocupacaoPorTrecho") Map<Trecho, Set<String>> ocupacaoPorTrecho,
-            @JsonProperty("data") LocalDateTime data,
+            @JsonProperty("dataPartida") LocalDateTime data,
             @JsonProperty("vagasTotais") int vagasTotais,
             @JsonProperty("status") StatusCarona status
     ) {
@@ -120,13 +119,12 @@ public class Carona implements Identificavel {
         return true;
     }
 
-    public synchronized void removePassageiro(String idPassageiro) {
-        for (Set<String> L : ocupacaoPorTrecho.values()) {
-            L.remove(idPassageiro);
-        }
-    }
-
-    public synchronized boolean removerPassageiroCompletamente(String idPassageiro) {
+    /**
+     * Remove completamente um passageiro de uma carona.
+     * @param idPassageiro ID do passageiro a ser removido
+     * @return se ele foi removido de algum trecho ou não.
+     */
+    public synchronized boolean removerPassageiro(String idPassageiro) {
         boolean foiRemovido = false;
 
         for (Set<String> T : ocupacaoPorTrecho.values()) {
