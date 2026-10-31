@@ -18,8 +18,8 @@ import java.util.concurrent.TimeUnit;
 import static org.UEFS.Server.http.service.ConsorcioUtils.isVazio;
 
 public class RecuperadorTransacoes {
-    private static final long INTERVALO_SEGUNDOS = 5;
     private static final Logger log = LoggerFactory.getLogger(RecuperadorTransacoes.class);
+    private static final long INTERVALO_SEGUNDOS = 5;
 
     private final String meuId;
     private final TransacaoService transacoes;
