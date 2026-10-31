@@ -84,6 +84,11 @@ public class RecuperadorTransacoes {
 
         Vizinho anterior = ServerConstant.getVizinho(anteriorId);
 
+        if (anterior == null) {
+            log.warn("[RECUPERAÇÃO] Servidor anterior '{}' não encontrado para '{}'.", anteriorId, tx.getId());
+            return;
+        }
+
         PeerClient.ResultadoStatus resp = peerClient.consultarStatusTransacao(anterior, tx.getId());
         if (resp.falhaRede()) {
             log.warn("[RECUPERAÇÃO] Não foi possível consultar '{}' para a transação '{}'", anteriorId, tx.getId());
@@ -93,7 +98,8 @@ public class RecuperadorTransacoes {
         // Se o anterior não conhece a transação, não existe decisão
         // de commit registrada nele.
         if (resp.inexistente()) {
-            log.warn("[RECUPERAÇÃO] Não foi possível consultar '{}' para a transação '{}'.", anteriorId, tx.getId());
+            log.warn("[RECUPERAÇÃO] Anterior desconhece '{}'. Abortando transação.", tx.getId());
+            abortar(tx);
             return;
         }
 

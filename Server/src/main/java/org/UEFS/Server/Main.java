@@ -66,6 +66,7 @@ public class Main {
         TransacaoService transacoes = new TransacaoService(meuID, transacaoRepo, caronaRepo, caronaService);
         service.register(TransacaoService.class, transacoes);
         transacoes.reaplicarOcupacao(); // garante as vagas das transações já guardadas
+        RecuperadorTransacoes recuperador = new RecuperadorTransacoes(meuID, transacoes, peerClient);
 
         service.register(UserController.class, new UserController(userRepo));
         service.register(CaronaController.class, new CaronaController(caronaRepo, cidadeMapper));
@@ -81,6 +82,8 @@ public class Main {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             IOUtils.fprintln("\n[:yellow]Desligamento detectado. Salvando dados...[::]");
 
+            recuperador.encerrar();
+
             userRepo.salvarNoDisco();
             caronaRepo.salvarNoDisco();
             transacaoRepo.salvarNoDisco();
@@ -91,6 +94,8 @@ public class Main {
         // 5. Subir o servidor HTTP
         mostrarResumo();
         new HttpServer(ServerConstant.getPorta()).Start();
+
+        recuperador.iniciar();
     }
 
     private static void mostrarResumo() throws SocketException {
