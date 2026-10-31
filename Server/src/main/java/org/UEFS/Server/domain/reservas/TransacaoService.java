@@ -47,6 +47,9 @@ public class TransacaoService {
     public Transacao buscar(String idTransacao) {
         return repo.getByID(idTransacao);
     }
+    public List<Transacao> listarTodas() {
+        return repo.getDadosList();
+    }
 
     /**
      * Instancia o objeto Transacao para o servidor coordenador.
