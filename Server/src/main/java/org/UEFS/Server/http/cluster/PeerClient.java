@@ -144,9 +144,11 @@ public class PeerClient implements Repasse {
     }
 
     @Override
-    public void rollback(Vizinho proximo, String idTransacao) {
-        enviar(proximo, "DELETE", "/api/consorcio/reservas/" + idTransacao,
+    public boolean rollback(Vizinho proximo, String idTransacao) {
+        Resposta res = enviar(proximo, "DELETE", "/api/consorcio/reservas/" + idTransacao,
                 null, Duration.ofSeconds(DURATION_S));
+
+        return !res.redeFalhou() && res.status() == 200;
     }
 
     @Override
