@@ -5,7 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public record IdPerna(String idCarona, int inicio, int fim) {
-    private static final Pattern PADRAO_C = Pattern.compile("^(.*)_(\\d+)_(\\d+)$");
+    private static final Pattern PADRAO_C = Pattern.compile("^(carona_[\\da-fA-F-]+)(?:\\..*)?_(\\d+)_(\\d+)$");
 
     public static Optional<IdPerna> decodificar(String idComposto) {
         if (idComposto == null) return Optional.empty();

@@ -376,6 +376,14 @@ dialog::backdrop {
     transform: scale(0.9);
 }
 
+.cidade-externa .ponto {
+    fill: #e67e22;
+}
+
+.cidade-externa text {
+    fill: #e67e22;
+}
+
 #svg {
     position: absolute;
     left: 0;

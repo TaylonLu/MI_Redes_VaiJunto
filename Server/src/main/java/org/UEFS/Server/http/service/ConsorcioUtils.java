@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 public class ConsorcioUtils {
     private static final Pattern ID_VALIDO = Pattern.compile("[A-Za-z0-9._-]+");
-
+    private static final Pattern ID_CARONA_VALIDO = Pattern.compile("[\\p{L}\\p{N}._ -]+");
     public static final int MAX_ID_LENGTH = 8;
 
     private ConsorcioUtils() {}
@@ -91,6 +91,12 @@ public class ConsorcioUtils {
         return S != null &&
                S.length() > MAX_ID_LENGTH &&
                ID_VALIDO.matcher(S).matches();
+    }
+
+    public static boolean idCaronaValido(String S) {
+        return S != null
+                && S.length() > MAX_ID_LENGTH
+                && ID_CARONA_VALIDO.matcher(S).matches();
     }
 
     public static int contarServidoresConsecutivos(List<TrechoSolicitado> trechos) {

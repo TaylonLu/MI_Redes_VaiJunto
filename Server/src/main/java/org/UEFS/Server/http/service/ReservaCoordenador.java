@@ -145,5 +145,4 @@ public class ReservaCoordenador {
 
         return new ResultadoValidacao(true, 200, null, trechos, qtdLocais, proximo);
     }
-
 }

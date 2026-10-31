@@ -49,7 +49,7 @@ public class ReservaParticipante {
 
         List<TrechoSolicitado> trechos = new ArrayList<>();
         for (TrechoSolicitado T : lista) {
-            if (T == null || isVazio(T.servidor()) || !idValido(T.idCarona()))
+            if (T == null || isVazio(T.servidor()) || !idCaronaValido(T.idCarona()))
                 throw new ServerException(400, "trecho sem servidor ou com id_carona invalido");
             trechos.add(new TrechoSolicitado(ServerConstant.normalizar(T.servidor()), T.idCarona()));
         }

@@ -39,6 +39,18 @@ public class PeerClient implements Repasse {
 
     private final Map<String, Long> suspeitoAte = new ConcurrentHashMap<>();
 
+    public record ResultadoStatus(boolean respondeu, int http, String corpo) {
+        public boolean conhecido() {
+            return respondeu && http == 200;
+        }
+        public boolean inexistente() {
+            return respondeu && http == 404;
+        }
+        public boolean falhaRede() {
+            return !respondeu;
+        }
+    }
+
     public PeerClient(String meuServidorID, RelogioLamport relogio) {
         this.meuServidorID = meuServidorID;
         this.relogio = relogio;
@@ -90,15 +102,15 @@ public class PeerClient implements Repasse {
      * @param idTransacao Id da transação.
      * @return Estado atual da transação.
      */
-    public Optional<String> consultarStatusTransacao(Vizinho coordenador, String idTransacao) {
+    public ResultadoStatus consultarStatusTransacao(Vizinho coordenador, String idTransacao) {
         Duration timeout = Duration.ofSeconds(DURATION_S);
         String caminho = "/api/consorcio/reservas/"+ idTransacao +"/status";
 
         Resposta r = enviar(coordenador, "GET", caminho, null, timeout);
 
-        return (r.redeFalhou() || r.status() != 200)
-                ? Optional.empty()
-                : Optional.of(r.corpo());
+        if (r.redeFalhou()) return new ResultadoStatus(false, 0, null);
+
+        return new ResultadoStatus(true, r.status(), r.corpo());
     }
 
     // RESERVA (repasse) ======================

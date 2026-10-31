@@ -11,7 +11,7 @@ async function carregarCidadesServidor() {
     const resposta = await api("/api/servidor/cidades");
 
     cidadesServidor = new Set(
-        resposta.map(c => Number(typeof c === "object" ? c.id : c))
+        Object.keys(resposta).map(Number)
     );
 }
 
@@ -58,6 +58,9 @@ function desenharMapa() {
         g.addEventListener("click", () => { if (!arrastou) clicou(a); });
 
         nos.set(a.id, g);
+        if (!cidadesServidor.has(Number(a.id))) {
+            g.classList.add("cidade-externa");
+        }
         cidadesSvg.append(g);
     }
 }
@@ -324,8 +327,7 @@ if (btnZoomIn && btnZoomOut) {
     if (!$("estradas") || !$("cidades")) return;
     try {
         await carregarCidades();
-        if (modo === "criacao")
-                await carregarCidadesServidor();
+        if (modo === "criacao") await carregarCidadesServidor();
     }
     catch { return aviso("Não foi possível carregar as cidades.", "erro"); }
 

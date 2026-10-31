@@ -3,7 +3,6 @@ package org.UEFS.Server.http.service;
 import org.UEFS.Server.controller.ControllerService;
 import org.UEFS.Server.domain.caronas.Carona;
 import org.UEFS.Server.domain.caronas.CaronaRepo;
-import org.UEFS.Server.domain.caronas.Rota;
 import org.UEFS.Server.domain.cidades.CidadeMapper;
 import org.UEFS.Server.http.cluster.PeerClient;
 import org.UEFS.Server.http.relogio.ServerConstant;
@@ -99,7 +98,7 @@ public class BuscaDistribuida {
 
             // Uma carona não pode aparecer duas vezes no itinerário.
             boolean jaUtilizada = EX.prefixo.stream()
-                    .anyMatch(t -> t.idCarona().equals(C.getId()));
+                    .anyMatch(t -> idBaseBusca(t.idCarona()).equals(C.getId()));
 
             if (jaUtilizada) continue;
 
@@ -132,11 +131,13 @@ public class BuscaDistribuida {
                 precoAcumulado += C.getValorPorTrecho();
 
                 // Evita ciclos no caminho atual.
-                if (EX.cidadesNoCaminho.contains(cidadeDestino)) {
-                    continue;
-                }
-
                 List<Trecho> faixa = trechos.subList(inicio, fim + 1);
+
+                // Evita passar por cidades que já estão no caminho.
+                boolean repeteCidade = faixa.stream()
+                        .anyMatch(T -> EX.cidadesNoCaminho.contains(T.destino()));
+
+                if (repeteCidade) continue;
                 int vagas = calcularAssentosLivresNaPerna(C, faixa);
                 if (vagas <= 0) continue;
 
@@ -163,15 +164,19 @@ public class BuscaDistribuida {
                         );
                     } else {
                         // Continua a busca a partir desta parada.
-                        EX.cidadesNoCaminho.add(cidadeDestino);
+                        Set<Integer> cidadesAdicionadas = new HashSet<>();
+
+                        for (Trecho T : faixa) {
+                            cidadesAdicionadas.add(T.destino());
+                        }
+
+                        EX.cidadesNoCaminho.addAll(cidadesAdicionadas);
 
                         try {
                             buscarLocal(cidadeDestino, EX);
-
-                            buscarRemoto(cidadeMapper.getNome(cidadeDestino),EX
-                            );
+                            buscarRemoto(cidadeMapper.getNome(cidadeDestino), EX);
                         } finally {
-                            EX.cidadesNoCaminho.remove(cidadeDestino);
+                            EX.cidadesNoCaminho.removeAll(cidadesAdicionadas);
                         }
                     }
                 } finally {
@@ -247,25 +252,30 @@ public class BuscaDistribuida {
         }
     }
 
-
-
     private void adicionarResultado(Execucao EX, List<TrechoConsorcioDTO> trechos) {
-        if (EX.resultados.size() >= MAX_ITINERARIOS || trechos.isEmpty() || trechos.size() > MAX_TRECHOS_TX) {
+        List<TrechoConsorcioDTO> consolidados = consolidarTrechos(trechos);
+
+        if (EX.resultados.size() >= MAX_ITINERARIOS ||
+                consolidados.isEmpty() ||
+                consolidados.size() > MAX_TRECHOS_TX) {
             return;
         }
 
-        // Verifica se já existe um itinerário equivalente.
         boolean duplicado = EX.resultados.stream()
                 .anyMatch(resultado ->
-                        itinerariosIguais(resultado.trechos(), trechos));
+                        itinerariosIguais(resultado.trechos(), consolidados));
+
         if (duplicado) return;
 
-        double precoTotal = trechos.stream()
+        double precoTotal = consolidados.stream()
                 .mapToDouble(TrechoConsorcioDTO::preco)
                 .sum();
 
         String idItin = meuServidorId + "-" + (EX.resultados.size() + 1);
-        EX.resultados.add(new ItinerarioConsorcioDTO(idItin, precoTotal, new ArrayList<>(trechos)));
+
+        EX.resultados.add(
+                new ItinerarioConsorcioDTO(idItin, precoTotal, consolidados)
+        );
     }
 
 
@@ -301,6 +311,66 @@ public class BuscaDistribuida {
         }
 
         return true;
+    }
+
+    private List<TrechoConsorcioDTO> consolidarTrechos(
+            List<TrechoConsorcioDTO> trechos) {
+
+        List<TrechoConsorcioDTO> resultado = new ArrayList<>();
+
+        for (TrechoConsorcioDTO atual : trechos) {
+            if (!resultado.isEmpty()) {
+                TrechoConsorcioDTO anterior = resultado.getLast();
+
+                String idAnterior = idBaseBusca(anterior.idCarona());
+                String idAtual = idBaseBusca(atual.idCarona());
+
+                boolean mesmaCarona =
+                        Objects.equals(anterior.servidor(), atual.servidor()) &&
+                                Objects.equals(idAnterior, idAtual);
+
+                boolean consecutivos = anterior.destino()
+                        .equalsIgnoreCase(atual.origem());
+
+                if (mesmaCarona && consecutivos) {
+                    List<String> paradas = new ArrayList<>(
+                            anterior.paradasIntermediarias()
+                    );
+
+                    paradas.add(anterior.destino());
+                    paradas.addAll(atual.paradasIntermediarias());
+
+                    resultado.set(
+                            resultado.size() - 1,
+                            new TrechoConsorcioDTO(
+                                    anterior.servidor(),
+                                    idAnterior + "." + anterior.origem()
+                                            + "-" + atual.destino(),
+                                    anterior.origem(),
+                                    atual.destino(),
+                                    anterior.horario(),
+                                    anterior.preco() + atual.preco(),
+                                    Math.min(
+                                            anterior.assentos_livres(),
+                                            atual.assentos_livres()
+                                    ),
+                                    paradas
+                            )
+                    );
+
+                    continue;
+                }
+            }
+
+            resultado.add(atual);
+        }
+
+        return resultado;
+    }
+
+    private String idBaseBusca(String idCarona) {
+        int separador = idCarona.indexOf('.');
+        return separador < 0 ? idCarona : idCarona.substring(0, separador);
     }
 
     private List<String> extrairParadasIntermediarias(List<Trecho> faixa) {

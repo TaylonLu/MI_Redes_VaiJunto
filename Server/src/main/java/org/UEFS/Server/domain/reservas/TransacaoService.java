@@ -1,11 +1,12 @@
 package org.UEFS.Server.domain.reservas;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.UEFS.Server.controller.ControllerService;
 import org.UEFS.Server.domain.caronas.Carona;
 import org.UEFS.Server.domain.caronas.CaronaRepo;
 import org.UEFS.Server.domain.caronas.CaronaService;
 import org.UEFS.Server.domain.caronas.IdPerna;
-import org.UEFS.Server.domain.interfaces.CaronaListener;
 import org.UEFS.Server.exceptions.ForbiddenException;
 import org.UEFS.Server.exceptions.RecursoNaoEncontradoException;
 import org.UEFS.Server.http.cluster.PeerClient;
@@ -14,6 +15,7 @@ import org.UEFS.Server.http.service.Perna;
 import org.UEFS.Server.http.service.Preparo;
 import org.UEFS.Server.http.service.Resultado;
 import org.UEFS.Server.http.service.Vizinho;
+import org.UEFS.shared.JsonUtils;
 import org.UEFS.shared.dto.ItinerarioDTO;
 import org.UEFS.shared.dto.PassoItinerarioDTO;
 import org.UEFS.shared.dto.Trecho;
@@ -21,7 +23,6 @@ import org.UEFS.shared.dto.consorcio.TrechoReserva;
 import org.UEFS.shared.dto.consorcio.TrechoSolicitado;
 import org.UEFS.shared.dto.responses.ReservaResponse;
 import org.UEFS.shared.enums.StatusReserva;
-import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +92,13 @@ public class TransacaoService {
 
         synchronized (caronaService) {
             Transacao existente = repo.getByID(pedido.getId());
-            if (existente != null) return new Preparo(Resultado.OK, existente.getLocais(), true, null);
+            if (existente != null) {
+                return switch (existente.getEstado()) {
+                    case ABORTADO -> recusa(Resultado.CONFLITO, "transação já foi abortada.");
+                    case PREPARADO, COMITADO -> new Preparo(Resultado.OK, existente.getLocais(), true, null);
+                    default -> recusa(Resultado.CONFLITO, "transação não pode ser preparada novamente.");
+                };
+            }
 
             List<TrechoReserva> assentos = new ArrayList<>();
             List<Perna> ocupadas = new ArrayList<>();
@@ -136,13 +143,33 @@ public class TransacaoService {
             Transacao transacao = repo.getByID(idTransacao);
             if (transacao == null) return Resultado.NAO_ENCONTRADO;
 
+            if (novoEstado != EstadoTransacao.COMITADO) return Resultado.CONFLITO;
+
+            EstadoTransacao estadoAtual = transacao.getEstado();
+
+            // Repetir o commit já persistido
+            if (estadoAtual == EstadoTransacao.COMITADO)
+                return Resultado.OK;
+
+            // Não permitir commit de transações canceladas ou em andamento
+            if (estadoAtual != EstadoTransacao.PREPARADO)
+                return Resultado.CONFLITO;
+
+            // Backup
+            List<TrechoReserva> itinerarioAnterior = transacao.getItinerario();
+
             // Atualiza o estado
-            transacao.setEstado(novoEstado);
-            if (itinerarioCompleto != null) transacao.setItinerario(itinerarioCompleto);
+            transacao.setEstado(EstadoTransacao.COMITADO);
+            if (itinerarioCompleto != null)
+                transacao.setItinerario(itinerarioCompleto);
 
             // Salva no disco
             repo.salvar(transacao);
-            if (!repo.salvarNoDisco()) return Resultado.ERRO;
+            if (!repo.salvarNoDisco()) { // Se falhou, volta o backup
+                transacao.setEstado(EstadoTransacao.PREPARADO);
+                transacao.setItinerario(itinerarioAnterior);
+                return Resultado.ERRO;
+            }
 
             return Resultado.OK;
         }
@@ -158,7 +185,34 @@ public class TransacaoService {
      * Acionado se a fase 1 falhar num vizinho. Libera as vagas que
      * tinham sido trancadas pelo {@code preparar}.
      */
-    public Resultado desfazer(String idTransacao) { return liberarEApagar(idTransacao, true); }
+    public Resultado desfazer(String idTransacao) {
+        synchronized (caronaService) {
+            Transacao tx = repo.getByID(idTransacao);
+            if (tx == null) return Resultado.OK;
+
+            // Rollback repetido
+            if (tx.getEstado() == EstadoTransacao.ABORTADO) return Resultado.OK;
+
+            // Uma transação confirmada não pode sofrer rollback
+            if (tx.getEstado() != EstadoTransacao.PREPARADO) return Resultado.CONFLITO;
+
+            List<Perna> pernas = pernasDe(tx);
+            tx.setEstado(EstadoTransacao.ABORTADO);
+            liberar(pernas, tx.getIdPassageiro());
+
+            if (!caronaRepo.salvarNoDisco() || !repo.salvarNoDisco()) {
+                tx.setEstado(EstadoTransacao.PREPARADO);
+                reocupar(pernas, tx.getIdPassageiro());
+
+                caronaRepo.salvarNoDisco();
+                repo.salvarNoDisco();
+
+                return Resultado.ERRO;
+            }
+
+            return Resultado.OK;
+        }
+    }
 
     /**
      *  O passo 4 reaproveita com false (cancelamento)
@@ -186,7 +240,13 @@ public class TransacaoService {
     /** Ao iniciar: garante que toda transação guardada ainda segura as suas vagas (o caronas.json pode estar mais velho). */
     public void reaplicarOcupacao() {
         synchronized (caronaService) {
-            for (Transacao t : repo.getDadosList()) reocupar(pernasDe(t), t.getIdPassageiro());
+            for (Transacao t : repo.getDadosList()) {
+                if (t.getEstado() == EstadoTransacao.PREPARADO ||
+                    t.getEstado() == EstadoTransacao.COMITADO) {
+
+                    reocupar(pernasDe(t), t.getIdPassageiro());
+                }
+            }
         }
     }
 
@@ -269,26 +329,58 @@ public class TransacaoService {
         Vizinho coordenador = ServerConstant.getVizinho(tx.getCoordenadorId());
         if (coordenador == null) return;
 
-        Optional<String> respostaOpt = client.consultarStatusTransacao(coordenador, tx.getId());
+        PeerClient.ResultadoStatus resposta = client.consultarStatusTransacao(coordenador, tx.getId());
 
-        if (respostaOpt.isEmpty()) {
-            log.info("[SYNC] Estado de transação: {}", respostaOpt);
+        if (resposta.falhaRede()) {
+            log.warn("[SYNC] Não foi possível consultar o coordenador '{}'", coordenador.id());
+            return;
         }
 
-        respostaOpt.ifPresent(corpoJson -> {
-            log.info("[SYNC] Estado de transação: {}", corpoJson);
-            if (corpoJson.contains("CANCEL")) {
-                tx.setEstado(EstadoTransacao.CANCELADO_PELO_MOTORISTA);
+        if (resposta.inexistente()) {
+            log.warn("[SYNC] Transação '{}' não encontrada no coordenador '{}'",
+                    tx.getId(), coordenador.id());
+            return;
+        }
 
-                repo.salvar(tx);
+        if (!resposta.conhecido()) {
+            log.warn("[SYNC] Coordenador '{}' respondeu HTTP {}",
+                    coordenador.id(), resposta.http());
+            return;
+        }
 
-                List<Perna> pernasLocais = pernasDe(tx);
-                liberar(pernasLocais, tx.getIdPassageiro());
+        log.info("[SYNC] Estado de transação: {}", resposta.corpo());
 
-                repo.salvarNoDisco();
-                caronaRepo.salvarNoDisco();
+        try {
+            JsonNode json = JsonUtils.getMapper().readTree(resposta.corpo());
+
+            String statusTexto = json.path("status").asText(null);
+            if (statusTexto == null) {
+                log.warn("[SYNC] Resposta sem campo status: {}", resposta.corpo());
+                return;
             }
-        });
+
+            EstadoTransacao estadoR = EstadoTransacao.valueOf(statusTexto);
+            log.info("[SYNC] Transação '{}': estado remoto = {}", tx.getId(), estadoR);
+
+            switch (estadoR) {
+                case CANCELADO_PELO_MOTORISTA, CANCELADO_PELO_PASSAGEIRO -> {
+                    tx.setEstado(estadoR);
+
+                    liberar(pernasDe(tx), tx.getIdPassageiro());
+
+                    if (!repo.salvarNoDisco() || !caronaRepo.salvarNoDisco()) {
+                        log.error("[SYNC] Falha ao persistir cancelamento da transação '{}'", tx.getId());
+                    }
+                }
+
+                case COMITADO, CANCELANDO -> { }
+                case PREPARADO -> log.warn("[SYNC] Coordenador informa PREPARADO para transação '{}'", tx.getId());
+            }
+
+        } catch (JsonProcessingException e) {
+            log.error("[SYNC] Resposta de status inválida para '{}': {}",
+                    tx.getId(), resposta.corpo(), e);
+        }
     }
 
     /**
@@ -393,6 +485,13 @@ public class TransacaoService {
     // ======================= UTILS
     private Perna resolver(TrechoReserva T) {
         Optional<IdPerna> id = IdPerna.decodificar(T.idCarona());
+
+        String idBase = IdPerna.idBase(T.idCarona());
+
+        log.info("ID recebido: '{}'", T.idCarona());
+        log.info("ID base: '{}'", idBase);
+        log.info("Carona encontrada: {}", caronaRepo.getByID(idBase) != null);
+
         Carona carona = caronaRepo.getByID(IdPerna.idBase(T.idCarona()));
         if (carona == null) return null;
 
