@@ -11,11 +11,10 @@ info "======================================"
 info " TESTES AUTOMATIZADOS - VAIJUNTO"
 info "======================================"
 
-# Confere se a rede está disponível.
 verificar_rede
 
-# Executa os testes.
 bash "$SCRIPT_DIR/teste-health.sh"
+bash "$SCRIPT_DIR/teste-cadastro-carona.sh"
 
 echo
 sucesso "Execução finalizada."
