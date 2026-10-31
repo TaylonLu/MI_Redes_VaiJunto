@@ -86,6 +86,35 @@ small, .vazio {
     border-bottom-color: var(--faixa)
 }
 
+/* Filtros internos das listas */
+.filtros-lista {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: 1rem;
+}
+
+.filtros-lista button {
+    padding: .4rem 1rem;
+    font: inherit;
+    font-weight: 600;
+    color: var(--suave);
+    background: var(--cartao);
+    border: 1px solid var(--borda);
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.filtros-lista button[aria-pressed=true] {
+    color: #fff;
+    background: var(--rota);
+    border-color: var(--rota);
+}
+
+.filtros-lista button:focus-visible {
+    outline: 3px solid var(--faixa);
+    outline-offset: 2px;
+}
+
 .pagina {
     max-width: 44rem;
     margin: 0 auto;

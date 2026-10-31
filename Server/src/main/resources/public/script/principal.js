@@ -2,6 +2,12 @@ exigirLogin();
 const $ = id => document.getElementById(id);
 let usuario = sessao.usuario(), reservaSel = null, caronaSel = null;
 
+let reservas = [];
+let caronas = [];
+
+let filtroReserva = "ativas";
+let filtroCarona = "ativas";
+
 // ---------- Abas ----------
 function abrirAba(nome) {
     document.querySelectorAll("[data-aba]").forEach(b => b.setAttribute("aria-selected", b.dataset.aba === nome));
@@ -57,6 +63,88 @@ $("logout").onclick = async () => {
     sair();
 };
 
+// ---------- Filtros das listas ----------
+function atualizarFiltro(botoes, filtro) {
+    botoes.forEach(b => {
+        b.setAttribute("aria-pressed", b.dataset[filtro] ===
+            (filtro === "filtroReserva" ? filtroReserva : filtroCarona));
+    });
+}
+
+function renderReservas() {
+    reservaSel = null;
+
+    const ativas = reservas.filter(r =>
+        String(r.status ?? "ATIVA").toUpperCase() === "ATIVA"
+    );
+
+    const historico = reservas.filter(r =>
+        ["CANCELADA", "CONCLUIDA"].includes(String(r.status).toUpperCase())
+    );
+
+    const lista = filtroReserva === "ativas" ? ativas : historico;
+
+    renderLista(
+        $("lista-reservas"),
+        lista,
+        cardReserva,
+        filtroReserva === "ativas"
+            ? "Você não possui reservas ativas."
+            : "Você ainda não possui reservas no histórico.",
+        r => reservaSel = r
+    );
+
+    $("cancelar-reserva").hidden = filtroReserva !== "ativas";
+
+    document.querySelectorAll("[data-filtro-reserva]").forEach(b => {
+        b.setAttribute("aria-pressed", b.dataset.filtroReserva === filtroReserva);
+    });
+}
+
+function renderCaronas() {
+    caronaSel = null;
+
+    const ativas = caronas.filter(c =>
+        ["AGENDADA", "EM_ANDAMENTO"].includes(String(c.status).toUpperCase())
+    );
+
+    const historico = caronas.filter(c =>
+        ["CANCELADA", "FINALIZADA"].includes(String(c.status).toUpperCase())
+    );
+
+    const lista = filtroCarona === "ativas" ? ativas : historico;
+
+    renderLista(
+        $("lista-caronas"),
+        lista,
+        cardCarona,
+        filtroCarona === "ativas"
+            ? "Você não possui caronas ativas."
+            : "Você ainda não possui caronas no histórico.",
+        c => caronaSel = c
+    );
+
+    $("cancelar-carona").hidden = filtroCarona !== "ativas";
+
+    document.querySelectorAll("[data-filtro-carona]").forEach(b => {
+        b.setAttribute("aria-pressed", b.dataset.filtroCarona === filtroCarona);
+    });
+}
+
+document.querySelectorAll("[data-filtro-reserva]").forEach(b => {
+    b.onclick = () => {
+        filtroReserva = b.dataset.filtroReserva;
+        renderReservas();
+    };
+});
+
+document.querySelectorAll("[data-filtro-carona]").forEach(b => {
+    b.onclick = () => {
+        filtroCarona = b.dataset.filtroCarona;
+        renderCaronas();
+    };
+});
+
 // ---------- Cards ----------
 function cardReserva(r) {
     const trechos = r.itinerario?.passos ?? r.trechos ?? [];
@@ -65,7 +153,7 @@ function cardReserva(r) {
     const idExibicao = r.id_transacao ?? r.idReserva ?? "-";
 
     return h("li", "card",
-        h("div", "topo-card", h("strong", "", n <= 1 ? "Carona Direta" : `Baldeação (${n} empresas)`), selo(r.status ?? "CONFIRMADA")),
+        h("div", "topo-card", h("strong", "", n <= 1 ? "Carona Direta" : `Baldeação (${n} empresas)`), selo(r.status ?? "ATIVA")),
         h("div", "chips", ...trechos.map((p, i) => {
             const chip = h("span", "chip", `${p.origem ?? nomeCidade(p.inicio) ?? "CI"} → ${p.destino ?? nomeCidade(p.fim) ?? "CF"}`);
             chip.style.background = cores[i];
@@ -125,14 +213,21 @@ function detalhesCarona(c) {
 }
 
 // ---------- Cancelamentos ----------
+// ---------- Cancelamentos ----------
 async function cancelar(selecionado, url, msgVazio, msgConfirma, msgOk) {
     if (!selecionado) return aviso(msgVazio, "aviso");
     if (!confirm(msgConfirma)) return;
+
     try {
-        const listaAtual = await api(url, "DELETE");
+        await api(url, "DELETE");
+
+        reservaSel = null;
+        caronaSel = null;
+
         aviso(msgOk, "sucesso");
-        reservaSel = caronaSel = null;
-        renderLista($("lista-reservas"), listaAtual, cardReserva, "Você ainda não tem inscrições.", r => reservaSel = r);
+
+        // Atualiza as duas listas com os dados mais recentes do servidor.
+        await carregar();
     } catch (e) {
         aviso(e.message, "erro");
     }
@@ -140,26 +235,35 @@ async function cancelar(selecionado, url, msgVazio, msgConfirma, msgOk) {
 
 $("cancelar-reserva").onclick = () => {
     const id = reservaSel?.id_transacao ?? reservaSel?.idReserva;
-    cancelar(reservaSel,
+
+    cancelar(
+        reservaSel,
         "/api/cliente/reservas/" + encodeURIComponent(id),
         "Selecione uma reserva na lista para cancelar sua inscrição.",
-        "Cancelar esta inscrição?", "Inscrição cancelada com sucesso!");
+        "Cancelar esta inscrição?",
+        "Inscrição cancelada com sucesso!"
+    );
 };
 
-$("cancelar-carona").onclick = () => cancelar(caronaSel,
+$("cancelar-carona").onclick = () => cancelar(
+    caronaSel,
     "/api/cliente/caronas/" + encodeURIComponent(caronaSel?.id),
     "Selecione uma viagem na lista para cancelar.",
-    "Cancelar esta viagem? Os passageiros serão notificados.", "Viagem cancelada.");
-
+    "Cancelar esta viagem? Os passageiros serão notificados.",
+    "Viagem cancelada."
+);
+// ---------- Carregamento ----------
 // ---------- Carregamento ----------
 async function carregar() {
     try {
-        const reservas = await api("/api/cliente/reservas");
-        renderLista($("lista-reservas"), reservas, cardReserva, "Você ainda não tem inscrições.", r => reservaSel = r);
+        reservas = await api("/api/cliente/reservas");
+        renderReservas();
 
         if (usuario.perfilMotorista) {
-            const caronas = await api("/api/cliente/caronas");
-            renderLista($("lista-caronas"), caronas, cardCarona, "Você ainda não criou nenhuma carona.", c => caronaSel = c);
+            caronas = await api("/api/cliente/caronas");
+            renderCaronas();
+        } else {
+            caronas = [];
         }
     } catch (e) {
         aviso(e.message, "erro");

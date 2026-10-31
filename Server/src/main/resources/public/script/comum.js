@@ -118,7 +118,16 @@ const nomeCidade = id => cidade(id)?.nome ?? "#" + id;
 
 const fmtData = iso => new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 const nMotoristas = trechos => new Set(trechos.map(t => t.servidor)).size;
-const corStatus = s => ({ CONFIRMADA: "#2ecc71", EM_ANDAMENTO: "#2ecc71", CANCELADA: "#e74c3c", FINALIZADA: "#95a5a6" })[String(s).toUpperCase()] ?? "#f39c12";
+const corStatus = s => ({
+    CONFIRMADA: "#2ecc71",
+    ATIVA: "#2ecc71",
+    AGENDADA: "#2ecc71",
+    EM_ANDAMENTO: "#2ecc71",
+    CANCELADA: "#e74c3c",
+    CONCLUIDA: "#95a5a6",
+    FINALIZADA: "#95a5a6"
+})[String(s).toUpperCase()] ?? "#f39c12";
+
 
 function lerTrecho(t) {
     if (typeof t === "string") {
@@ -168,7 +177,7 @@ function nCaronas(trechos) {
 }
 
 function corpoPassos(trechos, ...extra) {
-    const n = nCaronas(trechos);
+    const n = new Set(trechos.map(t => t.idCarona)).size;
 
     return h("div", "corpo", ...extra,
         h("p", "", n <= 1
@@ -180,21 +189,13 @@ function corpoPassos(trechos, ...extra) {
 
         ...(trechos.length
                 ? trechos.map((t, i) => h("div", "caixa",
-                    h("strong", "", `${i + 1}. ${[
-                        t.origem,
-                        ...(t.paradas_intermediarias ?? []),
-                        t.destino
-                    ].join(" → ")}`),
+                    h("strong", "",
+                        `${i + 1}. ${nomeCidade(t.inicio)} → ${nomeCidade(t.fim)}`
+                    ),
 
-                    h("small", "", `Partida: ${fmtData(t.horario)}`),
+                    h("small", "", `ID da carona: ${t.idCarona ?? "-"}`),
 
-                    h("small", "", `Preço: R$ ${Number(t.preco).toFixed(2)}`),
-
-                    h("small", "", `Assentos livres: ${t.assentos_livres}`),
-
-                    h("small", "", `Servidor: ${t.servidor}`),
-
-                    h("small", "", `ID da carona: ${t.id_carona}`)
+                    h("small", "", `Motorista: ${t.idMotorista ?? "-"}`)
                 ))
                 : [h("p", "vazio", "Nenhum trecho cadastrado.")]
         )

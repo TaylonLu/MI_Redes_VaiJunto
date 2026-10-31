@@ -20,7 +20,14 @@
 <main class="pagina">
     <section id="aba-cliente" class="painel">
         <h1>Caronas que me inscrevi</h1>
+
+        <div class="filtros-lista" role="group" aria-label="Filtrar reservas">
+            <button type="button" data-filtro-reserva="ativas" aria-pressed="true">Ativas</button>
+            <button type="button" data-filtro-reserva="historico" aria-pressed="false">Histórico</button>
+        </div>
+
         <ul id="lista-reservas" class="lista"></ul>
+
         <div class="acoes">
             <a class="btn primario" href="/pages/mapa.html?modo=busca">Procurar nova carona</a>
             <button id="cancelar-reserva" class="btn perigo" type="button">Cancelar inscrição selecionada</button>
@@ -29,7 +36,14 @@
 
     <section id="aba-motorista" class="painel" hidden>
         <h1>Caronas que eu criei</h1>
+
+        <div class="filtros-lista" role="group" aria-label="Filtrar caronas">
+            <button type="button" data-filtro-carona="ativas" aria-pressed="true">Ativas</button>
+            <button type="button" data-filtro-carona="historico" aria-pressed="false">Histórico</button>
+        </div>
+
         <ul id="lista-caronas" class="lista"></ul>
+
         <div class="acoes">
             <a class="btn verde" href="/pages/mapa.html?modo=criacao">Criar nova carona</a>
             <button id="cancelar-carona" class="btn perigo" type="button">Cancelar viagem selecionada</button>
