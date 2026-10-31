@@ -6,7 +6,10 @@ import org.UEFS.Server.domain.usuarios.UserRepo;
 import org.UEFS.Server.domain.usuarios.Usuario;
 import org.UEFS.Server.exceptions.*;
 import org.UEFS.Server.http.HttpServer;
+import org.UEFS.Server.http.cluster.PeerClient;
 import org.UEFS.shared.JsonUtils;
+import org.UEFS.shared.dto.OtherUserDTO;
+import org.UEFS.shared.dto.SelfUserDTO;
 import org.UEFS.shared.dto.requests.CadastroMotoristaRequest;
 import org.UEFS.shared.dto.requests.CadastroRequest;
 import org.UEFS.shared.dto.requests.LoginRequest;
@@ -14,69 +17,31 @@ import org.UEFS.shared.dto.responses.LoginResponse;
 import org.UEFS.shared.enums.Status;
 import org.UEFS.shared.model.Request;
 import org.UEFS.shared.model.Response;
+import org.UEFS.shared.model.ServerException;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.UEFS.Server.http.Utils.tokenDe;
 
 public class UserController {
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final ControllerService service = ControllerService.getInstance();
     private final SessionsController sessions = service.get(SessionsController.class);
+    private final PeerClient client = service.get(PeerClient.class);
     private final UserRepo repo;
 
     public UserController(UserRepo repositorio) {
         this.repo = repositorio;
     }
 
-    public Response login(Request RQ) {
-        LoginRequest login = JsonUtils.fromJson(RQ.getDados(), LoginRequest.class);
-        return new Response(Status.LOGIN_EFETUADO, JsonUtils.toJson(doLogin(login)));
-    }
 
-    @Deprecated
-    public Response logout(Request RQ) {
-        String userID = sessions.validarToken(RQ.getToken());
-        if (userID == null) throw new TokenInvalidoException();
-
-        sessions.encerrarSessao(RQ.getToken());
-        return new Response(Status.SUCESSO, "LOGOUT_EFETUADO", "");
-    }
-
-    @Deprecated
-    public Response cadastrar(Request RQ) {
-        CadastroRequest cadastro = JsonUtils.fromJson(RQ.getDados(), CadastroRequest.class);
-
-        if (repo.buscaPorEmail(cadastro.email()) != null)
-            throw new UsuarioJaCadastradoException();
-
-        Usuario novoUser = new Usuario(cadastro.email(), cadastro.senha(), cadastro.nome());
-
-        repo.salvar(novoUser);
-        repo.salvarNoDisco();
-
-        String token = sessions.criarSessao(novoUser.getId());
-
-        LoginResponse dados = new LoginResponse(token, novoUser.getSelfData());
-
-        return new Response(Status.CADASTRO_COMPLETO, JsonUtils.toJson(dados));
-    }
-
-    @Deprecated
-    public Response cadastrarMotorista(Request RQ) {
-        String userID = sessions.validarToken(RQ.getToken());
-        if (userID == null) throw new TokenInvalidoException();
-
-        Usuario user = repo.getByID(userID);
-
-        if (user.isMotorista()) return new Response(Status.SEM_ALTERACAO);
-
-        CadastroMotoristaRequest cadastro = JsonUtils.fromJson(RQ.getDados(), CadastroMotoristaRequest.class);
-        user.tornarMotorista(cadastro.cnh(), cadastro.placaCarro(), cadastro.modeloCarro(), cadastro.corCarro());
-
-        repo.salvar(user);
-        repo.salvarNoDisco();
-
-        String payload = JsonUtils.toJson(user.getSelfData());
-        return new Response(Status.CADASTRO_COMPLETO, payload);
-    }
-
+    /**
+     * Verifica se o token recebido está no banco de dados de usuários logados.
+     * @param token string para verificação
+     * @return id do usuário caso ele esteja logado.
+     * @throws ForbiddenException
+     */
     public String validarUsuarioLogado(String token) throws ForbiddenException {
         String userID = sessions.validarToken(token);
         if (userID == null || userID.isBlank()) throw new ForbiddenException("Usuário não está logado.");
@@ -84,20 +49,16 @@ public class UserController {
         return userID;
     }
 
-    public Response atualizar(Request RQ) {
-        return new Response(Status.NAO_IMPLEMENTADO);
-    }
-
     public Usuario getByID(String userID) {
         return repo.getByID(userID);
     }
 
     public void getByID(@NotNull Context context) {
-        System.out.println("Pegando dados.");
         var usuario = repo.getByID(context.pathParam("id"));
-        System.out.println("ID buscado: " + context.pathParam("id"));
         if (usuario == null) throw new NotFoundResponse("Usuário não encontrado.");
         context.json(usuario.getSelfData());
+
+        log.info("[BUSCA] ID buscado: {}", context.pathParam("id"));
     }
 
     public HttpServer.Acesso getAcesso(String token) {
@@ -113,11 +74,11 @@ public class UserController {
     }
 
     public void login(@NotNull Context context) {
-        System.out.println("Logando...");
         LoginRequest login = context.bodyAsClass(LoginRequest.class);
         LoginResponse dados = doLogin(login);
         context.json(dados);
-        System.out.println("Logado.");
+
+        log.info("[LOGIN] Novo login do usuário '{}'", dados.usuario().nome());
     }
 
     private LoginResponse doLogin(LoginRequest login) {
@@ -132,7 +93,6 @@ public class UserController {
     }
 
     public void cadastrar(@NotNull Context context) {
-        System.out.println("Cadastrando...");
         CadastroRequest cadastro = context.bodyAsClass(CadastroRequest.class);
 
         if (repo.buscaPorEmail(cadastro.email()) != null)
@@ -147,13 +107,13 @@ public class UserController {
 
         LoginResponse dados = new LoginResponse(token, novoUser.getSelfData());
 
-        System.out.println("Cadastrado.");
+        log.info("[CADASTRO] Usuário '{}' cadastrado", novoUser.getNome());
 
         context.json(dados);
     }
 
     public void logout(@NotNull Context context) {
-        String token = context.header("Authorization");
+        String token = tokenDe(context);
         String userID = sessions.validarToken(token);
         if (userID == null) throw new TokenInvalidoException();
 
@@ -161,7 +121,7 @@ public class UserController {
     }
 
     public void cadastrarMotorista(@NotNull Context context) {
-        String userID = sessions.validarToken(context.header("Authorization"));
+        String userID = sessions.validarToken(tokenDe(context));
         if (userID == null) throw new TokenInvalidoException();
 
         Usuario user = repo.getByID(userID);
@@ -175,5 +135,36 @@ public class UserController {
         repo.salvarNoDisco();
 
         context.json(user.getSelfData());
+    }
+
+    /**
+     * GET /api/cliente/eu
+     * Devolve os dados do passageiro ou motorista autenticado.
+     */
+    public void eu(@NotNull Context context) {
+        String token = tokenDe(context);
+        String userID = validarUsuarioLogado(token);
+
+        Usuario utilizador = repo.getByID(userID);
+
+        if (utilizador == null) throw new NotFoundResponse("Utilizador não encontrado no sistema.");
+
+        context.status(200).json(utilizador.getSelfData());
+    }
+
+    public OtherUserDTO getUserRemoto(String idPassageiro) {
+        return client.buscarDadosUser(idPassageiro);
+    }
+
+    public void consultarUsuarioRemoto(@NotNull Context ctx) {
+        String idDesejado = ctx.pathParam("id");
+
+        Usuario usuario = getByID(idDesejado);
+
+        if (usuario != null) {
+            ctx.status(200).json(usuario.getOtherData());
+        } else {
+            ctx.status(404);
+        }
     }
 }

@@ -9,6 +9,8 @@
         <set>
           <option value="Status" />
           <option value="StatusReply" />
+          <option value="X-Lamport-Clock" />
+          <option value="X-Server-Id" />
         </set>
       </option>
     </inspection_tool>

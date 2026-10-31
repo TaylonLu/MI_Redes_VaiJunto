@@ -1,7 +1,0 @@
-services:
-
-  client:
-    environment:
-        DISPLAY: ${DISPLAY}
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix

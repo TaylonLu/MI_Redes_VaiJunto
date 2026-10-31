@@ -1,6 +1,7 @@
 package org.UEFS.shared;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -54,6 +55,14 @@ public class JsonUtils {
         }
     }
 
+    public static <U> U fromJson(InputStream dados, TypeReference<U> tipo) throws ServerException {
+        try {
+            return mapper.readValue(dados, tipo);
+        } catch (IOException _) {
+            throw new ServerException(701, "DADOS_INCORRETOS", "Dados da requisição incorretos: \n" + dados);
+        }
+    }
+
     public static <T> List<T> fromJsonList(String dados, Class<T> tipoElemento) throws ServerException {
         try {
             CollectionType tipoLista = mapper.getTypeFactory().constructCollectionType(List.class, tipoElemento);
@@ -82,7 +91,7 @@ public class JsonUtils {
 
             return mapper.readValue(input, tipoLista);
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao ler input de json.");
+            throw new RuntimeException("Erro ao ler input de json com elementos tipo: " + elemento);
         }
     }
 }

@@ -10,10 +10,8 @@ import io.javalin.security.RouteRole;
 import org.UEFS.Server.controller.CaronaController;
 import org.UEFS.Server.controller.ControllerService;
 import org.UEFS.Server.controller.UserController;
-import org.UEFS.Server.http.relogio.CMessage;
-import org.UEFS.Server.http.relogio.EstadoLocal;
 import org.UEFS.Server.exceptions.*;
-import org.UEFS.Server.http.relogio.ServerConstant;
+import org.UEFS.Server.http.service.ServerManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,16 +21,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static io.javalin.apibuilder.ApiBuilder.path;
-import static io.javalin.apibuilder.ApiBuilder.post;
-import static io.javalin.apibuilder.ApiBuilder.get;
-import static io.javalin.apibuilder.ApiBuilder.delete;
+import static io.javalin.apibuilder.ApiBuilder.*;
 
 public class HttpServer {
     private static final Logger log = LoggerFactory.getLogger(HttpServer.class);
     private final ControllerService service = ControllerService.getInstance();
     private final UserController userC = service.get(UserController.class);
     private final CaronaController caronaC = service.get(CaronaController.class);
+    private final ServerManager manager = service.get(ServerManager.class);
+
     private final int PORT;
 
     public enum Acesso implements RouteRole {
@@ -67,7 +64,6 @@ public class HttpServer {
         }).start(PORT);
 
         log.info("Iniciando servidor em {}:{}", server.javalinServlet().getServletConfig().getServletName(), PORT);
-        ServerConstant.loadServersIps();
 
         new Thread(new MenuServidores()::executar, "menu").start();
     }
@@ -86,44 +82,67 @@ public class HttpServer {
     }
 
     private void configurarRotas(JavalinConfig config) {
-        EstadoLocal estado = service.get(EstadoLocal.class);
-        ServerManager manager = service.get(ServerManager.class);
-
-        /* ROTAS DE GET */
+        /* ROTAS DO FRONTEND WEB (HTML) */
         config.routes.get("/", ctx -> ctx.redirect("/pages/principal.html"), Acesso.PUBLIC);
-        config.routes.get("/inicio", ctx -> ctx.redirect("/pages/inicio.html"), Acesso.PUBLIC);
+        config.routes.get("/origem", ctx -> ctx.redirect("/pages/origem.html"), Acesso.PUBLIC);
+
+        // Administração interna
         config.routes.get("/usuarios/{id}", userC::getByID, Acesso.ADMIN);
 
         config.routes.apiBuilder(() -> path("/api", () -> {
-            /* ROTAS DE POST */
-            post("/logout",             userC::logout,                   Acesso.PUBLIC);
-            post("/login",              userC::login,                    Acesso.PUBLIC);
-            post("/cadastro",           userC::cadastrar,                Acesso.PUBLIC);
-            post("/motorista",          userC::cadastrarMotorista,       Acesso.PASSAGEIRO);
-            post("/itinerarios/busca",  caronaC::buscarItinerarios,      Acesso.PASSAGEIRO);
+            get("/servidor/cidades", manager::getCidades, Acesso.PUBLIC);
+            /* =======================================================
+               ROTAS DO CONSÓRCIO P2P (Comunicação entre Servidores)
+               ======================================================= */
+            path("/consorcio", () -> {
+                get("/health", manager::health, Acesso.PUBLIC);
+                get("/vivo", manager::health, Acesso.PUBLIC);
+                get("/trechos", manager::trechos, Acesso.PUBLIC);
+                get("/usuarios/{id}", userC::consultarUsuarioRemoto, Acesso.PUBLIC);
 
-            path("/reservas", () -> {
-                get("/minhas",  caronaC::consultarMinhasReservas,   Acesso.PASSAGEIRO);
-                post(           caronaC::confirmarReserva,          Acesso.PASSAGEIRO);
-                delete("/{id}", caronaC::cancelarReserva,           Acesso.PASSAGEIRO);
+                path("/reservas", () -> {
+                    post("/prepare", manager::prepare, Acesso.PUBLIC);
+                    delete("/{id}", manager::rollback, Acesso.PUBLIC);
+                    put("/{id}/commit", manager::commit, Acesso.PUBLIC);
+                    put("/{id}/cancel", manager::cancel, Acesso.PUBLIC);
+                    get("/{id}/status", manager::status, Acesso.PUBLIC);
+                });
             });
 
-            path("/caronas", () -> {
-                get("/minhas",  caronaC::consultarCaronas,  Acesso.MOTORISTA);
-                post(           caronaC::criarCarona,       Acesso.MOTORISTA);
-                delete("/{id}", caronaC::cancelarCarona,    Acesso.MOTORISTA);
-            });
+            /* =======================================================
+               ROTAS DO CLIENTE (Passageiros e Motoristas)
+               ======================================================= */
+            // | TODO: Adicionar método para apagar transação cancelada e carona cancelada do banco de dados.
+            path("/cliente", () -> {
 
-            path("/server", () -> {
-               post(ctx -> {
-                   CMessage msg = ctx.bodyAsClass(CMessage.class);
-                   estado.ReceberRequest(msg);
-                   ctx.status(200);
-               });
+                // --- Autenticação e Perfil ---
+                post("/cadastro", userC::cadastrar, Acesso.PUBLIC);
+                post("/cadastro/motorista", userC::cadastrarMotorista, Acesso.PASSAGEIRO);
+                post("/login", userC::login, Acesso.PUBLIC);
+                post("/logout", userC::logout, Acesso.PUBLIC);
+                get("/eu", userC::eu, Acesso.PUBLIC);
 
-               get("/health", manager::health);
+                // --- Busca de Itinerários ---
+                get("/itinerarios", manager::itinerarios, Acesso.PASSAGEIRO);
 
-               get("/trechos", manager::trechos);
+                // --- Caronas (Motorista) ---
+                path("/caronas", () -> {
+                    get(caronaC::consultarCaronas, Acesso.MOTORISTA);
+                    post(caronaC::criarCarona, Acesso.MOTORISTA);
+                    delete("/{id}", caronaC::cancelarCarona, Acesso.MOTORISTA);
+                });
+
+                // Equivalente a /caronas para manter compatibilidade com o front-end
+                path("/rotas", () -> {
+                    post(caronaC::criarCarona, Acesso.MOTORISTA);
+                });
+
+                // --- Reservas (Passageiro) ---
+                path("/reservas", () -> {
+                    get(caronaC::consultarReservas, Acesso.PASSAGEIRO);
+                    post(manager::reservaCliente, Acesso.PASSAGEIRO); // 2PC Coordenador
+                    delete("/{id}", caronaC::cancelarReserva, Acesso.PASSAGEIRO);
+                });
             });
         }));
     }
@@ -134,23 +153,26 @@ public class HttpServer {
     }
 
     private void configurarArquivosEstativos(JavalinConfig config) {
-        config.staticFiles.add("/public", Location.CLASSPATH);
+        config.staticFiles.add("Server/src/main/resources/public", Location.EXTERNAL);
     }
 
     private void configurarAcesso(JavalinConfig config) {
         config.routes.beforeMatched(ctx -> {
             Set<RouteRole> exigidos = ctx.routeRoles();
 
-           if (exigidos.isEmpty() || exigidos.contains(Acesso.PUBLIC)) return;
+            if (exigidos.isEmpty() || exigidos.contains(Acesso.PUBLIC)) return;
 
-           Acesso perfil = userC.getAcesso(Utils.tokenDe(ctx));
-           if (perfil == null) throw new UnauthorizedResponse("Faça login.");
+            Acesso perfil = userC.getAcesso(Utils.tokenDe(ctx));
+            if (perfil == null) throw new UnauthorizedResponse("Faça login.");
 
-           boolean permitido = perfil.efetivos().stream().anyMatch(exigidos::contains);
+            boolean permitido = perfil.efetivos().stream().anyMatch(exigidos::contains);
 
-           if (!permitido) {
-               throw new ForbiddenResponse("Acesso não autorizado para o seu perfil.");
-           }
+            if (!permitido) {
+                throw new ForbiddenResponse("Acesso não autorizado para o seu perfil.");
+            }
         });
+
+        config.routes.before("/api*", manager::aoReceber);
+        config.routes.after("/api*", manager::aoResponder);
     }
 }

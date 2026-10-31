@@ -53,6 +53,12 @@ public class FileManager {
 
     public <T> void salvarObjetos(String arquivoDestino, Map<String, T> mapa) throws IOException {
         File arquivo = resolverArquivo(arquivoDestino);
+
+        File pastaPai = arquivo.getParentFile();
+        if (pastaPai != null && !pastaPai.exists()) {
+            pastaPai.mkdirs();
+        }
+
         mapper.writerWithDefaultPrettyPrinter().writeValue(arquivo, mapa);
     }
 

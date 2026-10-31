@@ -36,7 +36,7 @@ $("form-motorista").onsubmit = async e => {
     for (const campo of ["cnh", "placaCarro", "modeloCarro", "corCarro"]) corpo[campo] = f.get(campo).trim();
 
     try {
-        const novo = await api("/api/motorista", "POST", corpo);
+        const novo = await api("/api/cliente/cadastro/motorista", "POST", corpo);
         if (novo) {   // sem corpo = já era motorista (SEM_ALTERACAO)
             usuario = novo;
             localStorage.setItem("usuario", JSON.stringify(novo));
@@ -59,18 +59,20 @@ $("logout").onclick = async () => {
 
 // ---------- Cards ----------
 function cardReserva(r) {
-    const passos = r.itinerario?.passos ?? [];
-    const cores = coresDosPassos(passos);
-    const n = nMotoristas(passos);
+    const trechos = r.itinerario?.passos ?? r.trechos ?? [];
+    const cores = coresDosPassos(trechos);
+    const n = nMotoristas(trechos);
+    const idExibicao = r.id_transacao ?? r.idReserva ?? "-";
+
     return h("li", "card",
-        h("div", "topo-card", h("strong", "", n <= 1 ? "Carona Direta" : `Baldeação (${n} carros)`), selo(r.status)),
-        h("div", "chips", ...passos.map((p, i) => {
-            const chip = h("span", "chip", `${nomeCidade(p.inicio)} → ${nomeCidade(p.fim)}`);
+        h("div", "topo-card", h("strong", "", n <= 1 ? "Carona Direta" : `Baldeação (${n} empresas)`), selo(r.status ?? "CONFIRMADA")),
+        h("div", "chips", ...trechos.map((p, i) => {
+            const chip = h("span", "chip", `${p.origem ?? nomeCidade(p.inicio) ?? "CI"} → ${p.destino ?? nomeCidade(p.fim) ?? "CF"}`);
             chip.style.background = cores[i];
-            chip.title = `Motorista: ${p.idMotorista}\nCarona: ${p.idCarona}`;
+            chip.title = `Servidor: ${p.servidor}\nCarona: ${p.id_carona ?? p.idCarona}`;
             return chip;
         })),
-        h("small", "", `${passos.length} trecho(s) • Reserva #${String(r.idReserva ?? "-").slice(0, 8)}`),
+        h("small", "", `${trechos.length} trecho(s) • Reserva #${String(idExibicao).slice(0, 8)}`),
         botao("Ver detalhes", "btn pequeno", () => detalhesReserva(r)));
 }
 
@@ -127,32 +129,36 @@ async function cancelar(selecionado, url, msgVazio, msgConfirma, msgOk) {
     if (!selecionado) return aviso(msgVazio, "aviso");
     if (!confirm(msgConfirma)) return;
     try {
-        await api(url, "DELETE");
+        const listaAtual = await api(url, "DELETE");
         aviso(msgOk, "sucesso");
         reservaSel = caronaSel = null;
-        await carregar();
+        renderLista($("lista-reservas"), listaAtual, cardReserva, "Você ainda não tem inscrições.", r => reservaSel = r);
     } catch (e) {
         aviso(e.message, "erro");
     }
 }
 
-$("cancelar-reserva").onclick = () => cancelar(reservaSel,
-    "/api/reservas/" + encodeURIComponent(reservaSel?.idReserva),
-    "Selecione uma reserva na lista para cancelar sua inscrição.",
-    "Cancelar esta inscrição?", "Inscrição cancelada com sucesso!");
+$("cancelar-reserva").onclick = () => {
+    const id = reservaSel?.id_transacao ?? reservaSel?.idReserva;
+    cancelar(reservaSel,
+        "/api/cliente/reservas/" + encodeURIComponent(id),
+        "Selecione uma reserva na lista para cancelar sua inscrição.",
+        "Cancelar esta inscrição?", "Inscrição cancelada com sucesso!");
+};
 
 $("cancelar-carona").onclick = () => cancelar(caronaSel,
-    "/api/caronas/" + encodeURIComponent(caronaSel?.id),
+    "/api/cliente/caronas/" + encodeURIComponent(caronaSel?.id),
     "Selecione uma viagem na lista para cancelar.",
     "Cancelar esta viagem? Os passageiros serão notificados.", "Viagem cancelada.");
 
 // ---------- Carregamento ----------
 async function carregar() {
     try {
-        const reservas = await api("/api/reservas/minhas");
+        const reservas = await api("/api/cliente/reservas");
         renderLista($("lista-reservas"), reservas, cardReserva, "Você ainda não tem inscrições.", r => reservaSel = r);
+
         if (usuario.perfilMotorista) {
-            const caronas = await api("/api/caronas/minhas");
+            const caronas = await api("/api/cliente/caronas");
             renderLista($("lista-caronas"), caronas, cardCarona, "Você ainda não criou nenhuma carona.", c => caronaSel = c);
         }
     } catch (e) {

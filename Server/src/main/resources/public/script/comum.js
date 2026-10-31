@@ -5,6 +5,7 @@ const sessao = {
     usuario: () => JSON.parse(localStorage.getItem("usuario") || "null")
 };
 let cidades = [];
+let cidadesPorID = new Map();
 
 // Cria elementos; strings viram texto (nunca HTML)
 function h(tag, cls, ...filhos) {
@@ -62,29 +63,61 @@ function aviso(msg, tipo = "info") {
     setTimeout(() => t.remove(), 4000);
 }
 
-async function carregarCidades() {
-    const bruto = await (await fetch("/data/cidades.json")).json();
-    cidades = bruto.map(c => ({
-        id: c.id,
-        nome: c.nome,
-        x: Number(c.posX),
-        y: Number(c.posY),
-        estradas: c.ligacoes ?? []
-    }));
 
-    console.log(cidades);
-}
-const cidade = id => cidades.find(c => c.id === id);
-const nomeCidade = id => {
-    try {
-        return cidade(id).nome;
-    } catch {
-        console.log(`Id = ${id}`);
-        return "#" + id;
+async function carregarCidades() {
+    if (cidades.length > 0) return;
+
+    const cache = sessionStorage.getItem("cidades_cache");
+
+    if (cache) {
+        cidades = JSON.parse(cache);
+        console.log("Cidades carregadas do cache local.");
+    } else {
+        const resposta = await fetch("/data/cidades.json");
+
+        if (!resposta.ok)
+            throw new Error(`Erro HTTP: ${resposta.status}`);
+
+        const bruto = await resposta.json();
+
+        cidades = bruto.map(c => {
+            const x = Number(c.x || 0);
+            const y = Number(c.y || 0);
+            const largura = Number(c.largura || 0);
+            const altura = Number(c.altura || 0);
+
+            return {
+                id: Number(c.id),
+                nome: c.nome,
+                x, y, largura, altura,
+                cx: x + largura / 2,
+                cy: y + altura / 2,
+                estradas: (c.conexoes ?? []).map(Number),
+                regiao: c.regiao ?? "Desconhecida"
+            };
+        });
+
+        sessionStorage.setItem("cidades_cache", JSON.stringify(cidades));
+        console.log("Cidades baixadas do servidor.");
     }
-};
+
+    // Normaliza os IDs e reconstrói o índice, inclusive com cache.
+    cidadesPorID.clear();
+
+    for (const c of cidades) {
+        c.id = Number(c.id);
+        c.estradas = (c.estradas ?? []).map(Number);
+        cidadesPorID.set(c.id, c);
+    }
+}
+
+const cidade = id => cidadesPorID.get(Number(id));
+const nomeCidade = id => cidade(id)?.nome ?? "#" + id;
+
+
+
 const fmtData = iso => new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
-const nMotoristas = passos => new Set(passos.map(p => p.idMotorista)).size;
+const nMotoristas = trechos => new Set(trechos.map(t => t.servidor)).size;
 const corStatus = s => ({ CONFIRMADA: "#2ecc71", EM_ANDAMENTO: "#2ecc71", CANCELADA: "#e74c3c", FINALIZADA: "#95a5a6" })[String(s).toUpperCase()] ?? "#f39c12";
 
 function lerTrecho(t) {
@@ -102,10 +135,10 @@ function selo(status) {
 }
 
 // Uma cor por passo; muda sempre que o motorista muda
-function coresDosPassos(passos) {
-    let i = 0, atual = passos[0]?.idMotorista;
-    return passos.map(p => {
-        if (p.idMotorista !== atual) { atual = p.idMotorista; i = (i + 1) % CORES.length; }
+function coresDosPassos(trechos) { // alterado de passos para trechos
+    let i = 0, atual = trechos[0]?.servidor; // alterado de idMotorista para servidor
+    return trechos.map(t => {
+        if (t.servidor !== atual) { atual = t.servidor; i = (i + 1) % CORES.length; }
         return CORES[i];
     });
 }
@@ -127,19 +160,47 @@ function renderLista(ul, itens, fazerCard, vazio, aoSelecionar) {
     }
 }
 
-// Trechos de um itinerário/reserva (usado nos diálogos)
-function corpoPassos(passos, ...extra) {
-    const n = nMotoristas(passos);
-    return h("div", "corpo", ...extra,
-        h("p", "", n <= 1 ? "Carona direta" : `Com baldeação — ${n} motoristas diferentes`),
-        h("h3", "", "Trechos do percurso"),
-        ...(passos.length
-            ? passos.map((p, i) => h("div", "caixa",
-                h("strong", "", `${i + 1}. ${nomeCidade(p.inicio)} → ${nomeCidade(p.fim)}`),
-                h("small", "", `Motorista: ${p.idMotorista}`),
-                h("small", "", `Carona: ${p.idCarona}`)))
-            : [h("p", "vazio", "Nenhum trecho cadastrado.")]));
+
+function nCaronas(trechos) {
+    return new Set(
+        trechos.map(t => `${t.servidor}/${t.id_carona}`)
+    ).size;
 }
+
+function corpoPassos(trechos, ...extra) {
+    const n = nCaronas(trechos);
+
+    return h("div", "corpo", ...extra,
+        h("p", "", n <= 1
+            ? "Percurso realizado por uma única carona."
+            : `Percurso com ${n} caronas e ${n - 1} baldeação(ões).`
+        ),
+
+        h("h3", "", "Trechos do percurso"),
+
+        ...(trechos.length
+                ? trechos.map((t, i) => h("div", "caixa",
+                    h("strong", "", `${i + 1}. ${[
+                        t.origem,
+                        ...(t.paradas_intermediarias ?? []),
+                        t.destino
+                    ].join(" → ")}`),
+
+                    h("small", "", `Partida: ${fmtData(t.horario)}`),
+
+                    h("small", "", `Preço: R$ ${Number(t.preco).toFixed(2)}`),
+
+                    h("small", "", `Assentos livres: ${t.assentos_livres}`),
+
+                    h("small", "", `Servidor: ${t.servidor}`),
+
+                    h("small", "", `ID da carona: ${t.id_carona}`)
+                ))
+                : [h("p", "vazio", "Nenhum trecho cadastrado.")]
+        )
+    );
+}
+
 
 // Diálogo modal; resolve true se o usuário clicar no botão de confirmação
 function dialogo(titulo, corpo, confirmar) {

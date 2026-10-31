@@ -19,7 +19,7 @@ body {
     margin: 0;
     background: var(--papel);
     color: var(--tinta);
-    font-family: var(--fonte);
+    font-family: var(--fonte), serif;
     line-height: 1.5
 }
 
@@ -333,14 +333,47 @@ dialog::backdrop {
 }
 
 #mundo {
-    position: absolute;
-    left: 0;
-    top: 0
+    transform-origin: center center; /* O zoom expande a partir do centro */
+    transition: scale 0.15s ease-out;
 }
 
 #mundo img {
     display: block;
     user-select: none
+}
+
+/* Estilização dos botões de zoom flutuantes */
+.controles-zoom {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    bottom: auto;
+    left: auto;
+}
+
+.controles-zoom button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: var(--cartao);
+    color: var(--tinta);
+    border: 2px solid var(--suave);
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: background 0.2s, transform 0.1s;
+}
+
+.controles-zoom button:hover {
+    background-color: var(--papel);
+}
+
+.controles-zoom button:active {
+    transform: scale(0.9);
 }
 
 #svg {

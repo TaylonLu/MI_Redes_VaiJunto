@@ -38,11 +38,26 @@ public class Rota {
 
     public boolean isContinua() {
         return IntStream.range(0, trechos.size() - 1)
-                .allMatch(i -> trechos.get(i).fim() == trechos.get(i + 1).inicio());
+                .allMatch(i -> trechos.get(i).destino() == trechos.get(i + 1).origem());
     }
 
     public List<Trecho> getTrechos() {
         return trechos;
     }
 
+    /*
+    * Trechos de [inicio] até [fim], seguidos, na ordem da rota.
+    * Vazio se esse intervalo não existe nessa rota.
+    */
+    public List<Trecho> subRota(int inicio, int fim) {
+        int i = -1, j = -1;
+        for (int k = 0; k < trechos.size(); k++) {
+            if (i < 0 && trechos.get(k).origem() == inicio) i = k;
+            if (i >= 0 && trechos.get(k).destino() == fim) { j = k; break; }
+        }
+
+        return (i < 0 || j < i)
+                ? List.of()
+                : List.copyOf(trechos.subList(i, j+1));
+    }
 }

@@ -3,7 +3,21 @@ const $ = id => document.getElementById(id);
 const modo = new URLSearchParams(location.search).get("modo") === "criacao" ? "criacao" : "busca";
 const NS = "http://www.w3.org/2000/svg";
 const nos = new Map();   // id da cidade -> <g>
+const usuario = JSON.parse(localStorage.getItem("usuario"));
 let anterior = null, rota = [], origem = null, destino = null, itinerarios = [], itinSel = null;
+let cidadesServidor = new Set();
+
+async function carregarCidadesServidor() {
+    const resposta = await api("/api/servidor/cidades");
+
+    cidadesServidor = new Set(
+        resposta.map(c => Number(typeof c === "object" ? c.id : c))
+    );
+}
+
+function cidadePertenceAoServidor(id) {
+    return cidadesServidor.has(Number(id));
+}
 
 $("painel-" + modo).hidden = false;
 
@@ -15,22 +29,36 @@ function svgEl(tag, attrs, cls) {
 }
 
 const linha = (a, b, cor, larg) =>
-    $("rotas").append(svgEl("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: cor, "stroke-width": larg }));
+    $("rotas").append(svgEl("line", { x1: a.cx, y1: a.cy, x2: b.cx, y2: b.cy, stroke: cor, "stroke-width": larg }));
 
 // ---------- Mapa ----------
 function desenharMapa() {
+    const estradasSvg = $("estradas");
+    const cidadesSvg = $("cidades");
+
     for (const a of cidades) {
         for (const idV of a.estradas) {
             const b = cidade(idV);
-            if (b && a.id < b.id) $("estradas").append(svgEl("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y }, "estrada"));
+            if (b && a.id < b.id) {
+                estradasSvg.append(svgEl("line", { x1: a.cx, y1: a.cy, x2: b.cx, y2: b.cy }, "estrada"));
+            }
         }
-        const g = svgEl("g", {}, "cidade");
-        const texto = svgEl("text", { x: a.x + 15, y: a.y + 5 });
+
+        const classeRegiao = "regiao-" + a.regiao.toLowerCase().replace(/\s+/g, "-");
+        const g = svgEl("g", {}, `cidade ${classeRegiao}`);
+        g.dataset.regiao = a.regiao;
+
+        const halo = svgEl("circle", { cx: a.cx, cy: a.cy, r: 22 }, "halo");
+        const ponto = svgEl("circle", { cx: a.cx, cy: a.cy, r: 9 }, "ponto");
+
+        const texto = svgEl("text", { x: a.cx + 18, y: a.cy + 5 });
         texto.textContent = a.nome;
-        g.append(svgEl("circle", { cx: a.x, cy: a.y, r: 10 }), texto);
+
+        g.append(halo, ponto, texto);
         g.addEventListener("click", () => { if (!arrastou) clicou(a); });
+
         nos.set(a.id, g);
-        $("cidades").append(g);
+        cidadesSvg.append(g);
     }
 }
 
@@ -58,6 +86,10 @@ function limparMapa() {
 function clicou(c) {
     const g = nos.get(c.id);
     if (modo === "criacao") {
+        if (!cidadePertenceAoServidor(c.id)) {
+            aviso("Essa cidade não pertence ao seu servidor.", "erro");
+            return;
+        }
         if (anterior) {
             if (!(anterior.estradas.includes(c.id) || c.estradas.includes(anterior.id)))
                 return aviso(`Não há estrada direta entre ${anterior.nome} e ${c.nome}`, "erro");
@@ -94,25 +126,35 @@ $("fechar-popup").onclick = () => $("popup").close();
 $("form-carona").onsubmit = async e => {
     e.preventDefault();
     const f = new FormData(e.target);
-    const dataHora = `${f.get("data")}T${f.get("hora")}`;
-    if (new Date(dataHora) < new Date()) return aviso("A data e hora de partida não pode estar no passado.", "erro");
 
-    // Ajuste os nomes das chaves aos componentes do seu NovaCaronaRequest
-    const corpo = {
-        idMotorista: sessao.usuario().id,
-        vagas: Number(f.get("vagas")),
+    const dataHora = `${f.get("data")}T${f.get("hora")}:00`;
+    if (new Date(dataHora) < new Date())
+        return aviso("A data e hora de partida não pode estar no passado.", "erro");
+
+    const precoPorTrecho = Number(f.get("valor"));
+    const assentosPorTrecho = Number(f.get("vagas"));
+
+    const payload = {
+        idMotorista: usuario.id,
         valorPorTrecho: Number(f.get("valor")),
-        dataPartida: dataHora + ":00",
-        trechos: rota
+        vagas: Number(f.get("vagas")),
+        dataPartida: dataHora,
+        trechos: rota.map(passo => {
+            return {
+                origem: passo.inicio,
+                destino: passo.fim
+            };
+        })
     };
+
     try {
-        await api("/api/caronas", "POST", corpo);
+        await api("/api/cliente/caronas", "POST", payload);
         aviso("Carona publicada com sucesso!", "sucesso");
         setTimeout(() => location.href = PRINCIPAL, 1000);
     } catch (err) {
         aviso(err.message, "erro");
     }
-};
+}
 
 // ---------- Modo: busca ----------
 function limparBusca() {
@@ -129,16 +171,33 @@ $("limpar-busca").onclick = limparBusca;
 
 function desenharItinerario(it) {
     $("rotas").replaceChildren();
-    const cores = coresDosPassos(it.passos);
-    it.passos.forEach((p, i) => {
-        const a = cidade(p.inicio), b = cidade(p.fim);
-        if (a && b) linha(a, b, cores[i], 7);
+
+    const trechos = it.trechos || [];
+    const cores = coresDosPassos(trechos);
+
+    trechos.forEach((p, i) => {
+        const percurso = [
+            p.origem,
+            ...(p.paradas_intermediarias ?? []),
+            p.destino
+        ];
+
+        for (let j = 0; j < percurso.length - 1; j++) {
+            const cOrigem = cidades.find(c => c.nome === percurso[j]);
+            const cDestino = cidades.find(c => c.nome === percurso[j + 1]);
+
+            if (cOrigem && cDestino) {
+                linha(cOrigem, cDestino, cores[i], 7);
+            }
+        }
     });
 }
 
 const cardItinerario = it => {
-    const n = nMotoristas(it.passos), t = it.passos.length;
-    return h("li", "card", h("strong", "", n <= 1 ? `Carona Direta (${t} trechos)` : `Baldeação: ${n} carros (${t} trechos)`));
+    const trechos = it.trechos || [];
+    const n  = nCaronas(trechos), t = trechos.length; // alterado de passos para trechos
+    const preco = it.preco_total ? ` - $${it.preco_total.toFixed(2)}` : "";
+    return h("li", "card", h("strong", "", n <= 1 ? `Carona Direta (${t} trechos)${preco}` : `Baldeação: ${n} carros (${t} trechos)${preco}`));
 };
 
 $("buscar").onclick = async () => {
@@ -149,12 +208,15 @@ $("buscar").onclick = async () => {
     itinSel = null;
     $("ver-detalhes").hidden = true;
     try {
+        const paramOrigem = encodeURIComponent(origem.nome);
+        const paramDestino = encodeURIComponent(destino.nome);
+        const resultadoBusca = await api(`/api/cliente/itinerarios?origem=${paramOrigem}&destino=${paramDestino}`, "GET");
         // Ajuste os nomes das chaves aos componentes do seu BuscaCaronaRequest
-        itinerarios = await api("/api/itinerarios/busca", "POST",
-            { origemDesejada: origem.id, destinoDesejado: destino.id, vagasRequeridas: vagas, data_desejada: data + "T00:00:00" });
+        itinerarios = resultadoBusca?.itinerarios || [];
     } catch (err) {
         return aviso("Erro na busca: " + err.message, "erro");
     }
+
     $("rotas").replaceChildren();
     renderLista($("resultados"), itinerarios, cardItinerario, "", it => {
         itinSel = it;
@@ -168,14 +230,43 @@ $("buscar").onclick = async () => {
 
 $("ver-detalhes").onclick = async () => {
     if (!itinSel) return aviso("Selecione uma rota na lista primeiro.", "aviso");
-    const ok = await dialogo("Resumo do itinerário", corpoPassos(itinSel.passos), "Confirmar participação");
+    const ok = await dialogo("Resumo do itinerário", corpoPassos(itinSel.trechos), "Confirmar participação");
     if (ok) reservar(itinSel);
 };
 
 async function reservar(it) {
     $("carregando").hidden = false;
     try {
-        await api("/api/reservas", "POST", it);
+        const trechosConsolidados = (it.trechos || []).map(t => {
+            const idOrigem = cidades.find(c => c.nome === t.origem)?.id;
+            const idDestino = cidades.find(c => c.nome === t.destino)?.id;
+
+            return {
+                servidor: t.servidor,
+                idCaronaBase: t.id_carona,
+                inicio: idOrigem,
+                fim: idDestino
+            };
+        });
+
+        const meuServidor = window.location.host;
+
+        trechosConsolidados.sort((a, b) => {
+           if (a.servidor === meuServidor && b.servidor !== meuServidor) return -1;
+           if (a.servidor !== meuServidor && b.servidor === meuServidor) return 1;
+           return 0;
+        });
+
+        // 2. Montar o payload final com o ID da perna consolidado
+        const corpo = {
+            trechos_solicitados: trechosConsolidados.map(tc => ({
+                servidor: tc.servidor,
+                // Monta o identificador exato da perna que o Java espera descodificar
+                id_carona: `${tc.idCaronaBase}_${tc.inicio}_${tc.fim}`
+            }))
+        };
+
+        await api("/api/cliente/reservas", "POST", corpo);
         aviso("Reserva confirmada com sucesso!", "sucesso");
         setTimeout(() => location.href = PRINCIPAL, 1200);
     } catch (err) {
@@ -186,15 +277,62 @@ async function reservar(it) {
     }
 }
 
+// ==========================================
+// LÓGICA DE ZOOM DO MAPA
+// ==========================================
+let zoomAtual = 1;
+const ZOOM_MIN = 0.4; // Limite máximo de afastamento (zoom out)
+const ZOOM_MAX = 3.5; // Limite máximo de aproximação (zoom in)
+const ZOOM_PASSO = 0.15; // Velocidade do zoom
+
+function aplicarZoom(novoZoom) {
+    // Garante que o zoom não passa dos limites definidos
+    zoomAtual = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, novoZoom));
+
+    // A propriedade 'scale' isolada não quebra o 'transform: translate' caso arraste o mapa
+    const mundo = $("mundo");
+    if (mundo) {
+        mundo.style.scale = zoomAtual;
+    }
+
+    mundo.style.setProperty("--zoom", zoomAtual);
+}
+
+// 1. Zoom usando a roda do rato (Scroll)
+const areaMapa = $("mapa");
+if (areaMapa) {
+    areaMapa.addEventListener("wheel", (e) => {
+        e.preventDefault(); // Impede que a página role para baixo
+
+        // Se o deltaY for negativo (scroll para cima), aproxima. Caso contrário, afasta.
+        const direcao = e.deltaY < 0 ? 1 : -1;
+        aplicarZoom(zoomAtual + (ZOOM_PASSO * direcao));
+    }, { passive: false }); // 'passive: false' é obrigatório para usar preventDefault no wheel
+}
+
+// 2. Zoom usando os botões visuais
+const btnZoomIn = $("btn-zoom-in");
+const btnZoomOut = $("btn-zoom-out");
+
+if (btnZoomIn && btnZoomOut) {
+    btnZoomIn.addEventListener("click", () => aplicarZoom(zoomAtual + ZOOM_PASSO));
+    btnZoomOut.addEventListener("click", () => aplicarZoom(zoomAtual - ZOOM_PASSO));
+}
+
 // ---------- Inicialização ----------
 (async () => {
-    try { await carregarCidades(); }
+    if (!$("estradas") || !$("cidades")) return;
+    try {
+        await carregarCidades();
+        if (modo === "criacao")
+                await carregarCidadesServidor();
+    }
     catch { return aviso("Não foi possível carregar as cidades.", "erro"); }
 
     const img = $("img");
     if (!img.complete) await new Promise(r => { img.onload = img.onerror = r; });
-    const w = img.naturalWidth || Math.max(...cidades.map(c => c.x)) + 80;
-    const alt = img.naturalHeight || Math.max(...cidades.map(c => c.y)) + 80;
+    const w = img.naturalWidth || Math.max(...cidades.map(c => c.x + c.largura));
+    const alt = img.naturalHeight  || Math.max(...cidades.map(c => c.y + c.altura));
     $("svg").setAttribute("width", w);
     $("svg").setAttribute("height", alt);
     desenharMapa();

@@ -1,0 +1,3 @@
+package org.UEFS.Server.domain.reservas;
+
+public enum EstadoTransacao { PREPARADO, COMITADO, CANCELANDO, CANCELADO_PELO_MOTORISTA, CANCELADO_PELO_PASSAGEIRO }

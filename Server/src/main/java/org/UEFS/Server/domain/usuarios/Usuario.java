@@ -3,6 +3,7 @@ package org.UEFS.Server.domain.usuarios;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.UEFS.Server.http.relogio.ServerConstant;
 import org.UEFS.shared.dto.OtherUserDTO;
 import org.UEFS.shared.dto.SelfUserDTO;
 import org.UEFS.Server.domain.interfaces.Identificavel;
@@ -10,7 +11,7 @@ import org.UEFS.Server.domain.interfaces.Identificavel;
 import java.util.UUID;
 
 public class Usuario implements Identificavel {
-    private static String ID_BASE = "user_";
+    private static String ID_BASE = "-user-";
 
     private final String senha;
     private final String email;
@@ -22,7 +23,7 @@ public class Usuario implements Identificavel {
         this.senha = senha;
         this.email = email;
         this.nome = nome;
-        this.ID = ID_BASE + UUID.randomUUID();
+        this.ID = ServerConstant.getRegiao() + ID_BASE + UUID.randomUUID();
     }
 
     public Usuario(String id, String email, String senha, String nome) {

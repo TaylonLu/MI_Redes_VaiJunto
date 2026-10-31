@@ -2,6 +2,7 @@ package org.UEFS.Server.domain.usuarios;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.UEFS.Server.domain.interfaces.DataRepo;
+import org.UEFS.Server.http.relogio.ServerConstant;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,7 +11,10 @@ public class UserRepo extends DataRepo<Usuario> {
     private final Map<String, Usuario> emailIdx = new ConcurrentHashMap<>();
 
     public UserRepo() {
-        super("data/usuarios.json", new TypeReference<Map<String, Usuario>>() {});
+        super(
+                "data/"+ ServerConstant.getPorta() +"/usuarios.json",
+                new TypeReference<Map<String, Usuario>>() {}
+        );
         for (Usuario usuario : this.dados.values()) {
             this.emailIdx.put(usuario.getEmail(), usuario);
         }

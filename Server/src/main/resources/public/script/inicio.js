@@ -42,7 +42,7 @@ async function efetuarLogin() {
     };
 
     try {
-        const resposta = await enviarJson("/api/login", dadosLogin);
+        const resposta = await enviarJson("/api/cliente/login", dadosLogin);
         if (!resposta?.token) throw new Error("Resposta do servidor sem token.");
 
         localStorage.setItem("userToken", resposta.token);
@@ -67,11 +67,11 @@ async function efetuarCadastro() {
     }
 
     try {
-        const resposta = await enviarJson("/api/cadastro", dadosCadastro);
+        const resposta = await enviarJson("/api/cliente/cadastro", dadosCadastro);
         if (!resposta?.token) throw new Error("Resposta do servidor sem token.");
 
         localStorage.setItem("userToken", resposta.token);
-        localStorage.setItem("usuario", resposta.usuario);
+        localStorage.setItem("usuario", JSON.stringify(resposta.usuario));
         window.location.href = "/";
     } catch (erro) {
         console.log("Aconteceu um erro: " + erro.message);

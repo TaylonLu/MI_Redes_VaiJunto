@@ -5,6 +5,8 @@ import org.UEFS.Server.controller.ControllerService;
 import org.UEFS.Server.domain.caronas.Carona;
 import org.UEFS.shared.FileManager;
 import org.UEFS.Server.util.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -12,6 +14,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class DataRepo<T extends Identificavel> {
+    private static final Logger log = LoggerFactory.getLogger(DataRepo.class);
     protected final Map<String, T> dados = new ConcurrentHashMap<>();
     protected final String caminho_arquivo;
 
@@ -25,9 +28,9 @@ public abstract class DataRepo<T extends Identificavel> {
                     .carregarObjetos(caminho, typeReference);
             if (dados != null && !dados.isEmpty()) this.dados.putAll(dados);
         } catch (FileNotFoundException e){
-            IOUtils.fprintf("[:red]ERRO: arquivo %s não encontrado.\n",  caminho);
+            log.info("[DATA] Arquivo '{}' ainda não existe. Será criado ao salvar algum dado.", caminho_arquivo);
         } catch (IOException e) {
-            System.err.println("Nenhum dado foi carregado.\n"+ e);
+            log.info("[DATA] Nenhum dado foi carregado.", e);
         }
     }
 
@@ -58,14 +61,16 @@ public abstract class DataRepo<T extends Identificavel> {
         return new ArrayList<>(dados.values());
     }
 
-    public void salvarNoDisco() {
+    public boolean salvarNoDisco() {
         synchronized (DISK_LOCK) {
             try {
                 ControllerService.getInstance()
                         .get(FileManager.class)
                         .salvarObjetos(caminho_arquivo, dados);
+                return true;
             } catch (IOException e) {
-                System.err.println("Erro ao persistir dados no arquivo:" + e.getMessage());
+                log.error("[DATA] !! Erro ao persistir dados no arquivo: {}", caminho_arquivo, e);
+                return false;
             }
         }
     }

@@ -4,74 +4,40 @@ else
 	OS_TYPE := linux
 endif
 
-DK := docker compose
+# Ignora o compose.$(OS_TYPE).yaml se ele não existir mais
+COMPOSE := docker compose -f compose.yaml
 
-COMPOSE := $(DK) \
-	-f compose.yaml \
-	-f compose.$(OS_TYPE).yaml
+.PHONY: up build down logs clean compile
+.PHONY: unova kalos johto kanto
 
-.PHONY: up build up-build down restart logs clean clean-install compile
-.PHONY: server server-build server-rebuild
-.PHONY: client client-build client-rebuild
-.PHONY: docker-start docker-status
-
-# PROJETO COMPLETO
-
+# REDE COMPLETA (Sobe todos os servidores P2P juntos)
 up:
 	$(COMPOSE) up
 
 build:
 	$(COMPOSE) build
 
-compile:
-	$(COMPOSE) run --rm server mvn clean package
-
-up-build:
-	$(COMPOSE) up --build
-
 down:
 	$(COMPOSE) down
 
-restart:
-	$(COMPOSE) down
-	$(COMPOSE) up --build
-
-rebuild:
-	$(COMPOSE) build --no-cache
-
 logs:
-	$(COMPOSE) logs -f server
+	$(COMPOSE) logs -f
 
 clean:
-	$(COMPOSE) run --rm server mvn clean
-clean-install:
-	$(COMPOSE) run --rm server mvn clean install
+	$(COMPOSE) run --rm unova mvn clean
 
-# SERVIDOR
+compile:
+	$(COMPOSE) run --rm unova mvn clean package -DskipTests
 
-server:
-	$(COMPOSE) up server
+# ATALHOS PARA NÓS INDIVIDUAIS
+unova:
+	$(COMPOSE) up unova
 
-server-build:
-	$(COMPOSE) up --build server
+kalos:
+	$(COMPOSE) up kalos
 
-server-rebuild:
-	$(COMPOSE) build server --no-cache
+johto:
+	$(COMPOSE) up johto
 
-
-# CLIENTE
-
-client:
-	$(COMPOSE) up client
-
-client-build:
-	$(COMPOSE) up --build client
-
-client-rebuild:
-	$(COMPOSE) build client --no-cache
-
-docker-start:
-	sudo systemctl start docker
-
-docker-status:
-	sudo systemctl status docker
+kanto:
+	$(COMPOSE) up kanto

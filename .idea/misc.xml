@@ -10,6 +10,12 @@
         <option value="$PROJECT_DIR$/pom.xml" />
       </list>
     </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/Client/pom.xml" />
+        <option value="$PROJECT_DIR$/Custom/pom.xml" />
+      </set>
+    </option>
   </component>
   <component name="PrintToLogpointModuleInspectionState">
     <option name="disabledModuleNames">

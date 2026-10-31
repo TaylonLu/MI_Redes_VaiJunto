@@ -13,34 +13,19 @@
         <maven.compiler.source>24</maven.compiler.source>
         <maven.compiler.target>24</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <javafx.version>26</javafx.version>
-        <javafx-fxml.version>26</javafx-fxml.version>
         <jackson.version>2.22.3</jackson.version>
         <junit.version>5.10.2</junit.version>
-
-        <javalin.version>7.2.3</javalin.version>
-        <slf4j-simple.version>2.0.13</slf4j-simple.version>
+        <mockito.version>5.11.0</mockito.version>
+        <javalin.version>7.2.4</javalin.version>
     </properties>
 
     <modules>
         <module>Shared</module>
         <module>Server</module>
-        <module>Custom</module>
-        <module>Client</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-controls</artifactId>
-                <version>${javafx.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-fxml</artifactId>
-                <version>${javafx-fxml.version}</version>
-            </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
@@ -52,16 +37,10 @@
                 <version>${jackson.version}</version>
             </dependency>
 
-            <!-- Http -->
             <dependency>
                 <groupId>io.javalin</groupId>
                 <artifactId>javalin</artifactId>
                 <version>${javalin.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-simple</artifactId>
-                <version>${slf4j-simple.version}</version>
             </dependency>
 
             <!-- Testes -->
@@ -128,13 +107,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>-XX:+EnableDynamicAgentLoading -Dnet.bytebuddy.experimental=true</argLine>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <configuration>
-                    <mainClass>org.UEFS.vaiJunto.Main</mainClass>
                 </configuration>
             </plugin>
         </plugins>

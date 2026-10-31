@@ -1,31 +1,59 @@
 services:
-  server:
+  unova:
     build:
       context: .
-      dockerfile: Docker/Server/Dockerfile
-    container_name: vai-junto-server
-    init: true
-    stop_grace_period: 30s
+      dockerfile: Dockerfile
+    container_name: vai-junto-unova
     ports:
       - "2602:2602"
-    tty: true
+    environment:
+      - MAVEN_OPTS=-Dserver.regiao=Unova -Dserver.port=2602
     volumes:
       - .:/app
       - ./data:/app/data
       - maven-cache:/root/.m2
 
-  client:
+  kalos:
     build:
       context: .
-      dockerfile: Docker/Client/Dockerfile
-    container_name: vai-junto-client
+      dockerfile: Dockerfile
+    container_name: vai-junto-kalos
+    ports:
+      - "2603:2603"
+    environment:
+      - MAVEN_OPTS=-Dserver.regiao=Kalos -Dserver.port=2603
     volumes:
       - .:/app
       - ./data:/app/data
       - maven-cache:/root/.m2
+
+  johto:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vai-junto-johto
+    ports:
+      - "2604:2604"
     environment:
-      SERVER_IP: "192.168.0.100"
-      SERVER_PORT: "2602"
+      - MAVEN_OPTS=-Dserver.regiao=Johto -Dserver.port=2604
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - maven-cache:/root/.m2
+
+  kanto:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vai-junto-kanto
+    ports:
+      - "2605:2605"
+    environment:
+      - MAVEN_OPTS=-Dserver.regiao=Kanto -Dserver.port=2605
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - maven-cache:/root/.m2
 
 volumes:
   maven-cache:

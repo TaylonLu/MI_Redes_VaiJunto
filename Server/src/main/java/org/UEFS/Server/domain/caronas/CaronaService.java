@@ -1,25 +1,28 @@
 package org.UEFS.Server.domain.caronas;
 
-import org.UEFS.Server.domain.reservas.Reserva;
-import org.UEFS.Server.domain.reservas.ReservaRepo;
+import io.javalin.http.NotFoundResponse;
+import org.UEFS.Server.domain.interfaces.CaronaListener;
+import org.UEFS.Server.exceptions.ForbiddenException;
 import org.UEFS.shared.dto.requests.BuscaCaronaRequest;
 import org.UEFS.shared.dto.ItinerarioDTO;
 import org.UEFS.shared.dto.PassoItinerarioDTO;
 import org.UEFS.shared.dto.Trecho;
 import org.UEFS.shared.enums.StatusCarona;
-import org.UEFS.shared.enums.StatusReserva;
 
 import java.util.*;
 
 public class CaronaService {
     private final CaronaRepo caronaRepo;
-    private final ReservaRepo reservaRepo;
+    private final List<CaronaListener> listeners = new ArrayList<>();
 
     private static final int MAX_ITINERARIOS = 5;
 
-    public CaronaService(CaronaRepo repositorio, ReservaRepo reservaRepo) {
+    public CaronaService(CaronaRepo repositorio) {
         this.caronaRepo = repositorio;
-        this.reservaRepo = reservaRepo;
+    }
+
+    public void adicionarListener(CaronaListener listener) {
+        this.listeners.add(listener);
     }
 
     public List<ItinerarioDTO> toItinerariosDTO(List<List<ArestaTrecho>> caminhosDoGrafo) {
@@ -27,7 +30,7 @@ public class CaronaService {
                 .map(C -> {
                     List<PassoItinerarioDTO> passos = C.stream()
                             .map(aresta -> new PassoItinerarioDTO(
-                                    aresta.trecho().inicio(), aresta.trecho().fim(),
+                                    aresta.trecho().origem(), aresta.trecho().destino(),
                                     aresta.carona().getId(), aresta.carona().getId_motorista()
                             ))
                             .toList();
@@ -90,7 +93,7 @@ public class CaronaService {
         Set<Integer> cidades = new HashSet<>();
         cidades.add(origem);
         for (ArestaTrecho aresta : caminho) {
-            cidades.add(aresta.trecho().inicio());
+            cidades.add(aresta.trecho().origem());
             cidades.add(aresta.destino());
         }
         return cidades;
@@ -106,43 +109,8 @@ public class CaronaService {
             for (Trecho T : carona.getRota().getTrechos()) {
                 if (carona.vagas(T) < busca.vagasRequeridas()) continue;
 
-                grafo.computeIfAbsent(T.inicio(), _ -> new ArrayList<>())
-                        .add(new ArestaTrecho(T.fim(), carona, T));
-            }
-        }
-    }
-
-    public synchronized boolean confirmarReservaAtomica(String idPassageiro, List<ArestaTrecho> itinerarioEscolhido, ItinerarioDTO itinerarioDTO) {
-        for (ArestaTrecho aresta : itinerarioEscolhido) {
-            if (aresta.carona().getStatus() != StatusCarona.AGENDADA || aresta.carona().semVaga(aresta.trecho()))
-                return false;
-        }
-
-        for (ArestaTrecho aresta : itinerarioEscolhido) {
-            boolean sucesso = aresta.carona().addPassageiro(idPassageiro, List.of(aresta.trecho()));
-            if (!sucesso) return false;
-        }
-
-        reservaRepo.salvar(new Reserva(idPassageiro, itinerarioDTO));
-
-        return true;
-    }
-
-    public synchronized void cancelarCaronaEItinerarios(Carona caronaCancelada) {
-        caronaCancelada.setStatus(StatusCarona.CANCELADA);
-
-        List<Reserva> reservasAfetadas = reservaRepo.getDadosList().stream()
-                .filter(R -> R.getStatus() == StatusReserva.ATIVA && R.contemCarona(caronaCancelada.getId()))
-                .toList();
-
-        for (Reserva reserva : reservasAfetadas) {
-            reserva.setStatus(StatusReserva.CANCELADA);
-
-            for (var passo : reserva.getItinerario().passos()) {
-                if (passo.idCarona().equals(caronaCancelada.getId())) continue;
-                Carona caronaConectada = caronaRepo.getByID(passo.idCarona());
-                if (caronaConectada != null)
-                    caronaConectada.removerPassageiro(reserva.getIdPassageiro());
+                grafo.computeIfAbsent(T.origem(), _ -> new ArrayList<>())
+                        .add(new ArestaTrecho(T.destino(), carona, T));
             }
         }
     }
@@ -155,7 +123,7 @@ public class CaronaService {
         boolean temVagas = true;
 
         for (Trecho T : trechosCarona) {
-            if (T.inicio() == busca.origemDesejada()) achouOrigem = true;
+            if (T.origem() == busca.origemDesejada()) achouOrigem = true;
 
             if (achouOrigem && carona.semVaga(T)) {
                 int vagasDisponiveis = carona.vagas(T);
@@ -166,7 +134,7 @@ public class CaronaService {
                 }
             }
 
-            if (achouOrigem && T.fim() == busca.destinoDesejado()) {
+            if (achouOrigem && T.destino() == busca.destinoDesejado()) {
                 chegouDestino = true;
                 break;
             }
@@ -175,7 +143,20 @@ public class CaronaService {
         return achouOrigem && chegouDestino && temVagas;
     }
 
-    public ReservaRepo getReservaRepo() {
-        return reservaRepo;
+    public void cancelarCaronaETransacoes(String idCarona, String idMotorista) {
+        Carona carona = caronaRepo.getByID(idCarona);
+
+        if (carona == null) throw new NotFoundResponse("Carona não encontrada.");
+        if (!carona.getId_motorista().equalsIgnoreCase(idMotorista))
+            throw new ForbiddenException("Você só pode cancelar suas próprias caronas.");
+
+        carona.setStatus(StatusCarona.CANCELADA);
+        caronaRepo.salvarNoDisco();
+
+        listeners.forEach(L -> L.aoCancelarCarona(idCarona));
+    }
+
+    public void sincronizarPorCarona(String id) {
+        listeners.forEach(L -> L.aoSincronizar(id));
     }
 }

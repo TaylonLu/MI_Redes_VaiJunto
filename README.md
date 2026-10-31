@@ -1,180 +1,757 @@
-# Sistema VaiJunto — Plataforma de Caronas Universitárias
+# VaiJunto: Consórcio de Caronas P2P (Versão Java)
 
-![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)
-![Maven](https://img.shields.io/badge/Maven-C71A36?style=for-the-badge&logo=apache-maven&logoColor=white)
-![JavaFX](https://img.shields.io/badge/JavaFX-FF0000?style=for-the-badge&logo=java&logoColor=white)
+Servidor P2P desenvolvido em **Java com Javalin** para o consórcio de caronas compartilhadas (Problema 2).
 
-## Visão Geral e Contexto Acadêmico
+Cada servidor representa uma rede de trânsito regional (Kanto, Johto, Hoenn etc.), mantém seus próprios dados em disco e comunica-se exclusivamente com servidores vizinhos de fronteira por meio de uma API REST HTTP.
 
-O **VaiJunto** é um sistema distribuído de compartilhamento de caronas universitárias, desenvolvido com foco na aplicação prática de redes de computadores, sistemas distribuídos e programação concorrente. O desafio arquitetural central do projeto é a proibição do uso de Sistemas de Gerenciamento de Banco de Dados (SGBDs) externos e de frameworks de comunicação remota (RPC/Spring).
+A arquitetura não possui servidor central, coordenador fixo ou banco de dados compartilhado. Cada nó é responsável pelos dados de sua região e participa das operações distribuídas quando necessário.
 
-Toda a comunicação é baseada em **Sockets TCP/IP puros**, com protocolo de transporte customizado e serialização via JSON. O controle de concorrência (evitando *overbooking*) é feito inteiramente em memória RAM, utilizando estruturas de sincronização avançadas do Java. O sistema também permite a combinação automática de trechos de múltiplos motoristas (baldeações), usando algoritmos de Teoria dos Grafos.
+> **Estado atual:** busca distribuída de itinerários, reserva distribuída utilizando Two-Phase Commit (2PC) encadeado, ordenação de requisições por Relógio Lógico de Lamport, recuperação de estado por meio de Push assíncrono e Lazy Check (Pull sob demanda), cancelamento de viagens e persistência em disco.
 
----
+## Sumário
 
-## Requisitos e Perfis de Usuário
-
-O sistema atende a dois perfis principais de usuários.
-
-### Cliente Motorista
-
-- **Autenticação:** login seguro no sistema via Socket.
-- **Publicar carona:** cadastro de rotas contínuas (origem e destinos intermediários), data, horário, número de assentos e valor por trecho.
-- **Consultar publicações:** listagem das caronas oferecidas pelo motorista.
-- **Visualizar ocupação:** inspeção da lista de passageiros confirmados, segmentada por trecho da viagem.
-- **Cancelamento:** desativação de uma carona, alterando o status e liberando recursos (*soft delete*).
-
-### Cliente Passageiro
-
-- **Autenticação:** acesso à plataforma.
-- **Busca de itinerários:** informar origem, destino e data; o servidor calcula rotas diretas ou combinadas (baldeação entre carros diferentes).
-- **Reserva atômica:** confirmação de assentos em um itinerário, respeitando o princípio atômico (tudo ou nada) em todos os trechos envolvidos.
-- **Painel de reservas:** consulta ao histórico e status das reservas ativas.
-- **Cancelamento:** desistência da vaga, devolvendo o assento à disponibilidade global.
+1. [Requisitos e Execução](#1-requisitos-e-execução)
+2. [Como Rodar o Projeto](#2-como-rodar-o-projeto)
+3. [Topologia da Rede](#3-topologia-da-rede)
+4. [Estrutura do Projeto](#4-estrutura-do-projeto)
+5. [Modelo de Dados](#5-modelo-de-dados)
+6. [API do Cliente](#6-api-do-cliente-passageiros-e-motoristas)
+7. [API do Consórcio](#7-api-do-consórcio-servidor-para-servidor)
+8. [Arquitetura de Tolerância a Falhas](#8-arquitetura-de-tolerância-a-falhas)
+9. [Diagramas de Sequência](#9-diagramas-de-sequência)
+10. [Decisões Arquiteturais](#10-decisões-arquiteturais-relatório)
 
 ---
 
-## Fundamentação Teórica
+## 1. Requisitos e Execução
 
-1. **Redes e comunicação TCP/IP** — o sistema opera via Sockets TCP, garantindo entrega ordenada, íntegra e sem perdas de pacotes. O servidor orquestra as conexões em um `ExecutorService` (thread pool), isolando os fluxos: se um cliente cair abruptamente (`SocketException`), o servidor principal continua rodando normalmente, sem corromper transações.
-2. **Concorrência e transações atômicas** — na ausência de bancos relacionais, o risco de condição de corrida (*race condition*) ao reservar a mesma vaga é tratado com locks, blocos `synchronized` e validação em duas fases. A transação só debita a vaga se todos os trechos do percurso tiverem disponibilidade no momento exato da efetivação. Coleções thread-safe (`ConcurrentHashMap`, `CopyOnWriteArrayList`) garantem leitura isolada por outras threads em tempo real.
-3. **Teoria dos grafos** — a malha viária é modelada como um grafo direcionado, no qual os vértices representam cidades e as arestas equivalem aos trechos de carona publicados.
+- **Java 24:** versão utilizada no desenvolvimento e na compilação do projeto.
+- **Maven:** gerenciamento de dependências e compilação.
+- **Docker e Docker Compose:** execução isolada dos servidores e configuração da rede P2P.
+- **Dependências principais:**
+   - **Javalin:** implementação da API HTTP.
+   - **Jackson:** serialização e desserialização JSON.
+   - **SLF4J:** abstração para registro de logs.
+
+O projeto utiliza Maven para gerenciar seus módulos e dependências. Cada servidor pode ser executado independentemente, recebendo sua região e porta de inicialização por configuração.
+
+## 2. Como Rodar o Projeto
+
+O projeto pode ser executado de duas formas: utilizando Docker, para isolamento dos processos e facilidade de configuração da rede, ou diretamente na máquina local.
+
+### Opção 1: Com Docker (Recomendado)
+
+A execução com Docker utiliza a rede interna definida em `compose.yaml`, na qual cada região é executada em seu próprio contêiner. As dependências do Maven são gerenciadas em cache, e os comandos de execução estão disponíveis no `Makefile`.
+
+**Para gerenciar toda a rede:**
+
+| Comando        | Descrição                                                                                                          |
+|----------------|--------------------------------------------------------------------------------------------------------------------|
+| `make build`   | Reconstrói as imagens dos servidores.                                                                              |
+| `make up`      | Inicia os quatro servidores do consórcio em segundo plano.                                                         |
+| `make down`    | Encerra e remove os contêineres e a rede P2P.                                                                      |
+| `make compile` | Compila e empacota o projeto utilizando um contêiner temporário, refletindo os artefatos na pasta `target/` local. |
+
+Os quatro servidores são:
+
+- Unova
+- Kalos
+- Johto
+- Kanto
+
+**Para executar servidores individualmente:**
+
+É possível abrir quatro terminais e iniciar cada servidor separadamente, permitindo acompanhar os logs e simular falhas de maneira independente.
+
+```bash
+make unova  # Terminal 1
+make kalos  # Terminal 2
+make johto  # Terminal 3
+make kanto  # Terminal 4
+```
+
+Essa abordagem é útil para testar a comunicação entre nós e observar o comportamento da rede quando um servidor é interrompido.
+
+Para simular uma queda, basta encerrar um dos processos com `Ctrl + C` e observar os mecanismos de timeout, notificação e reconciliação de estado.
+
+### Opção 2: Localmente (Sem Docker)
+
+Para executar os processos Java diretamente na máquina, utilize o `Makefile.local`, que invoca o Maven instalado no sistema.
+
+O servidor utiliza as variáveis de ambiente `REGIAO` e `PORT` para determinar sua região e porta de inicialização.
+
+**Atalho para os comandos:**
+
+Para evitar escrever `make -f Makefile.local` repetidamente, pode-se configurar um alias na sessão do terminal:
+
+```bash
+alias mk='make -f Makefile.local'
+```
+
+**1. Compile o projeto antes de iniciar os servidores:**
+
+```bash
+mk compile
+```
+
+Esse comando compila o projeto sem executar os servidores, ignorando a etapa de testes.
+
+**2. Inicie os servidores individualmente:**
+
+Após a compilação, abra quatro terminais e execute:
+
+```bash
+mk unova  # Inicia Unova na porta 2602
+mk kalos  # Inicia Kalos na porta 2603
+mk johto  # Inicia Johto na porta 2604
+mk kanto  # Inicia Kanto na porta 2605
+```
+
+**Importante:** os comandos `mk unova`, `mk kalos`, `mk johto` e `mk kanto` utilizam o modo `run-only`, ou seja, iniciam os servidores sem executar novamente a compilação. Caso o código-fonte seja alterado, execute `mk compile` novamente antes de iniciar os processos.
+
+**Inicialização com parâmetros personalizados:**
+
+Também é possível iniciar uma região diferente das configurações padrão:
+
+```bash
+mk run-only REGIAO=Hoenn PORT=3010
+```
+
+**Outros comandos disponíveis:**
+
+| Comando | Descrição |
+|---|---|
+| `mk compile` | Compila o projeto sem executar os servidores, ignorando os testes. |
+| `mk clean` | Remove os arquivos compilados e as pastas `target/`. |
+| `mk run-only REGIAO=kanto` | Inicia o servidor Kanto sem executar novamente a etapa de compilação. |
+---
+
+## 3. Topologia da Rede
+
+Os servidores comunicam-se exclusivamente com seus vizinhos diretos por HTTP. As operações distribuídas são encaminhadas pela rede de acordo com a topologia regional.
+
+Cada servidor mantém os dados de sua própria região, sendo responsável por executar localmente as operações que envolvem suas caronas.
+
+| Servidor / Região           | Porta | Vizinhos diretos                       | Conexões externas (cidades)     |
+|-----------------------------|------:|----------------------------------------|---------------------------------|
+| **Unova Metro Lines**       |  2602 | Lumiose Express (Kalos), Kanto Transit | Cerulean, Snowbelle, Anistar    |
+| **Lumiose Express (Kalos)** |  2603 | Unova Metro, Johto Magnet              | Mistralton, Icirrus, Blackthorn |
+| **Johto Magnet Railways**   |  2604 | Lumiose Express, Kanto Transit         | Veniville, Geosenge, Lavender   |
+| **Kanto Transit Authority** |  2605 | Unova Metro, Johto Magnet              | Castelia, New Bark Town         |
+
+A topologia é definida por conexões entre regiões. Uma comunicação direta entre dois servidores só é permitida quando existe uma relação de vizinhança configurada.
+
+A busca distribuída utiliza essa topologia para encontrar itinerários entre diferentes regiões. Na reserva, o protocolo encadeado encaminha a transação entre os servidores envolvidos, respeitando a sequência de participantes.
 
 ---
 
-## Arquitetura do Sistema
-
-A base de código é estruturada em módulos isolados sob gerenciamento do Maven (multi-module), garantindo baixo acoplamento:
-
-- **Módulo `Shared`** — contém DTOs, enums e o núcleo do protocolo customizado; encapsula os dados agnósticos de infraestrutura.
-- **Módulo `Server`** — responsável pelas conexões Socket, thread pools, controllers, services e orquestração da busca. Implementa a persistência em disco (arquivos `.json`) via `FileManager`.
-- **Módulos `Client` e `Custom`** — views e controllers gráficos em JavaFX. Atuam de forma passiva, requisitando dados assincronamente sem travar a thread de renderização da UI (`Platform.runLater`).
-
-### Protocolo Customizado de Comunicação (ServerGrammar)
-
-A serialização mapeia as requisições em strings delimitadas por `|` (pipe), enviadas pela rede seguindo a sintaxe:
+## 4. Estrutura do Projeto
 
 ```text
-TIPO_COMANDO | PAYLOAD_JSON | TOKEN_SESSAO | TAMANHO
+org.UEFS/
+├── Server/
+│   ├── controller/          # Controladores HTTP Javalin
+│   │
+│   ├── domain/              # Regras de negócio e repositórios
+│   │   ├── caronas/         # Carona, ArestaTrecho, IdPerna
+│   │   ├── cidades/         # CidadeJSON, CidadeMapper
+│   │   └── reservas/        # Transacao, TransacaoService
+│   │
+│   ├── exceptions/          # Exceções padronizadas do domínio
+│   │
+│   └── http/                # Infraestrutura de comunicação P2P
+│       ├── cluster/         # PeerClient e ResultadoRepasse
+│       ├── relogio/         # RelogioLamport
+│       └── service/         # Serviços de busca e orquestração do 2PC
+│
+└── shared/
+    ├── dto/                 # Records de transferência de dados
+    └── enums/               # Estados de transação e status HTTP
 ```
+
+A divisão separa as regras de negócio da infraestrutura HTTP e dos mecanismos de comunicação distribuída.
+
+O módulo `shared` concentra estruturas utilizadas na comunicação entre os diferentes componentes, mantendo os formatos de transferência consistentes.
 
 ---
 
-## Módulo de Roteamento e Composição de Trechos
+## 5. Modelo de Dados
 
-Para combinar roteiros entre motoristas diferentes, o sistema emprega o algoritmo BFS (Busca em Largura):
+### Carona
 
-1. **Geração dinâmica** — ao receber uma solicitação de busca, o servidor avalia o catálogo de caronas ativas e cria grafos temporários apenas para caronas abertas e com vagas.
-2. **Travessia (BFS)** — o grafo é percorrido camada por camada, garantindo que os primeiros itinerários validados tenham a menor quantidade possível de baldeações.
-3. **Filtro estrito** — rotas em que as caronas subsequentes partem antes da chegada do passageiro, ou que quebram a continuidade espaço-temporal, são descartadas automaticamente.
+Representa uma viagem publicada por um motorista em um servidor regional.
+
+Uma carona possui:
+
+- Identificação do motorista.
+- Quantidade de vagas.
+- Data e horário de partida.
+- Rota composta por cidades consecutivas.
+- Preço associado aos segmentos da rota.
+
+Uma mesma carona pode atender passageiros que percorrem diferentes partes de seu trajeto.
+
+### Segmento de rota
+
+Representa a ligação entre duas cidades consecutivas da rota de uma carona.
+
+Por exemplo:
+
+```text
+A → B → C → D
+```
+
+Essa rota possui três segmentos:
+
+```text
+A → B
+B → C
+C → D
+```
+
+Os segmentos descrevem a estrutura da rota, mas não representam necessariamente reservas independentes.
+
+### Perna reservável (`IdPerna`)
+
+Representa o percurso solicitado de uma origem até um destino dentro de uma carona.
+
+Uma perna pode abranger vários segmentos consecutivos da rota, mantendo as cidades intermediárias como informação complementar.
+
+Exemplo:
+
+```text
+Rota da carona:
+A → B → C → D
+
+Percurso solicitado:
+A → D
+
+Paradas intermediárias:
+B, C
+```
+
+Nesse caso, o passageiro reserva uma única perna de uma única carona. As cidades B e C são paradas intermediárias, não baldeações.
+
+O identificador `IdPerna` permite representar o percurso solicitado dentro da carona original, identificando sua origem e destino.
+
+### Baldeação
+
+Uma baldeação ocorre quando o passageiro precisa trocar de carona para continuar seu itinerário.
+
+Por exemplo:
+
+```text
+Carona 1: A → B → C
+Carona 2: C → D → E
+```
+
+O passageiro realiza uma baldeação em C.
+
+Portanto:
+
+- Parada intermediária: mudança de cidade dentro da mesma carona.
+- Baldeação: troca de carona para continuar o percurso.
+
+### Transação (2PC)
+
+Representa uma operação distribuída de reserva, gerenciada pela classe `Transacao`.
+
+Armazena informações necessárias para o protocolo, como:
+
+- Identificador da transação.
+- Identificador do coordenador original.
+- Relógio lógico associado à operação.
+- Estado atual da transação.
+- Trechos locais cujas vagas foram bloqueadas.
+- Itinerário completo, utilizado como recibo da reserva.
+
+O armazenamento dos trechos locais é separado do itinerário global para evitar que cada servidor tente manipular ou liberar recursos pertencentes a outros nós.
 
 ---
 
-## Especificação de Hardware e Software
+## 6. API do Cliente (Passageiros e Motoristas)
 
-- **Linguagem:** Java 17 ou superior (imagem base dos containers: `maven:3.9-eclipse-temurin-24`).
-- **Gerenciador de dependências:** Apache Maven 3.9+.
-- **Interface gráfica:** JavaFX.
-- **Virtualização e DevOps:** Docker, Docker Compose e WSL 2 (Windows Subsystem for Linux).
-- **Dependências de ambiente (cliente em Linux/Docker):** bibliotecas gráficas X11/GTK (`libx11-6`, `libgtk-3-0`, `libgl1`, entre outras), necessárias para renderizar as janelas do JavaFX de dentro do container.
-- **Rede:** o servidor escuta na porta `2602`, mapeada em `compose.yaml`; o container do cliente localiza o servidor pelas variáveis de ambiente `SERVER_IP` e `SERVER_PORT`.
+Prefixo: `/api/cliente`
+
+As operações protegidas exigem autenticação por token, validado pelo `UserController`.
+
+Erros de autenticação e autorização são padronizados, utilizando os códigos HTTP `401` e `403`.
+
+### `POST /api/cliente/caronas`
+
+Cria uma carona no servidor atual.
+
+**Payload (`NovaCaronaRequest`):**
+
+```json
+{
+  "idMotorista": "mot_ash",
+  "vagas": 4,
+  "dataPartida": "2026-10-31T08:00:00",
+  "trechos": [
+    {
+      "origem": 1,
+      "destino": 2,
+      "preco": 50.0
+    },
+    {
+      "origem": 2,
+      "destino": 3,
+      "preco": 30.0
+    }
+  ]
+}
+```
+
+As cidades de origem e destino devem pertencer à região administrada pelo servidor que recebe a requisição.
+
+A validação dessa restrição deve ocorrer no servidor, independentemente das validações realizadas pela interface do cliente.
+
+### Busca distribuída de itinerários
+
+**Endpoint:** `GET <CAMINHO_REAL_DA_BUSCA>`
+
+Consulta itinerários entre cidades de diferentes regiões, utilizando a comunicação P2P para consultar os servidores envolvidos.
+
+O resultado é composto por uma lista de itinerários, cada um contendo suas pernas reserváveis.
+
+Cada perna informa:
+
+- Servidor responsável pela carona.
+- Identificador da carona.
+- Origem e destino do percurso solicitado.
+- Horário de partida.
+- Preço.
+- Quantidade de assentos livres.
+- Lista de paradas intermediárias.
+
+**Exemplo ilustrativo de uma perna:**
+
+```json
+{
+  "servidor": "johto",
+  "id_carona": "carona_johto_1_4",
+  "origem": "Cidade A",
+  "destino": "Cidade D",
+  "horario": "2026-10-31T08:00:00",
+  "preco": 80.0,
+  "assentos_livres": 3,
+  "paradas_intermediarias": [
+    "Cidade B",
+    "Cidade C"
+  ]
+}
+```
+
+As paradas intermediárias fazem parte da mesma perna reservável e não são contabilizadas como baldeações.
+
+O preço total do itinerário corresponde à soma dos preços de suas pernas.
+
+Uma baldeação ocorre somente quando o passageiro precisa utilizar outra carona.
+
+### `POST /api/cliente/reservas`
+
+Inicia uma reserva distribuída utilizando o protocolo Two-Phase Commit (2PC).
+
+O servidor que recebe a requisição assume o papel de coordenador, valida as condições locais e encaminha a transação aos demais participantes da cadeia.
+
+**Payload:**
+
+```json
+{
+  "trechos_solicitados": [
+    {
+      "servidor": "johto",
+      "id_carona": "carona_johto_1_2"
+    },
+    {
+      "servidor": "kalos",
+      "id_carona": "carona_kalos_2_3"
+    }
+  ]
+}
+```
+
+Cada elemento representa uma perna reservável de uma carona.
+
+As paradas intermediárias não são enviadas como reservas independentes, pois pertencem à mesma carona e já estão representadas na perna solicitada.
+
+### `DELETE /api/cliente/reservas/{id}`
+
+Cancela uma reserva confirmada.
+
+A operação libera as vagas associadas à reserva e inicia a propagação assíncrona da notificação de cancelamento aos servidores envolvidos.
+
+A resposta ao cliente não precisa aguardar a conclusão de todas as notificações remotas.
 
 ---
 
-## Instalação e Configuração
+## 7. API do Consórcio (Servidor-para-Servidor)
 
-O ecossistema é orquestrado via Docker Compose (`compose.yaml`, combinado automaticamente com `compose.windows.yaml` ou `compose.linux.yaml` conforme o sistema operacional), com o auxílio de um Makefile que detecta o SO e seleciona os arquivos corretos.
+Prefixo: `/api/consorcio`
 
-### 1. Preparação (recomendado para Windows)
+Utilizada exclusivamente para comunicação entre servidores, sendo gerenciada pelo `PeerClient` e pelos serviços de orquestração.
 
-Clone e opere o projeto diretamente no sistema de arquivos do WSL (`~/projetos/VaiJunto`), e não no diretório NTFS (`/mnt/c/...`), para evitar atrasos de I/O e problemas com *bind-mounts* órfãos no Docker Desktop.
+As requisições incluem os seguintes headers:
 
-### 2. Permissão do display gráfico (Linux)
+| Header            | Descrição                                                      |
+|-------------------|----------------------------------------------------------------|
+| `X-Server-Id`     | Identificador regional do servidor remetente.                  |
+| `X-Lamport-Clock` | Carimbo de tempo lógico utilizado na ordenação de requisições. |
 
-No Linux nativo, o container do cliente acessa o display X do host via `/tmp/.X11-unix` (montado por `compose.linux.yaml`). Antes de subir o cliente, é preciso liberar o acesso ao servidor X local:
+O relógio de Lamport permite ordenar eventos distribuídos. Quando necessário, o identificador do servidor pode ser utilizado como critério secundário de desempate.
 
-```bash
-xhost +local:
+### `POST /api/consorcio/reservas/prepare`
+
+**Fase 1 do 2PC — Preparação.**
+
+O servidor recebe a solicitação de reserva, identifica os trechos que pertencem à sua região, verifica a disponibilidade e bloqueia temporariamente as vagas correspondentes.
+
+Em seguida, encaminha os trechos restantes ao próximo servidor da cadeia.
+
+**Payload (`ReservaRequest`):**
+
+```json
+{
+  "id_transacao": "b3f1-4c9a...",
+  "coordenador_id": "johto",
+  "passageiro": "user_ash",
+  "relogio_logico": 42,
+  "trechos_solicitados": [
+    {
+      "servidor": "kalos",
+      "id_carona": "carona_kalos_2_3"
+    },
+    {
+      "servidor": "unova",
+      "id_carona": "carona_unova_3_4"
+    }
+  ]
+}
 ```
 
-Sem esse comando, o container não tem permissão para abrir a janela do JavaFX no host.
+**Resposta de sucesso (`RespostaPrepare`):**
 
-### 3. Subindo a solução via Makefile
-
-```bash
-# Build das imagens e subida de Servidor + Cliente com hot-reload (nodemon)
-make up-build
-
-# Alternativa: apenas builda as imagens, sem subir os containers
-make build
+```json
+{
+  "status": "READY",
+  "assentos": [
+    {
+      "servidor": "kalos",
+      "id_carona": "carona_kalos_2_3",
+      "assento": 2
+    }
+  ]
+}
 ```
 
-Também é possível operar cada módulo separadamente:
+A resposta agrega as informações dos participantes que conseguiram preparar a reserva.
 
-```bash
-make server-build     # builda e sobe apenas o Servidor
-make client-build     # builda e sobe apenas o Cliente (JavaFX GUI)
-```
+Se algum participante recusar a operação, a cadeia deve iniciar o procedimento de aborto e liberar os bloqueios realizados.
 
-Outros comandos úteis do Makefile:
+### `PUT /api/consorcio/reservas/{id}/commit`
 
-```bash
-make down             # para e remove os containers
-make restart          # down seguido de up --build
-make logs             # acompanha os logs do Servidor
-make clean            # mvn clean dentro do container do Servidor
-make clean-install    # mvn clean install dentro do container do Servidor
-make docker-start     # inicia o serviço Docker (systemctl)
-make docker-status    # verifica o status do serviço Docker
-```
+**Fase 2 do 2PC — Confirmação.**
 
-Para o Cliente, é necessário um servidor X em execução na máquina hospedeira (como VcXsrv ou GWSL no Windows, ou o X11 padrão no Linux).
+Recebe a decisão de commit do coordenador e confirma a reserva localmente.
+
+O servidor registra a decisão, finaliza a ocupação dos assentos e encaminha a confirmação ao próximo participante.
+
+A operação deve ser idempotente: receber novamente a mesma decisão não deve duplicar a reserva nem alterar incorretamente seu estado.
+
+### `DELETE /api/consorcio/reservas/{id}`
+
+Propaga o cancelamento de uma reserva pela rede.
+
+A operação libera os recursos associados à reserva e notifica os demais servidores envolvidos.
+
+O mecanismo de propagação utiliza o identificador da transação para reconhecer notificações repetidas e evitar ciclos de comunicação.
 
 ---
 
-## Dockerfiles
+## 8. Arquitetura de Tolerância a Falhas
 
-O projeto inclui dois Dockerfiles dedicados, descritos em `Docker/Server/Dockerfile` e `Docker/Client/Dockerfile`:
+O sistema combina duas estratégias complementares para lidar com falhas de comunicação e divergências temporárias entre os servidores:
 
-- **Servidor** — compila o backend sem dependências gráficas e executa `mvn install -pl Server exec:java` diretamente (sem hot-reload).
-- **Cliente** — inclui as bibliotecas gráficas X11/GTK necessárias para rodar o JavaFX dentro do container, e mantém o `nodemon` monitorando `Client/src`, `Custom/src` e `Shared/src`; a cada alteração, reexecuta `mvn install -pl Client -am -DskipTests` seguido de `mvn -pl Client javafx:run`.
+1. Push assíncrono de notificações.
+2. Pull sob demanda por meio de Lazy Check.
+
+Esses mecanismos reduzem a necessidade de sincronização contínua entre todos os nós.
+
+### 8.1. Push assíncrono
+
+Ao cancelar uma carona ou reserva, o serviço responsável inicia a propagação das notificações aos demais servidores envolvidos.
+
+A comunicação é executada assincronamente, por meio de `CompletableFuture.runAsync()`, evitando que o processamento da requisição do cliente precise aguardar a conclusão de todas as notificações remotas.
+
+São utilizados timeouts reduzidos, na faixa de 2 a 3 segundos, para limitar o tempo de espera por servidores indisponíveis.
+
+Se um servidor estiver acessível, ele poderá processar a notificação e atualizar seu estado local.
+
+Entretanto, a execução assíncrona não garante que todos os participantes recebam a mensagem imediatamente. Uma falha de comunicação pode deixar alguns nós temporariamente com informações desatualizadas.
+
+### 8.2. Pull sob demanda (Lazy Check)
+
+O Lazy Check funciona como mecanismo de reconciliação sob demanda.
+
+Quando um servidor identifica uma situação em que seus dados podem estar desatualizados, consulta a fonte responsável pela informação para verificar o estado atual.
+
+O mecanismo é aplicado em diferentes situações:
+
+**Na perspectiva do motorista:**
+
+O método `sincronizarPorCarona(idCarona)` é acionado antes de apresentar a carona na interface, consultando o coordenador para verificar se as informações locais continuam válidas.
+
+**Na perspectiva do passageiro:**
+
+Ao consultar as reservas por meio de `GET /api/cliente/reservas`, o método `sincronizarStatus(tx)` verifica o estado das transações e permite reconciliar registros desatualizados.
+
+Assim, mesmo que uma notificação Push não alcance determinado servidor, uma consulta posterior poderá identificar e corrigir a divergência.
+
+### 8.3. Limitações do Two-Phase Commit
+
+O 2PC oferece uma decisão atômica para a transação distribuída quando seus participantes respeitam o protocolo e as decisões são persistidas corretamente.
+
+Entretanto, o protocolo possui uma limitação importante: pode bloquear durante determinadas falhas.
+
+Por exemplo:
+
+1. Todos os participantes respondem `READY`.
+2. O coordenador registra a decisão `COMMIT`.
+3. O coordenador cai antes de comunicar a decisão aos participantes.
+4. Os participantes podem permanecer com os recursos bloqueados até recuperarem a decisão.
+
+Portanto, o sistema não garante disponibilidade contínua durante qualquer partição de rede.
+
+Os mecanismos de persistência e recuperação permitem retomar o processamento após falhas, mas não eliminam todas as limitações inerentes ao 2PC.
+
+### 8.4. Tratamento de timeouts
+
+Um timeout indica que a comunicação não foi concluída dentro do intervalo esperado. Ele não comprova que o servidor remoto deixou de executar a operação.
+
+Por exemplo, um participante pode ter recebido o `PREPARE`, bloqueado as vagas e enviado `READY`, mas a resposta pode ter sido perdida durante a comunicação.
+
+Nessa situação, o coordenador pode desconhecer o resultado real da operação remota.
+
+Por isso, em caso de timeout, o servidor tenta propagar o aborto da transação, utilizando o identificador persistente da operação.
+
+A recuperação depende de:
+
+- Identificação persistente das transações.
+- Operações idempotentes.
+- Registro durável das decisões.
+- Verificação do estado da transação antes de aplicar commit ou rollback.
+- Recuperação dos registros após a reinicialização dos servidores.
+
+Uma decisão `COMMIT` já persistida não pode ser revertida por uma tentativa posterior de rollback.
 
 ---
 
-## Diagrama de Fluxo de Mensagens
+## 9. Diagramas de Sequência
+
+### 9.1. 2PC Encadeado (Johto → Kalos → Unova)
+
+O diagrama representa uma reserva distribuída envolvendo três regiões.
 
 ```mermaid
-flowchart TD
-    A["Cliente (JavaFX / UI)"] -->|"1. Envia requisição via Socket TCP"| B["Servidor: Router"]
-    B -->|"2. Identifica o comando e despacha"| C["Servidor: Controller e Service"]
-    C -->|"3. Desserializa o JSON (Jackson) e executa a regra de negócio"| D["Servidor: monta a resposta"]
-    D -->|"4. Serializa o resultado em JSON e devolve via Socket"| E["Cliente: ClientRouter"]
-    E -->|"5. Faz o split, valida o código de status"| F["Atualização da UI via Platform.runLater"]
+sequenceDiagram
+    autonumber
+    participant P as Passageiro
+    participant J as Johto (Coordenador)
+    participant K as Kalos (Participante)
+    participant U as Unova (Participante)
+
+    P->>J: POST /api/cliente/reservas
+    Note over J: PREPARE local<br/>Bloqueia vagas
+
+    J->>K: POST /prepare<br/>Encaminha trechos restantes
+    Note over K: PREPARE local<br/>Bloqueia vagas
+
+    K->>U: POST /prepare<br/>Encaminha trechos restantes
+    Note over U: PREPARE local<br/>Bloqueia vagas
+
+    U-->>K: READY
+    K-->>J: READY (Kalos + Unova)
+
+    Note over J: Registra decisão COMMIT
+
+    J->>K: PUT /commit
+    K->>U: PUT /commit
+
+    U-->>K: Confirmação
+    K-->>J: Confirmação
+
+    J-->>P: 201 Created
 ```
 
-Detalhamento das etapas:
+### 9.2. Fluxo de falha durante a preparação
 
-- **Envio da requisição (Cliente):** o cliente inicia a comunicação enviando os dados formatados pela rede via Socket TCP.
-- **Recepção e roteamento (Servidor):** o `Router` intercepta a mensagem bruta e mapeia o comando recebido para o `Controller` adequado.
-- **Processamento (Servidor):** o `Controller` converte o JSON em objetos usando Jackson e repassa o fluxo ao `Service`, que executa a regra de negócio (busca em grafos, transações atômicas, etc.).
-- **Geração e envio da resposta (Servidor):** o resultado é serializado novamente em JSON, encapsulado em um objeto de resposta e enviado de volta pelo socket.
-- **Processamento no Cliente (`ClientRouter`):** o cliente recebe a resposta bruta, faz o split da mensagem, analisa o código de status e despacha o resultado para a UI de forma segura, na thread correta, via `Platform.runLater`.
+O exemplo mostra uma recusa de um participante durante a primeira fase.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant P as Passageiro
+    participant J as Johto (Coordenador)
+    participant K as Kalos (Participante)
+    participant U as Unova (Participante)
+
+    P->>J: POST /reservas
+    J->>K: PREPARE
+    K->>U: PREPARE
+
+    U-->>K: VOTE NO
+    K-->>J: VOTE NO
+
+    Note over J: Decide ABORT
+
+    J->>K: ROLLBACK
+    K->>U: ROLLBACK
+
+    Note over J,U: Bloqueios temporários liberados
+    J-->>P: 409 Conflict
+```
+
+### 9.3. Árvore de decisão: erros no fluxo de reserva
+
+```mermaid
+graph TD
+    A([Passageiro envia pedido de reserva]) --> B{Filtro de segurança}
+
+    B -- Sem token --> E401[401 Unauthorized]
+    B -- Perfil incompatível --> E403[403 Forbidden]
+    B -- Token válido --> C{Validação local}
+
+    C -- Requisição inválida --> E400[400 Bad Request]
+    C -- Carona inexistente --> E404[404 Not Found]
+    C -- Vaga indisponível --> E409[409 Conflict]
+    C -- Validação aprovada --> D{Fase 1: Prepare}
+
+    D -- Participante recusou --> E409_2[409 Conflict]
+    D -- Timeout de comunicação --> E504[504 Gateway Timeout]
+    D -- Participantes READY --> F{Fase 2: Commit}
+
+    F -- Falha interna --> E500[500 Internal Server Error]
+    F -- Decisão confirmada --> G([201 Created])
+
+    classDef client fill:#ffcccb,stroke:#ff0000,stroke-width:2px;
+    classDef server fill:#fed8b1,stroke:#ff8c00,stroke-width:2px;
+    classDef success fill:#90ee90,stroke:#008000,stroke-width:2px;
+
+    class E400,E401,E403,E404,E409,E409_2 client;
+    class E500,E504 server;
+    class G success;
+```
+
+### 9.4. Catálogo geral de erros
+
+| Código HTTP | Categoria | Nome                  | Significado                                                                                                       |
+|-------------|-----------|-----------------------|-------------------------------------------------------------------------------------------------------------------|
+| `400`       | Cliente   | Bad Request           | Requisição malformada, JSON inválido, parâmetros incorretos ou violação de regras estruturais do itinerário.      |
+| `401`       | Cliente   | Unauthorized          | Ausência de token, token inválido ou expirado.                                                                    |
+| `403`       | Cliente   | Forbidden             | Usuário autenticado sem permissão para executar a operação.                                                       |
+| `404`       | Cliente   | Not Found             | Recurso solicitado inexistente, como carona ou transação não encontrada em operações que exigem sua existência.   |
+| `409`       | Cliente   | Conflict              | Conflito de estado, como falta de vagas, carona duplicada ou tentativa de rollback após uma decisão irreversível. |
+| `500`       | Servidor  | Internal Server Error | Falha interna, como erro de leitura ou gravação dos arquivos persistidos.                                         |
+| `502`       | Rede      | Bad Gateway           | Resposta inválida ou inesperada recebida de um servidor participante.                                             |
+| `503`       | Servidor  | Service Unavailable   | Serviço temporariamente indisponível para executar determinada operação.                                          |
+| `504`       | Rede      | Gateway Timeout       | Servidor participante não respondeu dentro do tempo limite da comunicação.                                        |
+
+Os códigos são utilizados conforme a natureza da falha. A aplicação pode padronizar respostas específicas do protocolo, desde que mantenha a distinção entre erros de entrada, conflitos de estado e falhas de comunicação.
+
+### 9.5. Ciclo de vida do rollback
+
+O rollback é utilizado para abortar uma transação que ainda não teve uma decisão de commit registrada.
+
+O comportamento deve considerar o estado persistido da transação.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Desconhecida
+
+    Desconhecida --> Desconhecida: Recebe rollback
+    Desconhecida --> HTTP_200: Ignora (idempotente)
+
+    Desconhecida --> PREPARADO: Recebe prepare
+    PREPARADO --> ABORTADO: Recebe rollback
+    ABORTADO --> HTTP_200: Libera bloqueios
+
+    PREPARADO --> COMITADO: Recebe commit
+    COMITADO --> HTTP_409: Rollback não permitido
+
+    ABORTADO --> HTTP_200: Rollback repetido
+```
+
+Uma transação que já teve sua decisão `COMMIT` persistida não pode ser revertida por rollback.
+
+O cancelamento de uma reserva confirmada é uma operação de negócio distinta, com fluxo próprio de liberação de vagas e propagação de notificações.
 
 ---
 
-## Testes Automatizados e Confiabilidade
+## 10. Decisões Arquiteturais (Relatório)
 
-Para validar a atomicidade do backend e a ausência de corrupção de memória, o projeto conta com um roteiro de testes de alta carga:
+### 10.1. Roteamento P2P e separação de responsabilidades
 
-- **`StressTest` / `ReservaStressTest`** — simulador que gera tráfego de rede, instanciando múltiplos Sockets cliente em paralelo.
-- **Prevenção de overbooking** — dezenas de clientes disputam simultaneamente uma única vaga disponível.
-- **Resultado esperado** — graças ao bloqueio síncrono com checagem em duas fases, apenas um cliente recebe a resposta de sucesso (status 200); os demais recebem a resposta `CARONA_LOTADA`, comprovando a ausência de condições de corrida.
+**Topologia física e busca distribuída:**
+
+A topologia da rede é utilizada pelo algoritmo de busca para encontrar itinerários entre regiões conectadas.
+
+A busca consulta os servidores necessários para encontrar caminhos válidos, respeitando as conexões de fronteira.
+
+**Reserva distribuída:**
+
+Durante o 2PC, cada servidor processa os trechos que pertencem à sua própria região e encaminha o restante da transação ao próximo participante.
+
+A validação das condições locais é realizada por cada servidor envolvido. A validação da cadeia de participantes é distribuída entre o coordenador e os participantes, conforme suas respectivas responsabilidades.
+
+Essa abordagem evita concentrar todo o processamento em um único servidor.
+
+### 10.2. Isolamento dos recibos
+
+O campo `locais` do objeto `Transacao` armazena somente os trechos cujas vagas foram bloqueadas pelo próprio servidor.
+
+O itinerário global é armazenado separadamente em `itinerarioCompleto`, permitindo que o passageiro tenha acesso ao recibo completo sem que cada servidor precise manipular recursos pertencentes aos demais participantes.
+
+Essa separação também evita tentativas de liberação de vagas inexistentes no repositório local.
+
+### 10.3. Abandono de listeners implícitos
+
+A orquestração do cancelamento foi implementada por meio de um fluxo explícito, gerenciado pelo `CaronaController` e pelos serviços responsáveis.
+
+Essa decisão foi tomada para tornar mais previsível a sequência de operações, especialmente quando diferentes componentes poderiam tentar liberar a mesma vaga em resposta a um único evento.
+
+A abordagem procedural facilita a identificação dos pontos de entrada, a propagação das notificações e o tratamento de falhas.
+
+### 10.4. Timeouts reduzidos (Fail-Fast)
+
+Timeouts longos no módulo HTTP podem manter threads ocupadas aguardando servidores indisponíveis, aumentando o risco de esgotamento de recursos.
+
+Por esse motivo, os timeouts de comunicação do `PeerClient` foram reduzidos para aproximadamente 2 a 3 segundos.
+
+Essa estratégia permite detectar rapidamente falhas de comunicação e iniciar os procedimentos de recuperação.
+
+Entretanto, um timeout não comprova que a operação remota deixou de ser executada. Por isso, o sistema utiliza identificadores persistentes e operações idempotentes para tratar respostas perdidas e requisições repetidas.
+
+### 10.5. Relógio Lógico de Lamport
+
+O sistema utiliza relógios lógicos de Lamport para atribuir timestamps aos eventos distribuídos.
+
+Cada mensagem de comunicação entre servidores carrega seu respectivo timestamp no header `X-Lamport-Clock`.
+
+Essa informação permite estabelecer uma ordenação lógica dos eventos, inclusive quando ocorrem em servidores diferentes.
+
+Quando dois eventos possuem o mesmo timestamp, o identificador do servidor pode ser utilizado como critério secundário de ordenação.
+
+O relógio lógico não representa o horário físico exato de execução, mas preserva a relação de causalidade necessária para a ordenação dos eventos distribuídos.
 
 ---
 
-## Equipe de Desenvolvimento
+## Considerações finais
 
-- **Autor(es):** Taylon Luis do Nascimento Cerqueira
-- **Instituição:** Universidade Estadual de Feira de Santana (UEFS).
-- **Disciplina:** MI - Concorrência e Conectividade.
+O VaiJunto utiliza uma arquitetura P2P na qual cada servidor administra sua própria região e coopera com os demais para oferecer funcionalidades distribuídas.
+
+A busca distribuída permite encontrar itinerários que atravessam diferentes regiões, enquanto o protocolo 2PC coordena a reserva de vagas entre os servidores envolvidos.
+
+A combinação de persistência local, comunicação assíncrona, relógios lógicos e reconciliação sob demanda busca oferecer consistência entre os nós mesmo diante de falhas temporárias de comunicação.
+
+A arquitetura não depende de um servidor central, mantendo a responsabilidade pelos dados e pelas operações distribuída entre os participantes do consórcio.

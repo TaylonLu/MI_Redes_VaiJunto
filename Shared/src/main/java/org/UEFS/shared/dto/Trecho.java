@@ -3,10 +3,10 @@ package org.UEFS.shared.dto;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public record Trecho(int inicio, int fim) {
+public record Trecho(int origem, int destino) {
     @JsonValue
     public String toJsonKey() {
-        return inicio + "-" + fim;
+        return origem + "-" + destino;
     }
 
     @JsonCreator
