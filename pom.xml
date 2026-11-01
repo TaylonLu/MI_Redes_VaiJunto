@@ -18,6 +18,12 @@
         <mockito.version>5.11.0</mockito.version>
         <javalin.version>7.2.4</javalin.version>
     </properties>
+    <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+    </dependencies>
 
     <modules>
         <module>Shared</module>

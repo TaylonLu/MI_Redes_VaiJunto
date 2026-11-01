@@ -16,7 +16,7 @@ public class Vizinho {
         this.host = host;
 
         this.id = ip + ":" + porta;
-        this.url = "http://" + this.id;
+        this.url = "http://" + this.host + ":" + this.porta;
     }
 
     public Vizinho(String id) {

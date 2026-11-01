@@ -88,9 +88,9 @@ public final class ServerConstant {
 
         vizinhos = eu.vizinhos().stream().map(id -> {
             Regiao R = buscar(id).orElseThrow();
-            String nomeLimpo = R.id()
+            String nomeLimpo = R.regiaoBase()
                     .replaceAll("[^a-zA-Z0-9]", "")
-                    .toLowerCase(Locale.ROOT);
+                    .toUpperCase(Locale.ROOT);
             String hostEnv = System.getenv("HOST_" + nomeLimpo);
             String isReal = (hostEnv != null && !hostEnv.isEmpty()) ? hostEnv : R.ip();
             return new Vizinho(R.ip(), isReal, R.porta());

@@ -65,7 +65,7 @@ public class ReservaCoordenador {
         // Prepare
         Preparo preparo = transacoes.preparar(transacao);
         if (preparo.resultado() != Resultado.OK) {
-            return respostaRecusa(toHttpStatus(preparo.resultado()), meuId, preparo.motivo());
+            return respostaRecusa(toHttpStatus(preparo.resultado()), idTransacao, preparo.motivo());
         }
 
         List<TrechoReserva> assentosConfirmados = new ArrayList<>(preparo.assentos());
@@ -80,7 +80,7 @@ public class ReservaCoordenador {
             if (!rep.ok()) {
                 transacoes.desfazer(idTransacao);
                 if (rep.falhaDeRede()) repasse.rollback(proximo, idTransacao);
-                return respostaRecusa(rep.http(), meuId, rep.motivo());
+                return respostaRecusa(rep.http(), idTransacao, rep.motivo());
             }
             assentosConfirmados.addAll(rep.assentos());
         }
