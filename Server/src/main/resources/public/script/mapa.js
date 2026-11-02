@@ -269,9 +269,14 @@ async function reservar(it) {
             }))
         };
 
-        await api("/api/cliente/reservas", "POST", corpo);
-        aviso("Reserva confirmada com sucesso!", "sucesso");
-        setTimeout(() => location.href = PRINCIPAL, 1200);
+        const resposta = await api("/api/cliente/reservas", "POST", corpo);
+
+        if (resposta?.propagacao_pendente) {
+            aviso("Reserva confirmada, mas a sincronização com os servidores ainda está pendente.", "aviso");
+        } else {
+            aviso("Reserva confirmada com sucesso!", "sucesso");
+        }
+        setTimeout(() => location.href = PRINCIPAL, 2000);
     } catch (err) {
         aviso(err.status === 409 ? "Conflito: " + err.message : "Erro ao reservar: " + err.message,
             err.status === 409 ? "aviso" : "erro");

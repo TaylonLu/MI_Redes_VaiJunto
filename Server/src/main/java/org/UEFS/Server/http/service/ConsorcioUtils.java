@@ -67,14 +67,16 @@ public class ConsorcioUtils {
     }
 
     public static RespostaConsorcio respostaSucesso(String idTransacao, String idPassageiro,
-                                                    long timestamp, boolean propagacaoPendente, List<TrechoReserva> assentosConfirmados) {
+                                                    long timestamp, boolean propagacaoPendente,
+                                                    List<TrechoReserva> assentosConfirmados) {
         return builder()
                 .put("id_transacao", idTransacao)
                 .put("status", "CONFIRMADO")
                 .put("passageiro", idPassageiro)
                 .put("relogio_logico", timestamp)
                 .put("trechos", assentosConfirmados)
-                .build(201); // HTTP 201 Created
+                .put("propagacao_pendente", propagacaoPendente)
+                .build(201);
     }
 
     /**

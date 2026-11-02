@@ -100,8 +100,7 @@ public class TransacaoService {
             Transacao existente = repo.getByID(pedido.getId());
             if (existente != null) {
                 if (!mesmaSolicitacao(existente, pedido))
-                    return recusa(Resultado.CONFLITO,
-                            "ID de transacao reutilizado com dados diferentes.");
+                    return recusa(Resultado.CONFLITO, "ID de transacao reutilizado com dados diferentes.");
 
                 return switch (existente.getEstado()) {
                     case ABORTADO -> recusa(Resultado.CONFLITO, "transação já foi abortada.");
@@ -489,7 +488,6 @@ public class TransacaoService {
 
     /**
      * Retenta a propagação de um cancelamento feito pelo passageiro.
-     *
      * O coordenador utiliza o itinerário completo para reenviar o aviso
      * aos demais servidores. Como o cancelamento remoto é idempotente,
      * é seguro reenviar mensagens já recebidas.
