@@ -114,36 +114,63 @@ public class ReservaCoordenador {
 
         List<TrechoSolicitado> trechos = new ArrayList<>();
         Set<String> caronasVistas = new HashSet<>();
-        String servidorAnterior = meuId;
+        Set<String> servidoresVisitados = new HashSet<>();
 
-        for (int i = 0; i < trechosBrutos.size(); i++) {
-            TrechoSolicitado T = trechosBrutos.get(i);
+        String servidorAnterior = meuId;
+        servidoresVisitados.add(meuId);
+
+        for (TrechoSolicitado T : trechosBrutos) {
+            if (T == null || isVazio(T.servidor()) || isVazio(T.idCarona())) {
+                return ResultadoValidacao.erro(400, "Trecho invalido no itinerario");
+            }
+
             String serv = normalizar(T.servidor());
-            trechos.add(new TrechoSolicitado(serv, T.idCarona(), T.origem(), T.destino()));
+
+            trechos.add(new TrechoSolicitado(
+                    serv, T.idCarona(), T.origem(), T.destino()
+            ));
 
             if (!caronasVistas.add(IdPerna.idBase(T.idCarona()) + "@" + serv)) {
                 return ResultadoValidacao.erro(400, "Carona repetida no itinerario");
             }
 
-            if (serv.equals(meuId) && i != 0 && !servidorAnterior.equals(meuId)) {
-                return ResultadoValidacao.erro(400, "Os trechos deste servidor devem vir primeiro no itinerario");
+            // Os trechos locais precisam aparecer primeiro.
+            if (serv.equals(meuId) && !servidorAnterior.equals(meuId)) {
+                return ResultadoValidacao.erro(400,
+                        "Os trechos deste servidor devem vir primeiro no itinerario");
             }
 
-            if (!serv.equals(servidorAnterior) && servidorAnterior.equals(meuId) && buscarVizinho(serv) == null) {
-                return ResultadoValidacao.erro(400, servidorAnterior + " e " + serv + " nao fazem fronteira");
+            // Verifica toda mudança de servidor.
+            if (!serv.equals(servidorAnterior)) {
+
+                // Impede que um servidor reapareça na cadeia.
+                if (!servidoresVisitados.add(serv)) {
+                    return ResultadoValidacao.erro(400,
+                            "Servidor repetido em posicoes nao consecutivas");
+                }
+
+                // Verifica a fronteira entre os dois servidores.
+                if (!servidoresFazemFronteira(servidorAnterior, serv)) {
+                    return ResultadoValidacao.erro(400,
+                            servidorAnterior + " e " + serv + " nao fazem fronteira");
+                }
             }
 
             servidorAnterior = serv;
         }
 
         int qtdLocais = 0;
-        while (qtdLocais < trechos.size() && trechos.get(qtdLocais).servidor().equals(meuId))
+        while (qtdLocais < trechos.size()
+                && trechos.get(qtdLocais).servidor().equals(meuId)) {
             qtdLocais++;
+        }
 
         Vizinho proximo = (qtdLocais < trechos.size())
                 ? buscarVizinho(trechos.get(qtdLocais).servidor())
                 : null;
 
-        return new ResultadoValidacao(true, 200, null, trechos, qtdLocais, proximo);
+        return new ResultadoValidacao(
+                true, 200, null, trechos, qtdLocais, proximo
+        );
     }
 }

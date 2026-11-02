@@ -43,28 +43,56 @@ public class ReservaParticipante {
         String id = pedido.idTransacao();
         if (!idValido(id)) throw new ServerException(400, "id_transacao ausente ou invalido");
         if (isVazio(pedido.coordenadorId())) throw new ServerException(400, "Corpo sem corrdenador_id");
+        if (isVazio(pedido.passageiro())) throw new ServerException(400, "passageiro ausente");
+
+        String servidorAnterior = ServerConstant.normalizar(remetente);
+
+        if (isVazio(remetente) || buscarVizinho(servidorAnterior) == null)
+            throw new ServerException(403, "Remetente nao autorizado para esta cadeia");
+
         List<TrechoSolicitado> lista = pedido.trechosSolicitados();
         if (lista == null || lista.isEmpty() || lista.size() > MAX_TRECHOS)
             throw new ServerException(400, "trechos_solicitados deve ter 1 a 8 itens");
 
         List<TrechoSolicitado> trechos = new ArrayList<>();
+        Set<String> caronasVistas = new HashSet<>();
+        Set<String> servidoresVisitados = new HashSet<>();
+
+        // 1. Normaliza os trechos e verifica caronas repetidas.
         for (TrechoSolicitado T : lista) {
             if (T == null || isVazio(T.servidor()) || !idCaronaValido(T.idCarona()))
                 throw new ServerException(400, "trecho sem servidor ou com id_carona invalido");
-            trechos.add(new TrechoSolicitado(
-                    ServerConstant.normalizar(T.servidor()),
-                    T.idCarona(), T.origem(), T.destino()
-            ));
+
+            String servidor = ServerConstant.normalizar(T.servidor());
+
+            trechos.add(new TrechoSolicitado(servidor, T.idCarona(), T.origem(), T.destino()));
+
+            if (!caronasVistas.add(IdPerna.idBase(T.idCarona()) + "@" + servidor))
+                throw new ServerException(400, "carona repetida na transacao");
+
         }
 
+        // 2. Verifica se algum servidor aparece mais de uma vez na cadeia.
+        String servidorAnteriorNaLista = null;
+
+        for (TrechoSolicitado T : trechos) {
+            String servidor = T.servidor();
+
+            if (!servidor.equals(servidorAnteriorNaLista)) {
+                if (!servidoresVisitados.add(servidor))
+                    throw new ServerException(400, "Servidor repetido na cadeia");
+
+                servidorAnteriorNaLista = servidor;
+            }
+        }
+
+        // 3. Conta os trechos pertencentes a este servidor.
         int qtdMeusTrechos = 0;
-        Set<String> caronasVistas = new HashSet<>();
         while (qtdMeusTrechos < trechos.size() && trechos.get(qtdMeusTrechos).servidor().equals(meuId)) {
-            if (!caronasVistas.add(IdPerna.idBase(trechos.get(qtdMeusTrechos).idCarona())))
-                throw new ServerException(400, "carona repetida na transacao");
             qtdMeusTrechos++;
         }
 
+        // 4. Separa os trechos que serão encaminhados.
         List<TrechoSolicitado> trechosDosProximo = trechos.subList(qtdMeusTrechos, trechos.size());
         for (TrechoSolicitado T : trechosDosProximo) {
             if (T.servidor().equals(meuId))
@@ -77,7 +105,6 @@ public class ReservaParticipante {
             if (proximo == null) throw new ServerException(400, "O proximo servidor da cadeia não faz fronteira com este");
         }
 
-        String servidorAnterior = ServerConstant.normalizar(isVazio(remetente) ? pedido.coordenadorId() : remetente);
         List<TrechoReserva> meusTrechos = new ArrayList<>();
         for (TrechoSolicitado T : trechos.subList(0, qtdMeusTrechos)) {
             meusTrechos.add(new TrechoReserva(T.servidor(), T.idCarona(), T.origem(), T.destino(), 0));
