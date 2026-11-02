@@ -111,7 +111,7 @@ public class RecuperadorTransacoes {
         for (String servidorId : servidores) {
             Vizinho vizinho = ServerConstant.getVizinho(servidorId);
 
-            if (vizinho == null || !peerClient.cancel(vizinho, tx.getId())) {
+            if (vizinho == null || !peerClient.cancel(vizinho, tx.getId(), tx.getEstado())) {
                 log.warn("[RECUPERAÇÃO] Cancelamento da transação '{}' ainda pendente para '{}'.",
                         tx.getId(), servidorId);
             }

@@ -510,7 +510,7 @@ public class TransacaoService {
 
             Vizinho vizinho = ServerConstant.getVizinho(servidorId);
 
-            if (vizinho == null || !client.cancel(vizinho, tx.getId())) {
+            if (vizinho == null || !client.cancel(vizinho, tx.getId(), tx.getEstado())) {
                 sucesso = false;
                 log.warn("[RECUPERAÇÃO] Falha ao propagar cancelamento da transação '{}' para '{}'.",
                         tx.getId(), servidorId);

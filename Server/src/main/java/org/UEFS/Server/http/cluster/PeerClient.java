@@ -1,5 +1,6 @@
 package org.UEFS.Server.http.cluster;
 
+import org.UEFS.Server.domain.reservas.EstadoTransacao;
 import org.UEFS.Server.http.relogio.RelogioLamport;
 import org.UEFS.Server.http.relogio.ServerConstant;
 import org.UEFS.Server.http.service.ConsorcioUtils;
@@ -164,13 +165,18 @@ public class PeerClient implements Repasse {
     }
 
     @Override
-    public boolean cancel(Vizinho proximo, String idTransacao) {
-        Resposta R = enviar(
-                proximo, "PUT",
+    public boolean cancel(Vizinho vizinho, String idTransacao, EstadoTransacao estado) {
+        String corpo = JsonUtils.toJson(Map.of("estado", estado.name()));
+
+        Resposta resposta = enviar(
+                vizinho,
+                "PUT",
                 "/api/consorcio/reservas/" + idTransacao + "/cancel",
-                null, Duration.ofSeconds(DURATION_S)
+                corpo,
+                Duration.ofSeconds(DURATION_S)
         );
-        return !R.redeFalhou() && R.status() == 200;
+
+        return !resposta.redeFalhou() && resposta.status() == 200;
     }
 
     public boolean cancelPassageiro(Vizinho proximo, String idTransacao) {
