@@ -35,7 +35,6 @@ public class UserController {
         this.repo = repositorio;
     }
 
-
     /**
      * Verifica se o token recebido está no banco de dados de usuários logados.
      * @param token string para verificação
@@ -163,7 +162,18 @@ public class UserController {
 
         if (usuario != null) {
             ctx.status(200).json(usuario.getOtherData());
+            return;
+        }
+
+        log.info("[USER] Usuário '{}' não encontrado localmente, pedindo aos vizinhos...", idDesejado);
+
+        String visitados = ctx.queryParam("visitados");
+        OtherUserDTO userRemoto = client.buscarDadosUser(idDesejado, visitados);
+
+        if (userRemoto != null) {
+            ctx.status(200).json(userRemoto);
         } else {
+            log.warn("[USER] Usuário '{}' não encontrado...", idDesejado);
             ctx.status(404);
         }
     }

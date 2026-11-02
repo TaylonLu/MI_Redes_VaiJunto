@@ -2,6 +2,7 @@ package org.UEFS.Server.http.cluster;
 
 import org.UEFS.Server.http.relogio.RelogioLamport;
 import org.UEFS.Server.http.relogio.ServerConstant;
+import org.UEFS.Server.http.service.ConsorcioUtils;
 import org.UEFS.Server.http.service.Vizinho;
 import org.UEFS.shared.JsonUtils;
 import org.UEFS.shared.dto.OtherUserDTO;
@@ -9,6 +10,7 @@ import org.UEFS.shared.dto.consorcio.BuscaTrechosResponse;
 import org.UEFS.shared.dto.consorcio.RespostaPrepare;
 import org.UEFS.shared.dto.consorcio.ReservaRequest;
 import org.UEFS.shared.model.Regiao;
+import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,17 +22,17 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static org.UEFS.Server.http.service.ConsorcioUtils.isVazio;
 
 public class PeerClient implements Repasse {
     private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
     private static final long SUSPEITA_MS = 3_000;
     private static final long DURATION_S = 2;
     private static final long TIMEOUT_BUSCA_MS = 2_000;
-    private static final long TIMEOUT_REQUISICAO_MS = 2_000;
+    private static final long TIMEOUT_REQUISICAO_MS = 1_000;
     private static final long ESPERA_MAX_MS = 2_000;
 
     private final HttpClient httpClient;
@@ -190,33 +192,64 @@ public class PeerClient implements Repasse {
         return ate != null && ate > System.currentTimeMillis();
     }
 
-    public OtherUserDTO buscarDadosUser(String idPassageiro) {
-        if (idPassageiro == null) return null;
-        String[] partes = idPassageiro.split("-", 3);
-
-        if (partes.length < 3) return null;
-
-        String idRegiao = partes[0];
-
-        Regiao r = ServerConstant.buscar(idRegiao).orElse(null);
-        if (r == null) return null;
-
-        Vizinho V = ServerConstant.getVizinho(r.id());
-        if (V == null) {
-            log.error("[BUSCA] Vizinho não encontrado e é nulo, r.id() = {}", r.id());
-            V = new Vizinho(r.id());
+    /**
+     * Pede os dados de um usuário aos servidores vizinhos, que por sua vez fazem o mesmo
+     * caso não tenham encontrado o user no seu banco de dados.
+     * @param idUsuario ID do usuário sendo buscado.
+     * @param visitadosCsv Servidores que já foram consultados.
+     * @return {@link OtherUserDTO} caso tenham encontrado ou {@code null} caso
+     * a resposta seja incorreta ou não tenham encontrado.
+     */
+    public OtherUserDTO buscarDadosUser(String idUsuario, String visitadosCsv) {
+        if (idUsuario == null || idUsuario.isBlank()) {
+            return null;
         }
 
-        try {
-            String caminho = "/api/consorcio/usuarios/" + idPassageiro;
-            Resposta res = enviar(V, "GET", caminho, null, Duration.ofMillis(500));
+        Set<String> visitados = new LinkedHashSet<>();
 
-            if (res.status() == 200) return JsonUtils.fromJson(res.corpo(), OtherUserDTO.class);
-        } catch (Exception e) {
-            log.error("[BUSCA] Falha ao buscar dados de usuário '{}' externo do vizinho '{}'.", idPassageiro, (V != null) ? V.id() : "nulo");
+        if (visitadosCsv != null && !visitadosCsv.isBlank()) {
+            for (String id : visitadosCsv.split(",")) {
+                visitados.add(ServerConstant.normalizar(id.trim()));
+            }
+        }
+
+        String meuId = ServerConstant.normalizar(meuServidorID);
+
+        // Impede que o servidor processe novamente uma consulta
+        // que já passou por ele.
+        if (!visitados.add(meuId)) {
+            return null;
+        }
+
+        String historico = String.join(",", visitados);
+
+        for (Vizinho vizinho : ServerConstant.getVizinhos()) {
+            String idVizinho = ServerConstant.normalizar(vizinho.id());
+
+            if (visitados.contains(idVizinho)) continue;
+            if (suspeito(vizinho.id())) continue;
+
+            String caminho = "/api/consorcio/usuarios/"
+                    + codificar(idUsuario)
+                    + "?visitados=" + codificar(historico);
+
+            Resposta resposta = enviar(vizinho, "GET", caminho, null,
+                    Duration.ofMillis(TIMEOUT_BUSCA_MS)
+            );
+
+            if (resposta.status() == 200) {
+                try { return JsonUtils.fromJson( resposta.corpo(), OtherUserDTO.class );
+                } catch (RuntimeException e) {
+                    log.error("[BUSCA] Resposta inválida de {}: {}", vizinho.id(), e.getMessage() );
+                }
+            }
         }
 
         return null;
+    }
+
+    public OtherUserDTO buscarDadosUser(String idPassageiro) {
+        return buscarDadosUser(idPassageiro, null);
     }
 
     private record Resposta(int status, String corpo, boolean redeFalhou, String erro) {}
