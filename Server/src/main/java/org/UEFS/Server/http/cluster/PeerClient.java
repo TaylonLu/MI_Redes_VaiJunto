@@ -173,6 +173,24 @@ public class PeerClient implements Repasse {
         return !R.redeFalhou() && R.status() == 200;
     }
 
+    public boolean cancelPassageiro(Vizinho proximo, String idTransacao) {
+        Resposta r = enviar(
+                proximo, "PUT",
+                "/api/consorcio/reservas/" + idTransacao + "/cancel/passageiro",
+                null, Duration.ofSeconds(DURATION_S)
+        );
+        return !r.redeFalhou() && r.status() == 200;
+    }
+
+    public boolean cancelMotorista(Vizinho vizinho, String idTransacao) {
+        Resposta r = enviar(
+                vizinho, "PUT",
+                "/api/consorcio/reservas/" + idTransacao + "/cancel/motorista",
+                null, Duration.ofSeconds(DURATION_S)
+        );
+        return !r.redeFalhou() && r.status() == 200;
+    }
+
     // UTIL ====================================
 
     /** O C codifica espaço como %20; o URLEncoder do Java usa '+'. Padronizar evita depender de como o libmicrohttpd trata o '+'. */
