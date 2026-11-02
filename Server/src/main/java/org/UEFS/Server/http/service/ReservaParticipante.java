@@ -161,10 +161,7 @@ public class ReservaParticipante {
         boolean propagacaoPendente = false;
         if (!isVazio(existente.getProximo())) {
             Vizinho proximo = buscarVizinho(existente.getProximo());
-            if (proximo != null) {
-                boolean entregue = repasse.commit(proximo, idTransacao);
-                propagacaoPendente = !entregue;
-            }
+            propagacaoPendente = proximo == null || !repasse.commit(proximo, idTransacao);
         }
 
         return builder()
@@ -178,22 +175,53 @@ public class ReservaParticipante {
      * Intercepta a requisição HTTP {@code PUT /cancel} da rede e delega a limpeza
      * inteligente para o método receber {@code ReceberCancelamentoDaRede}.
      */
-    public RespostaConsorcio cancel(String idTransacao) {
-        if (!idValido(idTransacao)) throw new ServerException(400, "id da transacao invalido");
+    public RespostaConsorcio cancel(
+            String idTransacao,
+            EstadoTransacao estado,
+            String remetente
+    ) {
+        if (!idValido(idTransacao))
+            throw new ServerException(400, "id da transacao invalido");
 
-        Transacao existente = transacoes.buscar(idTransacao);
-        if (existente == null) {
-            return ConsorcioUtils.builder()
-                    .put("id_transacao", idTransacao)
-                    .put("mensagem", "Já cancelada")
-                    .build(200);
+        if (estado != EstadoTransacao.CANCELADO_PELO_PASSAGEIRO
+                && estado != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
+            throw new ServerException(400, "tipo de cancelamento invalido");
         }
 
-        transacoes.receberCancelamentoDaRede(idTransacao);
+        transacoes.receberCancelamentoDaRede(idTransacao, estado, remetente);
 
         return ConsorcioUtils.builder()
                 .put("id_transacao", idTransacao)
-                .put("mensagem", "Reserva CANCELADA com sucesso.")
+                .put("mensagem", "Cancelamento recebido")
+                .build(200);
+    }
+
+    /**
+     * Recebe a notificação de que o motorista cancelou a carona (Fase de Cancelamento).
+     * Marca a reserva como CANCELADA_MOTORISTA, libera as vagas localmente e agenda
+     * a propagação do aviso para os vizinhos através do Recuperador.
+     */
+    public RespostaConsorcio cancelMotorista(String idTransacao, String remetente) {
+        if (!idValido(idTransacao)) {
+            throw new ServerException(400, "id da transacao invalido");
+        }
+
+        Transacao existente = transacoes.buscar(idTransacao);
+        if (existente == null) {
+            return builder()
+                    .put("id_transacao", idTransacao)
+                    .put("mensagem", "Transação inexistente")
+                    .build(200);
+        }
+
+        // Chama o TransacaoService para alterar o estado, liberar vagas e
+        // persistir as flags de avisoAnteriorPendente e avisoProximoPendente
+        transacoes.registrarCancelamentoMotorista(idTransacao, remetente);
+
+        return builder()
+                .put("id_transacao", idTransacao)
+                .put("status", "CANCELADA_MOTORISTA")
+                .put("mensagem", "Cancelamento registrado")
                 .build(200);
     }
 
@@ -209,5 +237,7 @@ public class ReservaParticipante {
                 .build(200);
 
     }
+
+
 }
 

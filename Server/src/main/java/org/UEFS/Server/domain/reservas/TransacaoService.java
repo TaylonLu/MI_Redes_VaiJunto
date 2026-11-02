@@ -23,11 +23,14 @@ import org.UEFS.shared.dto.consorcio.TrechoReserva;
 import org.UEFS.shared.dto.consorcio.TrechoSolicitado;
 import org.UEFS.shared.dto.responses.ReservaResponse;
 import org.UEFS.shared.enums.StatusReserva;
+import org.UEFS.shared.model.ServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+
+import static org.UEFS.Server.http.service.ConsorcioUtils.isVazio;
 
 public class TransacaoService {
     private static final Logger log = LoggerFactory.getLogger(TransacaoService.class);
@@ -217,25 +220,31 @@ public class TransacaoService {
         }
     }
 
-    /**
-     *  O passo 4 reaproveita com false (cancelamento)
-     */
-    private Resultado liberarEApagar(String id, boolean soSePreparado) {
+    public Resultado concluirCancelamentoPassageiro(String idTransacao) {
         synchronized (caronaService) {
-            Transacao t = repo.getByID(id);
-            if (t == null) return Resultado.OK;
-            if (soSePreparado && t.getEstado() != EstadoTransacao.PREPARADO) return Resultado.CONFLITO;
+            Transacao tx = repo.getByID(idTransacao);
 
-            List<Perna> pernas = pernasDe(t);
-            liberar(pernas, t.getIdPassageiro()); // solta as vagas e grava as caronas...
-            if (!caronaRepo.salvarNoDisco()) { reocupar(pernas, t.getIdPassageiro()); return Resultado.ERRO; }
-            repo.remover(id); // ... e só então apaga o registro
+            if (tx == null) return Resultado.OK;
+
+            List<Perna> pernas = pernasDe(tx);
+
+            liberar(pernas, tx.getIdPassageiro());
+
+            if (!caronaRepo.salvarNoDisco()) {
+                reocupar(pernas, tx.getIdPassageiro());
+                return Resultado.ERRO;
+            }
+
+            repo.remover(idTransacao);
+
             if (!repo.salvarNoDisco()) {
-                repo.salvar(t);
-                reocupar(pernas, t.getIdPassageiro()); // memória volta a ser igual ao disco
+                repo.salvar(tx);
+                reocupar(pernas, tx.getIdPassageiro());
+
                 caronaRepo.salvarNoDisco();
                 return Resultado.ERRO;
             }
+
             return Resultado.OK;
         }
     }
@@ -298,28 +307,85 @@ public class TransacaoService {
      * @param idTransacao ID da transação que se deseja alterar.
      * @param userID ID do usuário Passageiro envolvido na transação.
      */
-    public void cancelarReserva(String idTransacao, String userID) {
+    public boolean cancelarReserva(String idTransacao, String userID) {
+        Transacao tx;
         synchronized (caronaService) {
-            Transacao tx = repo.getByID(idTransacao);
+            tx = repo.getByID(idTransacao);
 
             if (tx == null) throw new RecursoNaoEncontradoException("Reserva não encontrada.");
             if (!tx.getIdPassageiro().equalsIgnoreCase(userID)) {
                 throw new ForbiddenException("Reserva não pertence a esse usuário.");
             }
 
-            if (tx.getEstado() != EstadoTransacao.COMITADO) return;
+            if (tx.getEstado() == EstadoTransacao.CANCELANDO) {
+                //
+            } else if (tx.getEstado() != EstadoTransacao.COMITADO) return false;
 
-            tx.setEstado(EstadoTransacao.CANCELADO_PELO_PASSAGEIRO);
-            repo.salvar(tx);
-
-            List<Perna> pernasLocais = pernasDe(tx);
-            liberar(pernasLocais, tx.getIdPassageiro());
-
-            if (!repo.salvarNoDisco() || !caronaRepo.salvarNoDisco()) {
-                log.error("[ERRO CRÍTICO] Falha ao persistir cancelamento de Reserva.");
+            if (tx.souDono(meuId)) {
+                throw new ServerException(400, "O cancelamento deve ser iniciado pelo coordenador");
             }
 
-            notificarCancelamento(tx);
+            tx.setEstado(EstadoTransacao.CANCELANDO);
+            repo.salvar(tx);
+
+            if (!repo.salvarNoDisco()) {
+                tx.setEstado(EstadoTransacao.COMITADO);
+                repo.salvarNoDisco();
+                return false;
+            }
+        }
+
+        if (!isVazio(tx.getProximo())) {
+            Vizinho proximo = ServerConstant.getVizinho(tx.getProximo());
+            if (proximo == null || !client.cancelPassageiro(proximo, idTransacao))
+                return false;
+        }
+
+        return concluirCancelamentoPassageiro(idTransacao) == Resultado.OK;
+    }
+
+    public boolean registrarCancelamentoMotorista(
+            String idTransacao,
+            String remetente
+    ) {
+        synchronized (caronaService) {
+            Transacao tx = repo.getByID(idTransacao);
+
+            if (tx == null) return false;
+
+            if (tx.getEstado() == EstadoTransacao.CANCELANDO)
+                return false;
+
+            if (tx.getEstado() != EstadoTransacao.COMITADO
+                    && tx.getEstado() != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
+                return false;
+            }
+
+            if (tx.getEstado() == EstadoTransacao.COMITADO) {
+                tx.setEstado(EstadoTransacao.CANCELADO_PELO_MOTORISTA);
+
+                tx.setAvisoAnteriorPendente(
+                        !isVazio(tx.getAnterior())
+                                && !tx.getAnterior().equals(remetente)
+                );
+
+                tx.setAvisoProximoPendente(
+                        !isVazio(tx.getProximo())
+                                && !tx.getProximo().equals(remetente)
+                );
+
+                liberar(pernasDe(tx), tx.getIdPassageiro());
+
+                if (!caronaRepo.salvarNoDisco()) {
+                    reocupar(pernasDe(tx), tx.getIdPassageiro());
+                    tx.setEstado(EstadoTransacao.COMITADO);
+                    return false;
+                }
+            }
+
+            repo.salvar(tx);
+
+            return repo.salvarNoDisco();
         }
     }
 
@@ -416,37 +482,105 @@ public class TransacaoService {
     }
 
     /**
+     * Retenta a propagação de um cancelamento feito pelo passageiro.
+     *
+     * O coordenador utiliza o itinerário completo para reenviar o aviso
+     * aos demais servidores. Como o cancelamento remoto é idempotente,
+     * é seguro reenviar mensagens já recebidas.
+     *
+     * @return true se todos os servidores foram notificados.
+     */
+    public boolean retentarCancelamentoPassageiro(Transacao tx) {
+        if (tx == null || tx.getEstado() != EstadoTransacao.CANCELADO_PELO_PASSAGEIRO)
+            return true;
+
+        List<TrechoReserva> trechos =
+                tx.getItinerario() != null && !tx.getItinerario().isEmpty()
+                        ? tx.getItinerario()
+                        : tx.getLocais();
+
+        Set<String> servidores = new HashSet<>();
+        boolean sucesso = true;
+
+        for (TrechoReserva trecho : trechos) {
+            String servidorId = trecho.servidor();
+
+            if (servidorId.equalsIgnoreCase(meuId) || !servidores.add(servidorId))
+                continue;
+
+            Vizinho vizinho = ServerConstant.getVizinho(servidorId);
+
+            if (vizinho == null || !client.cancel(vizinho, tx.getId())) {
+                sucesso = false;
+                log.warn("[RECUPERAÇÃO] Falha ao propagar cancelamento da transação '{}' para '{}'.",
+                        tx.getId(), servidorId);
+            }
+        }
+
+        return sucesso;
+    }
+
+    /**
      * PUSH (Assíncrono). </div>
      * Dispara requisições HTTP em segundo plano para avisar o Coordenador
      * e/ou os vizinhos sobre o cancelamento.
      * @param tx {@link Transacao} modificada.
      */
     private void notificarCancelamento(Transacao tx) {
-        CompletableFuture.runAsync(() -> {  // Roda em uma thread secundária.
+        notificarCancelamento(tx, null);
+    }
+
+    private void notificarCancelamento(Transacao tx, String remetente) {
+        CompletableFuture.runAsync(() -> {
             if (meuId.equals(tx.getCoordenadorId())) {
                 Set<String> servidoresNotify = new HashSet<>();
-                List<TrechoReserva> trechos = (tx.getItinerario() != null && !tx.getItinerario().isEmpty())
-                        ? tx.getItinerario()
-                        : tx.getLocais();
+
+                List<TrechoReserva> trechos =
+                        (tx.getItinerario() != null && !tx.getItinerario().isEmpty())
+                                ? tx.getItinerario()
+                                : tx.getLocais();
 
                 for (TrechoReserva tr : trechos) {
                     String idServidor = tr.servidor();
-                    if (!idServidor.equals(meuId) && servidoresNotify.add(idServidor)) {
-                        Vizinho vizinho = ServerConstant.getVizinho(idServidor);
-                        if (vizinho != null) client.cancel(vizinho, tx.getId());
+
+                    if (idServidor.equalsIgnoreCase(meuId)
+                            || idServidor.equalsIgnoreCase(remetente)
+                            || !servidoresNotify.add(idServidor)) {
+                        continue;
+                    }
+
+                    Vizinho vizinho = ServerConstant.getVizinho(idServidor);
+
+                    if (vizinho != null) {
+                        client.cancel(vizinho, tx.getId(), tx.getEstado());
                     }
                 }
             } else {
-                if (tx.getProximo() != null && !tx.getProximo().isEmpty()) {
-                    Vizinho vizinhoProximo = ServerConstant.getVizinho(tx.getProximo());
-                    if (vizinhoProximo != null) client.cancel(vizinhoProximo, tx.getId());
+                String proximo = tx.getProximo();
+
+                if (proximo != null
+                        && !proximo.isEmpty()
+                        && !proximo.equalsIgnoreCase(remetente)) {
+
+                    Vizinho vizinho = ServerConstant.getVizinho(proximo);
+
+                    if (vizinho != null) {
+                        client.cancel(vizinho, tx.getId(), tx.getEstado());
+                    }
                 }
 
-                if (tx.getCoordenadorId() != null
-                        && !tx.getCoordenadorId().isEmpty()
-                        && !tx.getCoordenadorId().equals(this.meuId)) {
-                    Vizinho vizinhoCoord = ServerConstant.getVizinho(tx.getCoordenadorId());
-                    if (vizinhoCoord != null) client.cancel(vizinhoCoord, tx.getId());
+                String coordenador = tx.getCoordenadorId();
+
+                if (coordenador != null
+                        && !coordenador.isEmpty()
+                        && !coordenador.equalsIgnoreCase(meuId)
+                        && !coordenador.equalsIgnoreCase(remetente)) {
+
+                    Vizinho vizinho = ServerConstant.getVizinho(coordenador);
+
+                    if (vizinho != null) {
+                        client.cancel(vizinho, tx.getId(), tx.getEstado());
+                    }
                 }
             }
         });
@@ -456,37 +590,66 @@ public class TransacaoService {
      * P2P: Recebe um cancelamento vindo da rede, processa localmente
      * e continua a propagar a onda.
      */
-    public void receberCancelamentoDaRede(String idTransacao) {
+    public void receberCancelamentoDaRede(
+            String idTransacao,
+            EstadoTransacao estado,
+            String remetente
+    ) {
+        if (estado != EstadoTransacao.CANCELADO_PELO_PASSAGEIRO
+                && estado != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
+            throw new IllegalArgumentException("Estado de cancelamento inválido.");
+        }
+
         synchronized (caronaService) {
             Transacao tx = repo.getByID(idTransacao);
 
-            // Se a transação não existe ou JÁ ESTÁ cancelada, não faz nada (trava o loop infinito)
-            if (tx == null ||
-                    tx.getEstado() == EstadoTransacao.CANCELADO_PELO_MOTORISTA ||
-                    tx.getEstado() == EstadoTransacao.CANCELADO_PELO_PASSAGEIRO) {
+            if (tx == null) {
+                log.warn("[REDE] Transação '{}' não encontrada.", idTransacao);
                 return;
             }
 
-            log.info("[REDE] Recebido cancelamento remoto para a transação {}", idTransacao);
+            EstadoTransacao estadoAtual = tx.getEstado();
 
-            // Atualiza o estado
-            tx.setEstado(EstadoTransacao.CANCELADO_PELO_MOTORISTA); // Estado genérico para cancelamento em rede
+            // Cancelamento pelo motorista tem prioridade.
+            if (estadoAtual == EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
+                return;
+            }
+
+            EstadoTransacao novoEstado =
+                    estado == EstadoTransacao.CANCELADO_PELO_MOTORISTA
+                            ? EstadoTransacao.CANCELADO_PELO_MOTORISTA
+                            : EstadoTransacao.CANCELADO_PELO_PASSAGEIRO;
+
+            // Evita processar novamente o mesmo cancelamento.
+            if (estadoAtual == novoEstado) {
+                return;
+            }
+
+            boolean jaEstavaCancelada =
+                    estadoAtual == EstadoTransacao.CANCELADO_PELO_PASSAGEIRO;
+
+            log.info("[REDE] Cancelamento recebido: transação={}, estado={}, remetente={}",
+                    idTransacao, novoEstado, remetente);
+
+            tx.setEstado(novoEstado);
             repo.salvar(tx);
 
-            // Liberta as vagas presas localmente
-            List<Perna> pernasLocais = pernasDe(tx);
-            liberar(pernasLocais, tx.getIdPassageiro());
+            // Só libera os assentos na primeira transição para cancelada.
+            if (!jaEstavaCancelada) {
+                liberar(pernasDe(tx), tx.getIdPassageiro());
+            }
 
             boolean transacoesSalvas = repo.salvarNoDisco();
             boolean caronasSalvas = caronaRepo.salvarNoDisco();
 
             if (!transacoesSalvas || !caronasSalvas) {
-                log.error("[ERRO CRÍTICO] Falha ao persistir cancelamento de transação. \nTransações: {}, Caronas: {}", transacoesSalvas, caronasSalvas);
+                log.error("[ERRO CRÍTICO] Falha ao persistir cancelamento. Transações: {}, Caronas: {}",
+                        transacoesSalvas, caronasSalvas);
                 return;
             }
 
-            // PROPAGA a onda adiante!
-            notificarCancelamento(tx);
+            // Continua a propagação, sem retornar ao remetente.
+            notificarCancelamento(tx, remetente);
         }
     }
 
