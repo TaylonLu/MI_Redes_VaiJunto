@@ -155,7 +155,7 @@ public class BuscaDistribuida {
 
                 TrechoConsorcioDTO dto = new TrechoConsorcioDTO(
                         meuServidorId,
-                        C.getId() + "." + cidadeMapper.getNome(origem)
+                        C.getId() + "_" + cidadeMapper.getNome(origem)
                                 + "-" + cidadeMapper.getNome(cidadeDestino),
                         cidadeMapper.getNome(origem),
                         cidadeMapper.getNome(cidadeDestino),
@@ -188,7 +188,7 @@ public class BuscaDistribuida {
                             buscarLocal(cidadeDestino, EX);
                             buscarRemoto(cidadeMapper.getNome(cidadeDestino), EX);
                         } finally {
-                            EX.cidadesNoCaminho.removeAll(cidadesAdicionadas);
+
                             if (adicionou) EX.visitados.remove(minhaChave);
                         }
                     }
@@ -352,7 +352,7 @@ public class BuscaDistribuida {
                             resultado.size() - 1,
                             new TrechoConsorcioDTO(
                                     anterior.servidor(),
-                                    idAnterior + "." + anterior.origem()
+                                    idAnterior + "_" + anterior.origem()
                                             + "-" + atual.destino(),
                                     anterior.origem(),
                                     atual.destino(),

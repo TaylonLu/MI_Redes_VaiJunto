@@ -171,11 +171,11 @@ flowchart TD
 A implementação atual possui quatro servidores regionais:
 
 | Identificador | Região | Porta |
-|---|---|---:|
-| `unova` | Unova | 2602 |
-| `kalos` | Kalos | 2603 |
-| `johto` | Johto | 2604 |
-| `kanto` | Kanto | 2605 |
+|---------------|--------|------:|
+| `unova`       | Unova  |  2602 |
+| `kalos`       | Kalos  |  2603 |
+| `johto`       | Johto  |  2604 |
+| `kanto`       | Kanto  |  2605 |
 
 Os dados de cada região são definidos no arquivo:
 
@@ -207,12 +207,12 @@ A topologia configurada atualmente é:
 
 As conexões diretas são:
 
-| Servidor | Vizinhos |
-|---|---|
-| Unova | Kalos e Kanto |
-| Kalos | Unova e Johto |
-| Johto | Kalos e Kanto |
-| Kanto | Unova e Johto |
+| Servidor | Vizinhos      |
+|----------|---------------|
+| Unova    | Kalos e Kanto |
+| Kalos    | Unova e Johto |
+| Johto    | Kalos e Kanto |
+| Kanto    | Unova e Johto |
 
 Um servidor não deve encaminhar uma requisição diretamente para qualquer outro nó: a comunicação é realizada respeitando as relações de vizinhança definidas na configuração.
 
@@ -256,22 +256,22 @@ Na execução local, os endereços padrão definidos em `regioes.json` são util
 
 ## 3.1. Tecnologias
 
-| Tecnologia | Utilização |
-|---|---|
-| Java 24 | Linguagem principal |
-| Maven | Gerenciamento de dependências e compilação |
-| Javalin 7.2.4 | Servidor HTTP e API REST |
-| Jackson | Serialização e desserialização JSON |
-| Jackson JSR310 | Conversão de tipos de data e hora do Java |
-| Logback | Registro de logs |
-| SLF4J | Abstração de logging |
-| JUnit 5 | Infraestrutura de testes automatizados |
-| Mockito | Simulação de dependências nos testes |
-| Docker | Isolamento dos servidores |
-| Docker Compose | Orquestração dos nós |
-| Bash | Execução dos testes de integração |
-| cURL | Comunicação HTTP nos testes |
-| jq | Manipulação de JSON nos scripts |
+| Tecnologia     | Utilização                                 |
+|----------------|--------------------------------------------|
+| Java 24        | Linguagem principal                        |
+| Maven          | Gerenciamento de dependências e compilação |
+| Javalin 7.2.4  | Servidor HTTP e API REST                   |
+| Jackson        | Serialização e desserialização JSON        |
+| Jackson JSR310 | Conversão de tipos de data e hora do Java  |
+| Logback        | Registro de logs                           |
+| SLF4J          | Abstração de logging                       |
+| JUnit 5        | Infraestrutura de testes automatizados     |
+| Mockito        | Simulação de dependências nos testes       |
+| Docker         | Isolamento dos servidores                  |
+| Docker Compose | Orquestração dos nós                       |
+| Bash           | Execução dos testes de integração          |
+| cURL           | Comunicação HTTP nos testes                |
+| jq             | Manipulação de JSON nos scripts            |
 
 ## 3.2. Requisitos de ambiente
 

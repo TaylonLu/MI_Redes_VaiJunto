@@ -1,0 +1,22 @@
+{
+  "servidores": [
+    {
+      "id": "localhost:2602",
+      "url": "http://localhost:2602",
+      "container": "vai-junto-unova"
+    },
+    {
+      "id": "localhost:2603",
+      "url": "http://localhost:2603",
+      "container": "vai-junto-kalos"
+    },
+    {
+      "id": "localhost:2604",
+      "url": "http://localhost:2604",
+      "container": "vai-junto-johto"
+    }
+  ],
+  "timeout": 15,
+  "intervalo_recuperacao": 30,
+  "diretorio_dados": "../data"
+}
