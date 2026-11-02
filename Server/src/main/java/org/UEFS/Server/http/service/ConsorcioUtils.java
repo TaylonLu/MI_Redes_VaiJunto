@@ -110,6 +110,23 @@ public class ConsorcioUtils {
         return n;
     }
 
+    public static boolean servidoresFazemFronteira(String origem, String destino) {
+        try {
+            var regiaoOrigem = ServerConstant.buscar(origem).orElse(null);
+            var regiaoDestino = ServerConstant.buscar(destino).orElse(null);
+
+            if (regiaoOrigem == null || regiaoDestino == null)
+                return false;
+
+            return regiaoOrigem.vizinhos().stream()
+                    .map(v -> ServerConstant.buscar(v).orElseThrow())
+                    .anyMatch(v -> v.id().equals(regiaoDestino.id()));
+
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     /**
      * Percorre a lista de vizinhos do servidor para determinar se
      * o id dado está na lista de servidores vizinhos.
