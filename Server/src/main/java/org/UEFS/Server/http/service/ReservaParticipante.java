@@ -85,9 +85,7 @@ public class ReservaParticipante {
                 servidorAnteriorNaLista = servidor;
             }
         }
-        if (!trechos.getFirst().servidor().equals(meuId))
-            throw new ServerException(400,
-                    "O primeiro trecho deve pertencer a este servidor");
+
         // 3. Conta os trechos pertencentes a este servidor.
         int qtdMeusTrechos = 0;
         while (qtdMeusTrechos < trechos.size() && trechos.get(qtdMeusTrechos).servidor().equals(meuId)) {
