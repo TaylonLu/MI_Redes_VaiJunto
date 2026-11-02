@@ -99,6 +99,10 @@ public class TransacaoService {
         synchronized (caronaService) {
             Transacao existente = repo.getByID(pedido.getId());
             if (existente != null) {
+                if (!mesmaSolicitacao(existente, pedido))
+                    return recusa(Resultado.CONFLITO,
+                            "ID de transacao reutilizado com dados diferentes.");
+
                 return switch (existente.getEstado()) {
                     case ABORTADO -> recusa(Resultado.CONFLITO, "transação já foi abortada.");
                     case PREPARADO, COMITADO -> new Preparo(Resultado.OK, existente.getLocais(), true, null);
@@ -682,6 +686,35 @@ public class TransacaoService {
             if (P != null) pernas.add(P);
         }
         return pernas;
+    }
+
+    private boolean mesmaSolicitacao(Transacao existente, Transacao pedido) {
+        if (!Objects.equals(existente.getCoordenadorId(), pedido.getCoordenadorId())
+                || !Objects.equals(existente.getAnterior(), pedido.getAnterior())
+                || !Objects.equals(existente.getProximo(), pedido.getProximo())
+                || !Objects.equals(existente.getIdPassageiro(), pedido.getIdPassageiro())
+                || existente.getRelogio() != pedido.getRelogio()) {
+            return false;
+        }
+
+        List<TrechoReserva> A = existente.getLocais();
+        List<TrechoReserva> B = pedido.getLocais();
+
+        if (A.size() != B.size()) return false;
+
+        for (int i = 0; i < A.size(); i++) {
+            TrechoReserva a = A.get(i);
+            TrechoReserva b = B.get(i);
+
+            if (!Objects.equals(a.servidor(), b.servidor())
+                    || !Objects.equals(a.idCarona(), b.idCarona())
+                    || a.origem() != b.origem()
+                    || a.destino() != b.destino()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private List<PassoItinerarioDTO> makePassosItinerario(List<TrechoReserva> trechos) {
