@@ -1,9 +1,5 @@
 package org.UEFS.Server.http.cluster;
 
-import org.UEFS.Server.controller.ControllerService;
-import org.UEFS.Server.domain.reservas.EstadoTransacao;
-import org.UEFS.Server.domain.reservas.Transacao;
-import org.UEFS.Server.domain.reservas.TransacaoService;
 import org.UEFS.Server.http.relogio.RelogioLamport;
 import org.UEFS.Server.http.relogio.ServerConstant;
 import org.UEFS.Server.http.service.ConsorcioUtils;
@@ -11,9 +7,10 @@ import org.UEFS.Server.http.service.Vizinho;
 import org.UEFS.shared.JsonUtils;
 import org.UEFS.shared.dto.OtherUserDTO;
 import org.UEFS.shared.dto.consorcio.BuscaTrechosResponse;
-import org.UEFS.shared.dto.consorcio.ReservaRequest;
 import org.UEFS.shared.dto.consorcio.RespostaPrepare;
-import org.UEFS.shared.model.ServerException;
+import org.UEFS.shared.dto.consorcio.ReservaRequest;
+import org.UEFS.shared.model.Regiao;
+import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +25,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.UEFS.Server.http.service.ConsorcioUtils.*;
+import static org.UEFS.Server.http.service.ConsorcioUtils.isVazio;
 
 public class PeerClient implements Repasse {
     private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
@@ -43,7 +40,6 @@ public class PeerClient implements Repasse {
     private final String meuServidorID;
 
     private final Map<String, Long> suspeitoAte = new ConcurrentHashMap<>();
-    private final TransacaoService transacoes = ControllerService.getInstance().get(TransacaoService.class);
 
     public record ResultadoStatus(boolean respondeu, int http, String corpo) {
         public boolean conhecido() {
@@ -176,46 +172,6 @@ public class PeerClient implements Repasse {
         );
         return !R.redeFalhou() && R.status() == 200;
     }
-
-    public boolean cancel(Vizinho proximo, String idTransacao, EstadoTransacao estado) {
-        if (estado != EstadoTransacao.CANCELADO_PELO_PASSAGEIRO
-                && estado != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
-            throw new IllegalArgumentException("Estado de cancelamento inválido.");
-        }
-
-        String corpo = JsonUtils.toJson(Map.of("estado", estado.name()));
-
-        Resposta resposta = enviar(
-                proximo,
-                "PUT",
-                "/api/consorcio/reservas/" + idTransacao + "/cancel",
-                corpo,
-                Duration.ofSeconds(DURATION_S)
-        );
-
-        return !resposta.redeFalhou() && resposta.status() == 200;
-    }
-
-    public boolean cancelPassageiro(Vizinho proximo, String idTransacao) {
-        Resposta r = enviar(proximo, "PUT",
-                "/api/consorcio/reservas/" + idTransacao + "/cancel/passageiro",
-                null,
-                Duration.ofSeconds(DURATION_S)
-        );
-
-        return !r.redeFalhou() && r.status() == 200;
-    }
-
-    public boolean cancelMotorista(Vizinho vizinho, String idTransacao) {
-        Resposta r = enviar(vizinho, "PUT",
-                "/api/consorcio/reservas/" + idTransacao + "/cancel/motorista",
-                null,
-                Duration.ofSeconds(DURATION_S)
-        );
-
-        return !r.redeFalhou() && r.status() == 200;
-    }
-
 
     // UTIL ====================================
 
