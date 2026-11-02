@@ -71,7 +71,7 @@ public class TransacaoService {
         // Converte os trechos solicitados na estrutura de reserva local (com assento 0 temporário)
         List<TrechoReserva> meusTrechosReserva = new ArrayList<>();
         for (TrechoSolicitado T : trechosLocais) {
-            meusTrechosReserva.add(new TrechoReserva(T.servidor(), T.idCarona(), 0));
+            meusTrechosReserva.add(new TrechoReserva(T.servidor(), T.idCarona(), T.origem(), T.destino(), 0));
         }
 
         // Determina o ID do próximo nó da cadeia (ou string vazia se for o último)
@@ -116,7 +116,9 @@ public class TransacaoService {
                 }
 
                 ocupadas.add(P);
-                assentos.add(new TrechoReserva(P.servidor(), P.idPerna(), O.assento()));
+                assentos.add(new TrechoReserva(P.servidor(), P.idPerna(),
+                        P.trechos().getFirst().origem(), P.trechos().getFirst().destino(),
+                        O.assento()));
             }
 
             Transacao preparada = pedido.comAssentos(assentos);

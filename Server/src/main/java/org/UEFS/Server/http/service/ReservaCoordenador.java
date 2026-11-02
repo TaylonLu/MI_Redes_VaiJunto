@@ -7,6 +7,7 @@ import org.UEFS.Server.domain.reservas.TransacaoService;
 import org.UEFS.Server.http.cluster.Repasse;
 import org.UEFS.Server.http.cluster.ResultadoRepasse;
 import org.UEFS.Server.http.relogio.RelogioLamport;
+import org.UEFS.shared.dto.consorcio.ReservaClienteRequest;
 import org.UEFS.shared.dto.consorcio.ReservaRequest;
 import org.UEFS.shared.dto.consorcio.TrechoReserva;
 import org.UEFS.shared.dto.consorcio.TrechoSolicitado;
@@ -47,8 +48,8 @@ public class ReservaCoordenador {
      * @return {@link RespostaConsorcio} contendo um mapa de informações.
      * Se deu cerro ou errado (e o porquê).
      */
-    public ConsorcioUtils.RespostaConsorcio reservar(String idPassageiro, ReservaRequest pedidoCliente) {
-        List<TrechoSolicitado> trechosBrutos = pedidoCliente.trechosSolicitados();
+    public ConsorcioUtils.RespostaConsorcio reservar(String idPassageiro, ReservaClienteRequest pedidoCliente) {
+        List<TrechoSolicitado> trechosBrutos = pedidoCliente.trechos();
 
         ResultadoValidacao val = validarItinerario(trechosBrutos);
         if (!val.ok()) return respostaRecusa(val.status(), meuId, val.motivo());
@@ -118,7 +119,7 @@ public class ReservaCoordenador {
         for (int i = 0; i < trechosBrutos.size(); i++) {
             TrechoSolicitado T = trechosBrutos.get(i);
             String serv = normalizar(T.servidor());
-            trechos.add(new TrechoSolicitado(serv, T.idCarona()));
+            trechos.add(new TrechoSolicitado(serv, T.idCarona(), T.origem(), T.destino()));
 
             if (!caronasVistas.add(IdPerna.idBase(T.idCarona()) + "@" + serv)) {
                 return ResultadoValidacao.erro(400, "Carona repetida no itinerario");

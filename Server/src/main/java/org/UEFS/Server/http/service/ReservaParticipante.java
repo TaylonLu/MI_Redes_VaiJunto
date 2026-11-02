@@ -51,7 +51,10 @@ public class ReservaParticipante {
         for (TrechoSolicitado T : lista) {
             if (T == null || isVazio(T.servidor()) || !idCaronaValido(T.idCarona()))
                 throw new ServerException(400, "trecho sem servidor ou com id_carona invalido");
-            trechos.add(new TrechoSolicitado(ServerConstant.normalizar(T.servidor()), T.idCarona()));
+            trechos.add(new TrechoSolicitado(
+                    ServerConstant.normalizar(T.servidor()),
+                    T.idCarona(), T.origem(), T.destino()
+            ));
         }
 
         int qtdMeusTrechos = 0;
@@ -77,7 +80,7 @@ public class ReservaParticipante {
         String servidorAnterior = ServerConstant.normalizar(isVazio(remetente) ? pedido.coordenadorId() : remetente);
         List<TrechoReserva> meusTrechos = new ArrayList<>();
         for (TrechoSolicitado T : trechos.subList(0, qtdMeusTrechos)) {
-            meusTrechos.add(new TrechoReserva(T.servidor(), T.idCarona(), 0));
+            meusTrechos.add(new TrechoReserva(T.servidor(), T.idCarona(), T.origem(), T.destino(), 0));
         }
 
         Transacao transacao = new Transacao(id, pedido.coordenadorId(), servidorAnterior,

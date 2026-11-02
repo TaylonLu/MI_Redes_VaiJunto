@@ -10,6 +10,7 @@ import org.UEFS.Server.domain.reservas.EstadoTransacao;
 import org.UEFS.Server.http.relogio.*;
 import org.UEFS.shared.JsonUtils;
 import org.UEFS.shared.dto.consorcio.CancelamentoRequest;
+import org.UEFS.shared.dto.consorcio.ReservaClienteRequest;
 import org.UEFS.shared.dto.consorcio.ReservaRequest;
 import org.UEFS.Server.http.service.ConsorcioUtils.RespostaConsorcio;
 import org.jetbrains.annotations.NotNull;
@@ -54,9 +55,10 @@ public class ServerManager {
         String token = tokenDe(ctx);
         String idPassageiro = userController.validarUsuarioLogado(token);
 
-        ReservaRequest pedido;
-        try { pedido = ctx.bodyAsClass(ReservaRequest.class); }
-        catch (Exception e) {
+        ReservaClienteRequest pedido;
+        try {
+            pedido = ctx.bodyAsClass(ReservaClienteRequest.class);
+        } catch (Exception e) {
             ctx.status(400).json(Map.of("erro", "Corpo JSON inválido para reserva"));
             return;
         }
