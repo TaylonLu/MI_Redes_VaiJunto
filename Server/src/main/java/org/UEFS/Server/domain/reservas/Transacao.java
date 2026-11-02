@@ -6,7 +6,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.UEFS.Server.domain.interfaces.Identificavel;
 import org.UEFS.shared.dto.consorcio.TrechoReserva;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Transacao implements Identificavel {
     private final String id;                      // = id_transacao
@@ -21,12 +23,17 @@ public class Transacao implements Identificavel {
     private volatile EstadoTransacao estado;
     @JsonIgnore
     private volatile boolean emProcessamento;
+    private volatile Set<String> cancelamentosPendentes = new HashSet<>();
+
+    private volatile boolean avisoAnteriorPendente;
+    private volatile boolean avisoProximoPendente;
 
     /** Criação: sempre nasce PREPARADO, sem assentos definidos. */
     public Transacao(String id, String coordenadorId, String anterior, String proximo,
                      String idPassageiro, long relogio, List<TrechoReserva> locais) {
         this(id, coordenadorId, anterior, proximo, idPassageiro, relogio,
-             System.currentTimeMillis(), locais, null, EstadoTransacao.PREPARADO);
+             System.currentTimeMillis(), locais, null, EstadoTransacao.PREPARADO,
+                false, false, Set.of());
     }
 
     /** Leitura do disco. */
@@ -36,16 +43,29 @@ public class Transacao implements Identificavel {
                      @JsonProperty("idPassageiro") String idPassageiro, @JsonProperty("relogio") long relogio,
                      @JsonProperty("criadoEm") long criadoEm, @JsonProperty("locais") List<TrechoReserva> locais,
                      @JsonProperty("itinerario") List<TrechoReserva> itinerario,
-                     @JsonProperty("estado") EstadoTransacao estado) {
-        this.id = id; this.coordenadorId = coordenadorId; this.anterior = anterior; this.proximo = proximo;
-        this.idPassageiro = idPassageiro; this.relogio = relogio; this.criadoEm = criadoEm;
-        this.locais = List.copyOf(locais); this.itinerario = itinerario; this.estado = estado;
+                     @JsonProperty("estado") EstadoTransacao estado,
+                     @JsonProperty("avisoAnteriorPendente") Boolean avisoAnteriorPendente,
+                     @JsonProperty("avisoProximoPendente") Boolean avisoProximoPendente,
+                     @JsonProperty("cancelamentosPendentes") Set<String> cancelamentosPendentes) {
+        this.id = id;
+        this.coordenadorId = coordenadorId;
+        this.anterior = anterior;
+        this.proximo = proximo;
+        this.idPassageiro = idPassageiro;
+        this.relogio = relogio;
+        this.criadoEm = criadoEm;
+        this.locais = List.copyOf(locais);
+        this.itinerario = itinerario;
+        this.estado = estado;
+        this.cancelamentosPendentes = cancelamentosPendentes == null
+                ? new HashSet<>()
+                : new HashSet<>(cancelamentosPendentes);
     }
 
     /** Cópia com os assentos escolhidos. Preserva id e criadoEm. */
     public Transacao comAssentos(List<TrechoReserva> assentos) {
         Transacao copia = new Transacao(id, coordenadorId, anterior, proximo, idPassageiro, relogio,
-                criadoEm, assentos, itinerario, EstadoTransacao.PREPARADO);
+                criadoEm, assentos, itinerario, EstadoTransacao.PREPARADO, false, false, Set.of());
         copia.emProcessamento = true;
         return copia;
     }
@@ -65,6 +85,28 @@ public class Transacao implements Identificavel {
     @JsonIgnore public boolean isEmProcessamento() { return emProcessamento; }
     @JsonIgnore public void setEmProcessamento(boolean valor) { this.emProcessamento = valor; }
 
+    public synchronized void adicionarCancelamentoPendente(String servidorId) {
+        cancelamentosPendentes.add(servidorId);
+    }
+    public synchronized void confirmarCancelamento(String servidorId) {
+        cancelamentosPendentes.remove(servidorId);
+    }
+    public synchronized Set<String> getCancelamentosPendentes() {
+        return Set.copyOf(cancelamentosPendentes);
+    }
+
+    public boolean isAvisoAnteriorPendente() {
+        return avisoAnteriorPendente;
+    }
+    public void setAvisoAnteriorPendente(boolean avisoAnteriorPendente) {
+        this.avisoAnteriorPendente = avisoAnteriorPendente;
+    }
+    public boolean isAvisoProximoPendente() {
+        return avisoProximoPendente;
+    }
+    public void setAvisoProximoPendente(boolean avisoProximoPendente) {
+        this.avisoProximoPendente = avisoProximoPendente;
+    }
     public boolean comitado() {
         return this.estado == EstadoTransacao.COMITADO;
     }

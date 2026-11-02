@@ -105,6 +105,8 @@ public class HttpServer {
                     delete("/{id}", manager::rollback, Acesso.PUBLIC);
                     put("/{id}/commit", manager::commit, Acesso.PUBLIC);
                     put("/{id}/cancel", manager::cancel, Acesso.PUBLIC);
+                    put("/{id}/cancel/passageiro", manager::cancelPassageiro, Acesso.PUBLIC);
+                    put("/{id}/cancel/motorista", manager::cancelMotorista, Acesso.PUBLIC);
                     get("/{id}/status", manager::status, Acesso.PUBLIC);
                 });
             });

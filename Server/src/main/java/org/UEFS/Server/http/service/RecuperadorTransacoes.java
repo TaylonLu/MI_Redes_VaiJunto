@@ -8,9 +8,13 @@ import org.UEFS.Server.domain.reservas.TransacaoService;
 import org.UEFS.Server.http.cluster.PeerClient;
 import org.UEFS.Server.http.relogio.ServerConstant;
 import org.UEFS.shared.JsonUtils;
+import org.UEFS.shared.dto.consorcio.TrechoReserva;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -57,12 +61,59 @@ public class RecuperadorTransacoes {
                     case COMITADO -> propagarCommit(tx);
                     case ABORTADO -> propagarRollback(tx);
                     case PREPARADO -> recuperarPreparada(tx);
-                    default -> {
-                        // Estados de cancelamento não são dessa ossada.
+                    case CANCELADO_PELO_PASSAGEIRO -> {
+                        if (tx.souDono(meuId))
+                            transacoes.retentarCancelamentoPassageiro(tx);
                     }
-                };
+                    case CANCELADO_PELO_MOTORISTA -> recuperarCancelamentoMotorista(tx);
+                    default -> {
+                        // Outros estados não exigem recuperação neste momento.
+                    }
+                }
             } catch (RuntimeException e) {
                 log.error("[RECUPERAÇÃO] Erro ao recuperar transação '{}': {}", tx.getId(), e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * Retenta a propagação de cancelamentos feitos pelo motorista.</div>
+     * O coordenador utiliza o itinerário completo. Os participantes
+     * notificam seus servidores anterior e próximo.
+     */
+    private void recuperarCancelamentoMotorista(Transacao tx) {
+        if (tx.getEstado() != EstadoTransacao.CANCELADO_PELO_MOTORISTA)
+            return;
+
+        Set<String> servidores = new HashSet<>();
+
+        if (tx.souDono(meuId)) {
+            // Coordenador: notifica todos os servidores do itinerário.
+            List<TrechoReserva> trechos =
+                    tx.getItinerario() != null && !tx.getItinerario().isEmpty()
+                            ? tx.getItinerario()
+                            : tx.getLocais();
+
+            for (var trecho : trechos) {
+                servidores.add(trecho.servidor());
+            }
+        } else {
+            // Participante: notifica os dois vizinhos da cadeia.
+            if (!isVazio(tx.getAnterior()))
+                servidores.add(tx.getAnterior());
+
+            if (!isVazio(tx.getProximo()))
+                servidores.add(tx.getProximo());
+        }
+
+        servidores.removeIf(id -> id.equalsIgnoreCase(meuId));
+
+        for (String servidorId : servidores) {
+            Vizinho vizinho = ServerConstant.getVizinho(servidorId);
+
+            if (vizinho == null || !peerClient.cancel(vizinho, tx.getId())) {
+                log.warn("[RECUPERAÇÃO] Cancelamento da transação '{}' ainda pendente para '{}'.",
+                        tx.getId(), servidorId);
             }
         }
     }
@@ -122,8 +173,7 @@ public class RecuperadorTransacoes {
             switch (estadoAnterior) {
                 case COMITADO -> {
                     log.info("[RECUPERAÇÃO] Anterior confirmou '{}'. Efetivando commit.", tx.getId());
-                        if (transacoes.decidir(tx.getId(), EstadoTransacao.COMITADO)
-                                == Resultado.OK) {
+                        if (transacoes.decidir(tx.getId(), EstadoTransacao.COMITADO) == Resultado.OK) {
                             propagarCommit(tx);
                         }
                 } case ABORTADO ->  {

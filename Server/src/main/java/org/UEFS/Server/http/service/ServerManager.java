@@ -1,11 +1,15 @@
 package org.UEFS.Server.http.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.javalin.http.Context;
 import org.UEFS.Server.controller.CaronaController;
 import org.UEFS.Server.controller.ControllerService;
 import org.UEFS.Server.controller.UserController;
 import org.UEFS.Server.domain.cidades.CidadeMapper;
+import org.UEFS.Server.domain.reservas.EstadoTransacao;
 import org.UEFS.Server.http.relogio.*;
+import org.UEFS.shared.JsonUtils;
+import org.UEFS.shared.dto.consorcio.CancelamentoRequest;
 import org.UEFS.shared.dto.consorcio.ReservaRequest;
 import org.UEFS.Server.http.service.ConsorcioUtils.RespostaConsorcio;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +111,47 @@ public class ServerManager {
     }
 
     public void cancel(@NotNull Context ctx) {
-        RespostaConsorcio resposta = participante.cancel(ctx.pathParam("id"));
+        CancelamentoRequest pedido = ctx.bodyAsClass(CancelamentoRequest.class);
+
+        EstadoTransacao estado;
+
+        try {
+            estado = EstadoTransacao.valueOf(pedido.estado());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            ctx.status(400).json(Map.of(
+                    "mensagem", "Estado de cancelamento inválido."
+            ));
+            return;
+        }
+
+        RespostaConsorcio resposta = participante.cancel(
+                ctx.pathParam("id"),
+                estado,
+                ctx.header("X-Server-Id")
+        );
+
+        ctx.status(resposta.status()).json(resposta.corpo());
+    }
+
+    public void cancelPassageiro(@NotNull Context ctx) {
+        ConsorcioUtils.RespostaConsorcio resposta =
+                participante.cancel(
+                        ctx.pathParam("id"),
+                        EstadoTransacao.CANCELADO_PELO_PASSAGEIRO,
+                        null
+                );
+
+        ctx.status(resposta.status()).json(resposta.corpo());
+    }
+
+    public void cancelMotorista(@NotNull Context ctx) {
+        // Repassa o ID e resgata quem enviou o aviso pelo header X-Server-Id
+        ConsorcioUtils.RespostaConsorcio resposta =
+                participante.cancelMotorista(
+                        ctx.pathParam("id"),
+                        ctx.header("X-Server-Id")
+                );
+
         ctx.status(resposta.status()).json(resposta.corpo());
     }
 
