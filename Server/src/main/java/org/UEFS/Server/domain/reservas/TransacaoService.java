@@ -315,7 +315,7 @@ public class TransacaoService {
             List<Perna> pernasLocais = pernasDe(tx);
             liberar(pernasLocais, tx.getIdPassageiro());
 
-            if (!repo.salvarNoDisco() || caronaRepo.salvarNoDisco()) {
+            if (!repo.salvarNoDisco() || !caronaRepo.salvarNoDisco()) {
                 log.error("[ERRO CRÍTICO] Falha ao persistir cancelamento de Reserva.");
             }
 
@@ -477,8 +477,13 @@ public class TransacaoService {
             List<Perna> pernasLocais = pernasDe(tx);
             liberar(pernasLocais, tx.getIdPassageiro());
 
-            if (!repo.salvarNoDisco() || caronaRepo.salvarNoDisco())
-                log.error("[ERRO CRÍTICO] Falha ao persistir cancelamento de transação.");
+            boolean transacoesSalvas = repo.salvarNoDisco();
+            boolean caronasSalvas = caronaRepo.salvarNoDisco();
+
+            if (!transacoesSalvas || !caronasSalvas) {
+                log.error("[ERRO CRÍTICO] Falha ao persistir cancelamento de transação. \nTransações: {}, Caronas: {}", transacoesSalvas, caronasSalvas);
+                return;
+            }
 
             // PROPAGA a onda adiante!
             notificarCancelamento(tx);

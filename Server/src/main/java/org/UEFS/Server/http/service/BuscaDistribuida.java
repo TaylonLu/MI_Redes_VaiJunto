@@ -3,6 +3,7 @@ package org.UEFS.Server.http.service;
 import org.UEFS.Server.controller.ControllerService;
 import org.UEFS.Server.domain.caronas.Carona;
 import org.UEFS.Server.domain.caronas.CaronaRepo;
+import org.UEFS.Server.domain.caronas.IdPerna;
 import org.UEFS.Server.domain.cidades.CidadeMapper;
 import org.UEFS.Server.http.cluster.PeerClient;
 import org.UEFS.Server.http.relogio.ServerConstant;
@@ -155,8 +156,7 @@ public class BuscaDistribuida {
 
                 TrechoConsorcioDTO dto = new TrechoConsorcioDTO(
                         meuServidorId,
-                        C.getId() + "_" + cidadeMapper.getNome(origem)
-                                + "-" + cidadeMapper.getNome(cidadeDestino),
+                        C.getId() + "_" + origem + "_" + cidadeDestino,
                         cidadeMapper.getNome(origem),
                         cidadeMapper.getNome(cidadeDestino),
                         C.getData().toString(),
@@ -188,7 +188,7 @@ public class BuscaDistribuida {
                             buscarLocal(cidadeDestino, EX);
                             buscarRemoto(cidadeMapper.getNome(cidadeDestino), EX);
                         } finally {
-
+                            EX.cidadesNoCaminho.removeAll(cidadesAdicionadas);
                             if (adicionou) EX.visitados.remove(minhaChave);
                         }
                     }
@@ -330,15 +330,25 @@ public class BuscaDistribuida {
             if (!resultado.isEmpty()) {
                 TrechoConsorcioDTO anterior = resultado.getLast();
 
-                String idAnterior = idBaseBusca(anterior.idCarona());
-                String idAtual = idBaseBusca(atual.idCarona());
+                Optional<IdPerna> pernaAnterior = IdPerna.decodificar(anterior.idCarona());
+
+                Optional<IdPerna> pernaAtual = IdPerna.decodificar(atual.idCarona());
+
 
                 boolean mesmaCarona =
                         Objects.equals(anterior.servidor(), atual.servidor()) &&
-                                Objects.equals(idAnterior, idAtual);
+                                pernaAnterior.isPresent() &&
+                                pernaAtual.isPresent() &&
+                                Objects.equals(
+                                        pernaAnterior.get().idCarona(),
+                                        pernaAtual.get().idCarona()
+                                );
 
-                boolean consecutivos = anterior.destino()
-                        .equalsIgnoreCase(atual.origem());
+                boolean consecutivos =
+                        anterior.destino().equalsIgnoreCase(atual.origem()) &&
+                                pernaAnterior.isPresent() &&
+                                pernaAtual.isPresent() &&
+                                pernaAnterior.get().fim() + 1 == pernaAtual.get().inicio();
 
                 if (mesmaCarona && consecutivos) {
                     List<String> paradas = new ArrayList<>(
@@ -352,8 +362,9 @@ public class BuscaDistribuida {
                             resultado.size() - 1,
                             new TrechoConsorcioDTO(
                                     anterior.servidor(),
-                                    idAnterior + "_" + anterior.origem()
-                                            + "-" + atual.destino(),
+                                    pernaAnterior.get().idCarona()
+                                            + "_" + pernaAnterior.get().inicio()
+                                            + "_" + pernaAtual.get().fim(),
                                     anterior.origem(),
                                     atual.destino(),
                                     anterior.horario(),
@@ -382,8 +393,7 @@ public class BuscaDistribuida {
     }
 
     private String idBaseBusca(String idCarona) {
-        int separador = idCarona.indexOf('.');
-        return separador < 0 ? idCarona : idCarona.substring(0, separador);
+       return IdPerna.idBase(idCarona);
     }
 
     private List<String> extrairParadasIntermediarias(List<Trecho> faixa) {
@@ -402,4 +412,5 @@ public class BuscaDistribuida {
         try { return cidadeMapper.traduzirParaId(nome.trim()); }
         catch (RuntimeException e) { return null; }
     }
+
 }

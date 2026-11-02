@@ -13,7 +13,7 @@ from pathlib import Path
 
 CONFIG = json.loads(Path("config.json").read_text(encoding="utf-8"))
 SERVIDORES = CONFIG["servidores"]
-TIMEOUT = CONFIG.get("timeout", 15)
+TIMEOUT = CONFIG.get("timeout", 5)
 
 ORIGENS_DESTINOS = [
     # Substitua pelos nomes de cidades existentes no seu cidades.json.
@@ -122,6 +122,68 @@ def extrair_trechos(itinerario):
 
     return resultado
 
+def normalizar_servidor(servidor):
+    """
+    Normaliza a identificação do servidor para permitir
+    comparações entre endereços em formatos equivalentes.
+    """
+    if not servidor:
+        return ""
+
+    servidor = servidor.strip().lower()
+    servidor = servidor.removeprefix("http://")
+    servidor = servidor.removeprefix("https://")
+    return servidor.rstrip("/")
+
+
+def ordenar_trechos_por_servidor(trechos, coordenador_id):
+    """
+    Agrupa os trechos por servidor, preservando a ordem
+    em que os servidores aparecem no itinerário.
+
+    O servidor coordenador sempre fica primeiro, pois
+    o protocolo de reserva exige isso.
+
+    Não permite que um servidor reapareça depois de
+    outro servidor já ter começado.
+    """
+    grupos = {}
+    servidores_encerrados = set()
+    servidor_anterior = None
+
+    for trecho in trechos:
+        servidor = normalizar_servidor(trecho["servidor"])
+
+        if not servidor:
+            raise ValueError("Trecho sem identificação de servidor.")
+
+        if servidor != servidor_anterior:
+            if servidor in servidores_encerrados:
+                raise ValueError(
+                    f"O itinerário retorna a um servidor já visitado: {servidor}"
+                )
+
+            if servidor_anterior is not None:
+                servidores_encerrados.add(servidor_anterior)
+
+            servidor_anterior = servidor
+
+        grupos.setdefault(servidor, []).append(trecho)
+
+    coordenador = normalizar_servidor(coordenador_id)
+    trechos_locais = grupos.pop(coordenador, None)
+
+    if not trechos_locais:
+        raise ValueError(
+            f"O itinerário não possui trechos do coordenador {coordenador}"
+        )
+
+    resultado = list(trechos_locais)
+
+    for trechos_servidor in grupos.values():
+        resultado.extend(trechos_servidor)
+
+    return resultado
 
 def buscar(servidor, token, origem, destino):
     url = (
@@ -157,6 +219,17 @@ def reservar(servidor, token, itinerario):
         incrementar("itinerarios_invalidos")
         return
 
+    try:
+        trechos = ordenar_trechos_por_servidor(
+            trechos,
+            servidor["id"]
+        )
+
+    except ValueError as erro:
+        incrementar("itinerarios_invalidos")
+        print(f"[ITINERÁRIO INVÁLIDO] {erro}")
+        return
+
     pedido = {
         "id_transacao": str(uuid.uuid4()),
         "coordenador_id": servidor["id"],
@@ -165,9 +238,6 @@ def reservar(servidor, token, itinerario):
         "trechos_solicitados": trechos
     }
 
-    # O servidor obtém o passageiro pelo token.
-    # Os campos passageiro e coordenador_id são mantidos
-    # por compatibilidade com o DTO ReservaRequest.
     status, resposta = requisicao(
         servidor["url"] + "/api/cliente/reservas",
         "POST",
@@ -178,14 +248,25 @@ def reservar(servidor, token, itinerario):
     if status == 201 and isinstance(resposta, dict):
         if resposta.get("status") == "CONFIRMADO":
             incrementar("reservas_confirmadas")
+
+            print(
+                f"[RESERVA CONFIRMADA] "
+                f"Transação: {resposta.get('id_transacao')}"
+            )
             return
 
     if status == 0:
         incrementar("reservas_com_erro_rede")
+
     elif status == 409:
         incrementar("reservas_recusadas_conflito")
+
     else:
         incrementar("reservas_recusadas")
+
+    print(
+        f"[RESERVA RECUSADA] HTTP {status}: {resposta}"
+    )
 
 
 def trabalhador(numero, servidor, iteracoes):

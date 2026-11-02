@@ -265,7 +265,7 @@ async function reservar(it) {
             trechos_solicitados: trechosConsolidados.map(tc => ({
                 servidor: tc.servidor,
                 // Monta o identificador exato da perna que o Java espera descodificar
-                id_carona: `${tc.idCaronaBase}_${tc.inicio}_${tc.fim}`
+                id_carona: `${tc.idCaronaBase}`
             }))
         };
 

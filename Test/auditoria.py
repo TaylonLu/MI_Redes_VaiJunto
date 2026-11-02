@@ -2,6 +2,7 @@ import argparse
 import json
 import subprocess
 import time
+import re
 from pathlib import Path
 
 from simulador import CONFIG, SERVIDORES
@@ -24,7 +25,7 @@ def carregar_json(caminho):
 def id_base_carona(id_carona):
     # O formato produzido pela BuscaDistribuida é:
     # carona_UUID.origem-destino
-    return id_carona.split(".", 1)[0]
+    return re.sub(r"_\d+_\d+$", "", id_carona)
 
 
 def obter_porta(servidor):
