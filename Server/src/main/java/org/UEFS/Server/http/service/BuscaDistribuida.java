@@ -15,12 +15,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static org.UEFS.Server.http.service.ConsorcioUtils.isVazio;
+
 public class BuscaDistribuida {
+    private static final Logger log = LoggerFactory.getLogger(BuscaDistribuida.class);
     private static final int MAX_ITINERARIOS = 30;
     private static final int MAX_CONSULTAS = 40;
-    private static final int MAX_VISITADOS = 16;
+    private static final int MAX_VISITADOS = 64;
     private static final int MAX_TRECHOS_TX = 8;
-    private static final Logger log = LoggerFactory.getLogger(BuscaDistribuida.class);
 
     private final String meuServidorId;
     private final List<Vizinho> vizinhos;
@@ -67,7 +69,7 @@ public class BuscaDistribuida {
             }
         }
 
-        adicionarVisitado(EX, meuServidorId);
+        adicionarVisitado(EX, chave(meuServidorId, origem));
         EX.cidadesNoCaminho.add(origem);
 
         log.info("[BUSCA] {} -> {} (incluirRemotoOrigem={})", origem, destino, incluirRemotoOrigem);
@@ -113,7 +115,7 @@ public class BuscaDistribuida {
                     break;
                 }
             }
-
+            log.info("[BUSCA] {} carona {} inicio={} trechos={}", meuServidorId, C.getId(), inicio, trechos.size());
             if (inicio == -1) continue;
 
             double precoAcumulado = 0;
@@ -137,9 +139,17 @@ public class BuscaDistribuida {
                 boolean repeteCidade = faixa.stream()
                         .anyMatch(T -> EX.cidadesNoCaminho.contains(T.destino()));
 
-                if (repeteCidade) continue;
+                if (repeteCidade) {
+                    log.info("[BUSCA] {} carona {} fim={} descartado: repete cidade (noCaminho={})",
+                            meuServidorId, C.getId(), fim, EX.cidadesNoCaminho);
+                    continue;
+                }
                 int vagas = calcularAssentosLivresNaPerna(C, faixa);
-                if (vagas <= 0) continue;
+                if (vagas <= 0) {
+                    log.info("[BUSCA] {} carona {} fim={} descartado: sem vagas (totais={})",
+                            meuServidorId, C.getId(), fim, C.getVagasTotais());
+                    continue;
+                }
 
                 List<String> paradas = extrairParadasIntermediarias(faixa);
 
@@ -172,11 +182,14 @@ public class BuscaDistribuida {
 
                         EX.cidadesNoCaminho.addAll(cidadesAdicionadas);
 
+                        String minhaChave = chave(meuServidorId, cidadeDestino);
+                        boolean adicionou = EX.visitados.add(minhaChave);
                         try {
                             buscarLocal(cidadeDestino, EX);
                             buscarRemoto(cidadeMapper.getNome(cidadeDestino), EX);
                         } finally {
                             EX.cidadesNoCaminho.removeAll(cidadesAdicionadas);
+                            if (adicionou) EX.visitados.remove(minhaChave);
                         }
                     }
                 } finally {
@@ -208,6 +221,9 @@ public class BuscaDistribuida {
 
 
     private void buscarRemoto(String cidadeAtual, Execucao EX) {
+        Integer cidadeId = idDaCidade(cidadeAtual);
+        if (cidadeId == null) return;
+
         String visitadosCsv = String.join(",", EX.visitados);
 
         for (Vizinho V : vizinhos) {
@@ -215,11 +231,7 @@ public class BuscaDistribuida {
                 return;
             }
 
-            String chaveVizinho = ServerConstant.normalizar(V.id())
-                    .trim()
-                    .toLowerCase(Locale.ROOT);
-
-            // Não consulta servidores já visitados.
+            String chaveVizinho = chave(V.id(), cidadeId);
             if (EX.visitados.contains(chaveVizinho)) continue;
 
             // Não consulta servidores suspeitos.
@@ -230,25 +242,26 @@ public class BuscaDistribuida {
 
             EX.consultas++;
 
-            peerClient.buscaTrechosRemotos(V,cidadeAtual,
-                    EX.destinoNome, visitadosCsv
-            ).ifPresent(resp -> {
-                List<ItinerarioConsorcioDTO> sufixos = resp.itinerarios() == null
-                                ? List.of()
-                                : resp.itinerarios();
+            log.info("[BUSCA] consultando {} em '{}' (visitados={})", V.id(), cidadeAtual, visitadosCsv);
 
-                for (ItinerarioConsorcioDTO sufixo : sufixos) {
-                    if (EX.resultados.size() >= MAX_ITINERARIOS) break;
+            var respOpt = peerClient.buscaTrechosRemotos(V, cidadeAtual, EX.destinoNome, visitadosCsv);
+            if (respOpt.isEmpty()) {
+                log.warn("[BUSCA] {} não respondeu (erro ou resposta vazia)", V.id());
+                continue;
+            }
 
-                    if (sufixo.trechos() == null || sufixo.trechos().isEmpty()) {
-                        continue;
-                    }
+            List<ItinerarioConsorcioDTO> sufixos = respOpt.get().itinerarios() == null
+                    ? List.of()
+                    : respOpt.get().itinerarios();
 
-                    List<TrechoConsorcioDTO> combinado = new ArrayList<>(EX.prefixo);
-                    combinado.addAll(sufixo.trechos());
-                    adicionarResultado(EX, combinado);
-                }
-            });
+            for (ItinerarioConsorcioDTO sufixo : sufixos) {
+                if (EX.resultados.size() >= MAX_ITINERARIOS) break;
+                if (sufixo.trechos() == null || sufixo.trechos().isEmpty()) continue;
+
+                List<TrechoConsorcioDTO> combinado = new ArrayList<>(EX.prefixo);
+                combinado.addAll(sufixo.trechos());
+                adicionarResultado(EX, combinado);
+            }
         }
     }
 
@@ -281,17 +294,12 @@ public class BuscaDistribuida {
 
     // ======================= Util
 
-    private void adicionarVisitado(Execucao EX, String id) {
-        if (id == null || id.isBlank()) return;
+    private void adicionarVisitado(Execucao EX, String chave) {
+        if (isVazio(chave)) return;
+        String k = chave.trim().toLowerCase(Locale.ROOT);
 
-        String chave = ServerConstant.normalizar(id)
-                .trim()
-                .toLowerCase(Locale.ROOT);
-
-        if (!chave.isEmpty() &&
-                !EX.visitados.contains(chave) &&
-                EX.visitados.size() < MAX_VISITADOS) {
-            EX.visitados.add(chave);
+        if (EX.visitados.size() < MAX_VISITADOS) {
+            EX.visitados.add(k);
         }
     }
 
@@ -366,6 +374,11 @@ public class BuscaDistribuida {
         }
 
         return resultado;
+    }
+
+    private String chave(String meuServidorId, int cidade) {
+        return ServerConstant.normalizar(meuServidorId).trim().toLowerCase(Locale.ROOT)
+                + "@" + cidade;
     }
 
     private String idBaseBusca(String idCarona) {
