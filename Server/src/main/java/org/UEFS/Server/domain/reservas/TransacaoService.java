@@ -475,8 +475,29 @@ public class TransacaoService {
                 boolean envolveEstaCarona = tx.getLocais().stream()
                         .anyMatch(local -> IdPerna.idBase(local.idCarona()).equals(idCarona));
 
+                /* O coordenador registra cada servidor do itinerário em cancelamentosPendentes.
+                O participante registra os dois vizinhos usando as flags existentes. */
                 if (envolveEstaCarona) {
                     tx.setEstado(EstadoTransacao.CANCELADO_PELO_MOTORISTA);
+
+                    if (tx.souDono(meuId)) {
+                        List<TrechoReserva> trechos = tx.getItinerario() != null && !tx.getItinerario().isEmpty()
+                                        ? tx.getItinerario()
+                                        : tx.getLocais();
+
+                        for (TrechoReserva trecho : trechos) {
+                            String servidorId = trecho.servidor();
+
+                            if (servidorId != null
+                                    && !servidorId.isBlank()
+                                    && !servidorId.equalsIgnoreCase(meuId)) {
+                                tx.adicionarCancelamentoPendente(servidorId);
+                            }
+                        }
+                    } else {
+                        tx.setAvisoAnteriorPendente(!isVazio(tx.getAnterior()));
+                        tx.setAvisoProximoPendente(!isVazio(tx.getProximo()));
+                    }
 
                     List<Perna> pernasLocais = pernasDe(tx);
                     liberar(pernasLocais, tx.getIdPassageiro());
@@ -551,19 +572,34 @@ public class TransacaoService {
                 for (TrechoReserva tr : trechos) {
                     String idServidor = tr.servidor();
 
-                    if (idServidor.equalsIgnoreCase(meuId)
-                            || idServidor.equalsIgnoreCase(remetente)
+                    if (idServidor == null
+                            || idServidor.isBlank()
+                            || idServidor.equalsIgnoreCase(meuId)
+                            || (remetente != null && idServidor.equalsIgnoreCase(remetente))
                             || !servidoresNotify.add(idServidor)) {
                         continue;
                     }
 
                     Vizinho vizinho = ServerConstant.getVizinho(idServidor);
 
-                    if (vizinho != null) {
-                        client.cancel(vizinho, tx.getId(), tx.getEstado());
+                    if (vizinho != null && client.cancel(vizinho, tx.getId(), tx.getEstado())) {
+                        tx.confirmarCancelamento(idServidor);
                     }
                 }
             } else {
+                String anterior = tx.getAnterior();
+
+                if (anterior != null
+                        && !anterior.isEmpty()
+                        && !anterior.equalsIgnoreCase(remetente)) {
+
+                    Vizinho vizinho = ServerConstant.getVizinho(anterior);
+
+                    if (vizinho != null && client.cancel(vizinho, tx.getId(), tx.getEstado())) {
+                            tx.setAvisoAnteriorPendente(false);
+                    }
+                }
+
                 String proximo = tx.getProximo();
 
                 if (proximo != null
@@ -572,25 +608,14 @@ public class TransacaoService {
 
                     Vizinho vizinho = ServerConstant.getVizinho(proximo);
 
-                    if (vizinho != null) {
-                        client.cancel(vizinho, tx.getId(), tx.getEstado());
-                    }
-                }
-
-                String coordenador = tx.getCoordenadorId();
-
-                if (coordenador != null
-                        && !coordenador.isEmpty()
-                        && !coordenador.equalsIgnoreCase(meuId)
-                        && !coordenador.equalsIgnoreCase(remetente)) {
-
-                    Vizinho vizinho = ServerConstant.getVizinho(coordenador);
-
-                    if (vizinho != null) {
-                        client.cancel(vizinho, tx.getId(), tx.getEstado());
+                    if (vizinho != null && client.cancel(vizinho, tx.getId(), tx.getEstado())) {
+                        tx.setAvisoProximoPendente(false);
                     }
                 }
             }
+
+            repo.salvar(tx);
+            repo.salvarNoDisco();
         });
     }
 

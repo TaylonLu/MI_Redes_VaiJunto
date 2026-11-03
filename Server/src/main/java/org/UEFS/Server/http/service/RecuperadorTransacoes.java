@@ -1,6 +1,5 @@
 package org.UEFS.Server.http.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.UEFS.Server.domain.reservas.EstadoTransacao;
 import org.UEFS.Server.domain.reservas.Transacao;
@@ -8,14 +7,9 @@ import org.UEFS.Server.domain.reservas.TransacaoService;
 import org.UEFS.Server.http.cluster.PeerClient;
 import org.UEFS.Server.http.relogio.ServerConstant;
 import org.UEFS.shared.JsonUtils;
-import org.UEFS.shared.dto.consorcio.TrechoReserva;
-import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -94,7 +88,6 @@ public class RecuperadorTransacoes {
 
                 if (vizinho != null
                         && peerClient.cancel(vizinho, tx.getId(), tx.getEstado())) {
-
                     tx.confirmarCancelamento(servidorId);
 
                 } else {
@@ -122,13 +115,16 @@ public class RecuperadorTransacoes {
             }
 
             if (tx.isAvisoProximoPendente()) {
-                String proximo = tx.getAnterior();
+                String proximo = tx.getProximo();
                 Vizinho vizinho = ServerConstant.getVizinho(proximo);
                 if (vizinho != null && peerClient.cancel(vizinho, tx.getId(), tx.getEstado())) {
                     tx.setAvisoProximoPendente(false);
                 }
             }
         }
+
+        transacoes.salvar(tx);
+        transacoes.salvarNoDisco();
     }
 
     private void recuperarPreparada(Transacao tx) {
