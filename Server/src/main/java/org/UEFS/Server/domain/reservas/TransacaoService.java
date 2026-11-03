@@ -403,11 +403,13 @@ public class TransacaoService {
 
                 tx.setEstado(EstadoTransacao.CANCELADO_PELO_MOTORISTA);
 
-                tx.setAvisoAnteriorPendente(
-                        !isVazio(tx.getAnterior()) && !tx.getAnterior().equals(remetente));
+                if (!pendenciaAnterior) {
+                    tx.setAvisoAnteriorPendente(
+                            !isVazio(tx.getAnterior()) && !tx.getAnterior().equals(remetente));
 
-                tx.setAvisoProximoPendente(
-                        !isVazio(tx.getProximo()) && !tx.getProximo().equals(remetente));
+                    tx.setAvisoProximoPendente(
+                            !isVazio(tx.getProximo()) && !tx.getProximo().equals(remetente));
+                }
 
                 liberar(pernas, tx.getIdPassageiro());
 
@@ -727,6 +729,8 @@ public class TransacaoService {
 
                 if (!repo.salvarNoDisco()) {
                     tx.setCancelamentoMotoristaPendente(false);
+                    tx.setAvisoAnteriorPendente(!isVazio(tx.getAnterior()) && !tx.getAnterior().equals(remetente));
+                    tx.setAvisoProximoPendente(!isVazio(tx.getProximo()) && !tx.getProximo().equals(remetente));
                     repo.salvar(tx);
                     repo.salvarNoDisco();
                     return false;

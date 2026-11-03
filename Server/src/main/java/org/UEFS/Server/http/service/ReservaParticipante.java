@@ -197,6 +197,15 @@ public class ReservaParticipante {
         if (!isVazio(existente.getProximo())) {
             Vizinho proximo = buscarVizinho(existente.getProximo());
             propagacaoPendente = proximo == null || !repasse.commit(proximo, idTransacao);
+
+            // efetiva o cancelamento somente depois de propagar o COMMIT.
+            if (existente.isCancelamentoMotoristaPendente()) {
+                if (!transacoes.registrarCancelamentoMotorista(idTransacao, null)) {
+                    throw new ServerException(503,
+                            "Commit registrado, mas o cancelamento pendente não pôde ser efetivado."
+                    );
+                }
+            }
         }
 
         return builder()
