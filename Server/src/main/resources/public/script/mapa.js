@@ -128,14 +128,42 @@ $("fechar-popup").onclick = () => $("popup").close();
 
 $("form-carona").onsubmit = async e => {
     e.preventDefault();
+    const campoData = $("form-carona").elements.data;
+
+    const hoje = new Date();
+    const dataMinima = [
+        hoje.getFullYear(),
+        String(hoje.getMonth() + 1).padStart(2, "0"),
+        String(hoje.getDate()).padStart(2, "0")
+    ].join("-");
+
+    campoData.min = dataMinima;
+
     const f = new FormData(e.target);
 
-    const dataHora = `${f.get("data")}T${f.get("hora")}:00`;
-    if (new Date(dataHora) < new Date())
-        return aviso("A data e hora de partida não pode estar no passado.", "erro");
+    const data = f.get("data");
+    const hora = f.get("hora");
+
+    if (!data || !hora) {
+        return aviso("Informe a data e o horário da partida.", "aviso");
+    }
+
+    const dataHora = `${data}T${hora}:00`;
+
+    if (new Date(dataHora).getTime() <= Date.now()) {
+        return aviso("A data e hora de partida precisa ser futura.", "erro");
+    }
 
     const precoPorTrecho = Number(f.get("valor"));
     const assentosPorTrecho = Number(f.get("vagas"));
+
+    if (!Number.isSafeInteger(assentosPorTrecho) || assentosPorTrecho < 1) {
+        return aviso("A quantidade de vagas deve ser um inteiro maior que zero.", "erro");
+    }
+
+    if (!Number.isFinite(precoPorTrecho) || precoPorTrecho < 0) {
+        return aviso("O valor por trecho deve ser um número válido e não negativo.", "erro");
+    }
 
     const payload = {
         idMotorista: usuario.id,
