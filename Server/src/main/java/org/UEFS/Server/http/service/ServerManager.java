@@ -17,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -81,13 +83,38 @@ public class ServerManager {
     public void responderBusca(Context context, boolean incluirRemotoOrigem, String visitados) {
         String origem = context.queryParam("origem");
         String destino = context.queryParam("destino");
+        String data = context.queryParam("data");
+        String vagas = context.queryParam("vagas");
 
-        if (origem == null || origem.isBlank() || destino == null || destino.isBlank()) {
-            context.status(400).json("{\"erro\": \"Informe ?origem=...&destino=...\"}");
+        if (isVazio(origem) || isVazio(destino) ||
+                isVazio(data) || isVazio(vagas)) {
+            context.status(400).json(Map.of(
+                    "erro", "Informe origem, destino, data e vagas."
+            ));
             return;
         }
 
-        context.json(buscaService.executar(origem, destino, visitados, incluirRemotoOrigem));
+        LocalDate dataDesejada;
+        int vagasRequeridas;
+
+        try {
+            dataDesejada = LocalDate.parse(data);
+            vagasRequeridas = Integer.parseInt(vagas);
+
+            if (vagasRequeridas < 1) {
+                throw new NumberFormatException();
+            }
+        } catch (DateTimeParseException | NumberFormatException e) {
+            context.status(400).json(Map.of(
+                    "erro", "Data ou quantidade de vagas inválida."
+            ));
+            return;
+        }
+
+        context.json(buscaService.executar(origem, destino, visitados, incluirRemotoOrigem,
+                dataDesejada,
+                vagasRequeridas
+        ));
     }
 
     public void prepare(@NotNull Context ctx) {

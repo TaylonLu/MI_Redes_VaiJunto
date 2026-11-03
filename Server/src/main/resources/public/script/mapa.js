@@ -213,7 +213,15 @@ $("buscar").onclick = async () => {
     try {
         const paramOrigem = encodeURIComponent(origem.nome);
         const paramDestino = encodeURIComponent(destino.nome);
-        const resultadoBusca = await api(`/api/cliente/itinerarios?origem=${paramOrigem}&destino=${paramDestino}`, "GET");
+        const params = new URLSearchParams({
+            origem: paramOrigem,
+            destino: paramDestino,
+            data,
+            vagas: String(vagas)
+        });
+
+        const resultadoBusca = await api(`/api/cliente/itinerarios?${params}`,"GET"
+        );
         // Ajuste os nomes das chaves aos componentes do seu BuscaCaronaRequest
         itinerarios = resultadoBusca?.itinerarios || [];
     } catch (err) {

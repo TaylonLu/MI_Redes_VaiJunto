@@ -14,6 +14,7 @@ import org.UEFS.shared.dto.consorcio.TrechoConsorcioDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.util.*;
 
 import static org.UEFS.Server.http.service.ConsorcioUtils.isVazio;
@@ -51,11 +52,26 @@ public class BuscaDistribuida {
         final List<TrechoConsorcioDTO> prefixo = new ArrayList<>();
         final List<ItinerarioConsorcioDTO> resultados = new ArrayList<>();
         int consultas;
+        final LocalDate dataDesejada;
+        final int vagasRequeridas;
 
-        Execucao(int destinoId, String destinoNome) { this.destinoId = destinoId; this.destinoNome = destinoNome; }
+        Execucao(int destinoId, String destinoNome,
+                 LocalDate dataDesejada, int vagasRequeridas) {
+            this.destinoId = destinoId;
+            this.destinoNome = destinoNome;
+            this.dataDesejada = dataDesejada;
+            this.vagasRequeridas = vagasRequeridas;
+        }
     }
 
-    public BuscaTrechosResponse executar(String origemNome, String destinoNome, String visitadosCsv, boolean incluirRemotoOrigem) {
+    public BuscaTrechosResponse executar(
+            String origemNome,
+            String destinoNome,
+            LocalDate dataDesejada,
+            int vagasRequeridas,
+            String visitadosCsv,
+            boolean incluirRemotoOrigem
+    ) {
         Integer origem = idDaCidade(origemNome);
         Integer destino = idDaCidade(destinoNome);
         if (origem == null || destino == null || origem == -1 || destino == -1) {
@@ -63,7 +79,12 @@ public class BuscaDistribuida {
             return new BuscaTrechosResponse(meuServidorId, 0, List.of());
         }
 
-        Execucao EX = new Execucao(destino, destinoNome.trim());
+        Execucao EX = new Execucao(
+                destino,
+                destinoNome.trim(),
+                dataDesejada,
+                vagasRequeridas
+        );
         if (visitadosCsv != null) {
             for (String token : visitadosCsv.split(",")) {
                 adicionarVisitado(EX, token);
@@ -98,6 +119,7 @@ public class BuscaDistribuida {
         for (Carona C : caronasLocais) {
             if (EX.resultados.size() >= MAX_ITINERARIOS) return;
             if (!C.emAberto()) continue;
+            if (!C.getData().toLocalDate().equals(EX.dataDesejada)) continue;
 
             // Uma carona não pode aparecer duas vezes no itinerário.
             boolean jaUtilizada = EX.prefixo.stream()
@@ -146,7 +168,7 @@ public class BuscaDistribuida {
                     continue;
                 }
                 int vagas = calcularAssentosLivresNaPerna(C, faixa);
-                if (vagas <= 0) {
+                if (vagas < EX.vagasRequeridas) {
                     log.info("[BUSCA] {} carona {} fim={} descartado: sem vagas (totais={})",
                             meuServidorId, C.getId(), fim, C.getVagasTotais());
                     continue;
@@ -244,7 +266,9 @@ public class BuscaDistribuida {
 
             log.info("[BUSCA] consultando {} em '{}' (visitados={})", V.id(), cidadeAtual, visitadosCsv);
 
-            var respOpt = peerClient.buscaTrechosRemotos(V, cidadeAtual, EX.destinoNome, visitadosCsv);
+            var respOpt = peerClient.buscaTrechosRemotos(V, cidadeAtual,
+                    EX.destinoNome, visitadosCsv, EX.dataDesejada, EX.vagasRequeridas
+            );
             if (respOpt.isEmpty()) {
                 log.warn("[BUSCA] {} não respondeu (erro ou resposta vazia)", V.id());
                 continue;

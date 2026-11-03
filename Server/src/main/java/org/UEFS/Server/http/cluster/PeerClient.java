@@ -20,6 +20,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -71,12 +72,16 @@ public class PeerClient implements Repasse {
      * @param visitadosCsv Cidades visitadas.
      * @return Um {@link Optional} contendo a lista de itinerários ou vazio.
      */
-    public Optional<BuscaTrechosResponse> buscaTrechosRemotos(Vizinho vizinho, String origem, String destino, String visitadosCsv) {
+    public Optional<BuscaTrechosResponse> buscaTrechosRemotos( Vizinho vizinho, String origem,
+            String destino, String visitadosCsv, LocalDate dataDesejada, int vagasRequeridas
+    ) {
         try {
             String url = "/api/consorcio/trechos"
                     + "?origem=" + codificar(origem)
                     + "&destino=" + codificar(destino)
-                    + "&visitados=" + codificar(visitadosCsv);
+                    + "&visitados=" + codificar(visitadosCsv)
+                    + "&data=" + codificar(dataDesejada.toString())
+                    + "&vagas=" + vagasRequeridas;
 
             Resposta r = enviar(vizinho, "GET", url, null, Duration.ofMillis(TIMEOUT_BUSCA_MS));
 
