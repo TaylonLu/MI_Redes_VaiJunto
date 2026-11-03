@@ -37,6 +37,12 @@ $("abrir-form").onclick = () => { $("abrir-form").hidden = true; $("form-motoris
 $("cancelar-form").onclick = () => { $("form-motorista").reset(); $("form-motorista").hidden = true; $("abrir-form").hidden = false; };
 
 $("form-motorista").onsubmit = async e => {
+    const botao = e.target.querySelector('button[type="submit"]');
+    if (botao.disabled) return;
+
+    botao.disabled = true;
+    botao.textContent = "Cadastrando...";
+
     e.preventDefault();
     const f = new FormData(e.target);
     const corpo = {};
@@ -56,6 +62,9 @@ $("form-motorista").onsubmit = async e => {
         aviso("Você agora é um motorista!", "sucesso");
     } catch (err) {
         aviso(err.message || "Não foi possível completar o cadastro como motorista.", "erro");
+    } finally {
+        botao.disabled = false;
+        botao.textContent = "Confirmar cadastro";
     }
 };
 

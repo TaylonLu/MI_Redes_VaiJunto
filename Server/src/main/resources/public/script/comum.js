@@ -2,7 +2,13 @@ const PRINCIPAL = "/login-efetuado";   // rota que serve a tela principal
 const CORES = ["#27ae60", "#e74c3c", "#9b59b6", "#f39c12", "#3498db"];
 const sessao = {
     token: () => localStorage.getItem("userToken"),
-    usuario: () => JSON.parse(localStorage.getItem("usuario") || "null")
+    usuario: () => {
+        try {
+            return JSON.parse(localStorage.getItem("usuario") || "null");
+        } catch {
+            return null;
+        }
+    }
 };
 let cidades = [];
 let cidadesPorID = new Map();
@@ -70,9 +76,16 @@ async function carregarCidades() {
     const cache = sessionStorage.getItem("cidades_cache");
 
     if (cache) {
-        cidades = JSON.parse(cache);
-        console.log("Cidades carregadas do cache local.");
-    } else {
+        try {
+            cidades = JSON.parse(cache);
+            console.log("Cidades carregadas do cache local.");
+        } catch {
+            sessionStorage.removeItem("cidades_cache");
+            cidades = [];
+        }
+    }
+
+    if (cidades.length === 0) {
         const resposta = await fetch("/data/cidades.json");
 
         if (!resposta.ok)
