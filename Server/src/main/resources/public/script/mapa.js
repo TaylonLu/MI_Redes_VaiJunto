@@ -262,10 +262,11 @@ async function reservar(it) {
 
         // 2. Montar o payload final com o ID da perna consolidado
         const corpo = {
-            trechos_solicitados: trechosConsolidados.map(tc => ({
+            trechos: trechosConsolidados.map(tc => ({
                 servidor: tc.servidor,
-                // Monta o identificador exato da perna que o Java espera descodificar
-                id_carona: `${tc.idCaronaBase}`
+                id_caronas: tx.id_caronas,
+                origem: tc.origem,
+                destino: tc.destino
             }))
         };
 
