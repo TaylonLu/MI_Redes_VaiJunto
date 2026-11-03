@@ -731,9 +731,6 @@ public class TransacaoService {
                 repo.salvar(tx);
 
                 if (!repo.salvarNoDisco()) {
-                    tx.setCancelamentoMotoristaPendente(false);
-                    tx.setAvisoAnteriorPendente(false);
-                    tx.setAvisoProximoPendente(false);
                     repo.salvar(tx);
                     repo.salvarNoDisco();
                     return false;
