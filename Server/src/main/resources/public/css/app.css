@@ -139,7 +139,7 @@ small, .vazio {
     cursor: pointer
 }
 
-.card[aria-selected=true] {
+.card.selecionado {
     border-color: var(--rota);
     box-shadow: 0 0 0 2px var(--rota)
 }

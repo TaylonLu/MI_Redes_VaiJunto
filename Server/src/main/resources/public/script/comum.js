@@ -168,9 +168,9 @@ function renderLista(ul, itens, fazerCard, vazio, aoSelecionar) {
         const li = fazerCard(item);
         li.tabIndex = 0;
         const marcar = () => {
-            ul.querySelectorAll(".card").forEach(c => c.setAttribute("aria-selected", c === li));
-            aoSelecionar(item);
-        };
+            ul.querySelectorAll(".card").forEach(C => C.classList.toggle("selecionado", C === li));
+            aoSelecionar(item)
+        }
         li.onclick = marcar;
         li.onkeydown = e => { if (e.target === li && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); marcar(); } };
         ul.append(li);

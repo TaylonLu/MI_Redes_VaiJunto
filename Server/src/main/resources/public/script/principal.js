@@ -64,13 +64,6 @@ $("logout").onclick = async () => {
 };
 
 // ---------- Filtros das listas ----------
-function atualizarFiltro(botoes, filtro) {
-    botoes.forEach(b => {
-        b.setAttribute("aria-pressed", b.dataset[filtro] ===
-            (filtro === "filtroReserva" ? filtroReserva : filtroCarona));
-    });
-}
-
 function renderReservas() {
     reservaSel = null;
 
@@ -252,7 +245,7 @@ $("cancelar-carona").onclick = () => cancelar(
     "Cancelar esta viagem? Os passageiros serão notificados.",
     "Viagem cancelada."
 );
-// ---------- Carregamento ----------
+
 // ---------- Carregamento ----------
 async function carregar() {
     try {
