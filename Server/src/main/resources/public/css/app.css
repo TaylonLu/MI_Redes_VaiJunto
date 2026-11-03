@@ -417,12 +417,78 @@ dialog::backdrop {
     transform: scale(0.9);
 }
 
-.cidade-externa .ponto {
-    fill: #e67e22;
+/* Cores dos marcadores por região */
+.regiao-kanto {
+    --cor-regiao: #e57373;
+}
+
+.regiao-johto {
+    --cor-regiao: #ba68c8;
+}
+
+.regiao-hoenn {
+    --cor-regiao: #4db6ac;
+}
+
+.regiao-sinnoh {
+    --cor-regiao: #7986cb;
+}
+
+.regiao-unova {
+    --cor-regiao: #64b5f6;
+}
+
+.regiao-kalos {
+    --cor-regiao: #f06292;
+}
+
+/* Marcadores */
+.cidade .ponto {
+    fill: var(--cor-regiao, #fff);
+    stroke: var(--tinta);
+    stroke-width: 2;
+    cursor: pointer;
+}
+
+/* Círculo externo */
+.cidade .halo {
+    fill: #fff;
+    stroke: var(--tinta);
+    stroke-width: 2;
+    opacity: 1;
+    pointer-events: none;
+}
+
+/* Cidades do servidor atual */
+.cidade-local .halo {
+    fill: #b7e4c7;
+    stroke: #1e8e4e;
+    stroke-width: 3;
+}
+
+/* Cidades externas */
+.cidade-externa .halo {
+    fill: #ffe0b2;
+    stroke: #e67e22;
+    stroke-width: 3;
+    stroke-dasharray: none;
 }
 
 .cidade-externa text {
-    fill: #e67e22;
+    fill: #b85d0b;
+}
+
+/* Estados de seleção */
+.cidade.sel .ponto {
+    fill: var(--rota);
+}
+
+.cidade.origem .ponto {
+    fill: #27ae60;
+}
+
+.cidade.destino .ponto {
+    fill: #e74c3c;
 }
 
 #svg {

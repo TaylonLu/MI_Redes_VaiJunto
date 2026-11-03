@@ -1,0 +1,54 @@
+services:
+  unova:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vai-junto-unova
+    ports:
+      - "2602:2602"
+    environment:
+      - MAVEN_OPTS=-Dserver.regiao=Unova -Dserver.port=2602
+      - HOST_UNOVA=unova
+      - HOST_KALOS=kalos
+      - HOST_JOHTO=johto
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - maven-cache:/root/.m2
+
+  kalos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vai-junto-kalos
+    ports:
+      - "2603:2603"
+    environment:
+      - MAVEN_OPTS=-Dserver.regiao=Kalos -Dserver.port=2603
+      - HOST_UNOVA=unova
+      - HOST_KALOS=kalos
+      - HOST_JOHTO=johto
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - maven-cache:/root/.m2
+
+  johto:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vai-junto-johto
+    ports:
+      - "2604:2604"
+    environment:
+      - MAVEN_OPTS=-Dserver.regiao=Johto -Dserver.port=2604
+      - HOST_UNOVA=unova
+      - HOST_KALOS=kalos
+      - HOST_JOHTO=johto
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - maven-cache:/root/.m2
+
+volumes:
+  maven-cache:

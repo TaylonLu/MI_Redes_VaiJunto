@@ -15,6 +15,13 @@
             "--logo-servidor",
             `url("/images/logos/${regiao}.png")`
         );
+
+        const logo = document.getElementById("logo-servidor");
+
+        if (logo) {
+            logo.src = `/images/logos/${regiao}.png`;
+            logo.alt = `Logo do servidor ${regiao}`;
+        }
     } catch (erro) {
         console.error("Não foi possível identificar o servidor:", erro);
     }

@@ -69,7 +69,7 @@ function desenharMapa() {
         }, "halo");
 
         const ponto = svgEl("circle", {
-            cx: a.cx, cy: a.cy, r: 9
+            cx: a.cx, cy: a.cy, r: 8
         }, "ponto");
 
         const texto = svgEl("text", {
@@ -87,9 +87,11 @@ function desenharMapa() {
 
         nos.set(a.id, g);
 
-        if (modo === "criacao" && !cidadePertenceAoServidor(a.id)) {
-            g.classList.add("cidade-externa");
-        }
+        g.classList.add(
+            cidadePertenceAoServidor(a.id)
+                ? "cidade-local"
+                : "cidade-externa"
+        );
 
         fragmentoCidades.append(g);
     }
@@ -98,7 +100,6 @@ function desenharMapa() {
     estradasSvg.append(fragmentoEstradas);
     cidadesSvg.append(fragmentoCidades);
 }
-
 
 // Arrastar o mapa (sem pointer capture, para não perder o clique nas cidades)
 let tx = 0, ty = 0, ox = 0, oy = 0, x0 = 0, y0 = 0, arrastando = false, arrastou = false;
@@ -496,7 +497,7 @@ if (btnZoomIn && btnZoomOut) {
     if (!$("estradas") || !$("cidades")) return;
     try {
         await carregarCidades();
-        if (modo === "criacao") await carregarCidadesServidor();
+        await carregarCidadesServidor();
     } catch {
         return aviso("Não foi possível carregar as cidades.", "erro");
     }
