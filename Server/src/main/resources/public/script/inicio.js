@@ -1,4 +1,6 @@
 function navigateTo(targetScreenId) {
+    limparErro("login-erro");
+    limparErro("cadastro-erro");
     const screens = document.querySelectorAll('.screen');
 
     // Remove a classe 'active' de todas
