@@ -231,43 +231,78 @@ $("buscar").onclick = async () => {
         : aviso("Nenhuma carona encontrada para esse trajeto.", "aviso");
 };
 
+function corpoTrechosBusca(trechos) {
+    const n = nCaronas(trechos);
+
+    return h("div", "corpo",
+        h("p", "",
+            n <= 1
+                ? "Percurso realizado por uma única carona."
+                : `Percurso com ${n} caronas e ${n - 1} baldeação(ões).`
+        ),
+
+        h("h3", "", "Trechos do percurso"),
+
+        ...trechos.map((t, i) => {
+            const paradas = t.paradas_intermediarias ?? [];
+
+            return h("div", "caixa",
+                h("strong", "",
+                    `${i + 1}. ${t.origem} → ${t.destino}`
+                ),
+
+                ...(paradas.length
+                    ? [h("small", "",
+                        `Paradas intermediárias: ${paradas.join(" → ")}`
+                    )]
+                    : []),
+
+                h("small", "", `Horário: ${fmtData(t.horario)}`),
+
+                h("small", "", `Preço: ${Number(t.preco).toLocaleString(
+                    "pt-BR", { style: "currency", currency: "BRL" }
+                )}`),
+
+                h("small", "",
+                    `${t.assentos_livres} vaga(s) disponível(is)`
+                ),
+
+                h("small", "", `Servidor: ${t.servidor}`)
+            );
+        })
+    );
+}
+
 $("ver-detalhes").onclick = async () => {
     if (!itinSel) return aviso("Selecione uma rota na lista primeiro.", "aviso");
-    const ok = await dialogo("Resumo do itinerário", corpoPassos(itinSel.trechos), "Confirmar participação");
+
+    const ok = await dialogo(
+        "Resumo do itinerário",
+        corpoTrechosBusca(itinSel.trechos ?? []),
+        "Confirmar participação"
+    );
+
     if (ok) reservar(itinSel);
 };
 
 async function reservar(it) {
     $("carregando").hidden = false;
     try {
-        const trechosConsolidados = (it.trechos || []).map(t => {
-            const idOrigem = cidades.find(c => c.nome === t.origem)?.id;
-            const idDestino = cidades.find(c => c.nome === t.destino)?.id;
+        const trechosSolicitados = (it.trechos || []).map(t => ({
+            servidor: t.servidor,
+            id_carona: t.id_carona,
+            origem: cidades.find(c => c.nome === t.origem)?.id,
+            destino: cidades.find(c => c.nome === t.destino)?.id
+        }));
 
-            return {
-                servidor: t.servidor,
-                idCaronaBase: t.id_carona,
-                inicio: idOrigem,
-                fim: idDestino
-            };
-        });
-
-        const meuServidor = window.location.host;
-
-        trechosConsolidados.sort((a, b) => {
-           if (a.servidor === meuServidor && b.servidor !== meuServidor) return -1;
-           if (a.servidor !== meuServidor && b.servidor === meuServidor) return 1;
-           return 0;
-        });
-
+        if (trechosSolicitados.some(t =>
+            t.origem === undefined || t.destino === undefined
+        )) {
+            throw new Error("Não foi possível identificar as cidades do itinerário.");
+        }
         // 2. Montar o payload final com o ID da perna consolidado
         const corpo = {
-            trechos: trechosConsolidados.map(tc => ({
-                servidor: tc.servidor,
-                id_caronas: tx.id_caronas,
-                origem: tc.origem,
-                destino: tc.destino
-            }))
+            trechos: trechosSolicitados
         };
 
         const resposta = await api("/api/cliente/reservas", "POST", corpo);
