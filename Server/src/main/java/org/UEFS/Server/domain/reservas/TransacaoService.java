@@ -240,7 +240,7 @@ public class TransacaoService {
             // Uma transação confirmada não pode sofrer rollback
             if (tx.getEstado() != EstadoTransacao.PREPARADO) return Resultado.CONFLITO;
 
-            List<Perna> pernas = pernasDe(tx);
+            List<Perna> pernas = pernasDe(tx, true);
             tx.setEstado(EstadoTransacao.ABORTADO);
             liberar(pernas, tx.getIdPassageiro());
 
@@ -395,23 +395,51 @@ public class TransacaoService {
             }
 
             if (estadoAtual != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
+                List<Perna> pernas = pernasDe(tx, true);
+
+                boolean avisoAnteriorAnterior = tx.isAvisoAnteriorPendente();
+                boolean avisoProximoAnterior = tx.isAvisoProximoPendente();
+                boolean pendenciaAnterior = tx.isCancelamentoMotoristaPendente();
+
                 tx.setEstado(EstadoTransacao.CANCELADO_PELO_MOTORISTA);
 
-                tx.setAvisoAnteriorPendente(!isVazio(tx.getAnterior()) && !tx.getAnterior().equals(remetente));
+                tx.setAvisoAnteriorPendente(
+                        !isVazio(tx.getAnterior()) && !tx.getAnterior().equals(remetente));
 
-                tx.setAvisoProximoPendente(!isVazio(tx.getProximo()) && !tx.getProximo().equals(remetente));
+                tx.setAvisoProximoPendente(
+                        !isVazio(tx.getProximo()) && !tx.getProximo().equals(remetente));
 
-                liberar(pernasDe(tx), tx.getIdPassageiro());
+                liberar(pernas, tx.getIdPassageiro());
 
                 if (!caronaRepo.salvarNoDisco()) {
-                    reocupar(pernasDe(tx), tx.getIdPassageiro());
+                    reocupar(pernas, tx.getIdPassageiro());
                     tx.setEstado(estadoAtual);
+                    tx.setAvisoAnteriorPendente(avisoAnteriorAnterior);
+                    tx.setAvisoProximoPendente(avisoProximoAnterior);
+                    return false;
+                }
+
+                tx.setCancelamentoMotoristaPendente(false);
+                repo.salvar(tx);
+
+                if (!repo.salvarNoDisco()) {
+                    reocupar(pernas, tx.getIdPassageiro());
+                    tx.setEstado(estadoAtual);
+                    tx.setAvisoAnteriorPendente(avisoAnteriorAnterior);
+                    tx.setAvisoProximoPendente(avisoProximoAnterior);
+                    tx.setCancelamentoMotoristaPendente(pendenciaAnterior);
+
+                    caronaRepo.salvarNoDisco();
+                    repo.salvar(tx);
+                    repo.salvarNoDisco();
+
                     return false;
                 }
             }
 
             if (tx.souDono(meuId)) {
-                List<TrechoReserva> trechos = tx.getItinerario() != null && !tx.getItinerario().isEmpty()
+                List<TrechoReserva> trechos =
+                        tx.getItinerario() != null && !tx.getItinerario().isEmpty()
                                 ? tx.getItinerario()
                                 : tx.getLocais();
 
@@ -428,7 +456,6 @@ public class TransacaoService {
             }
 
             repo.salvar(tx);
-
             return repo.salvarNoDisco();
         }
     }
@@ -692,6 +719,22 @@ public class TransacaoService {
             }
 
             EstadoTransacao estadoAtual = tx.getEstado();
+            if (estado == EstadoTransacao.CANCELADO_PELO_MOTORISTA
+                    && estadoAtual == EstadoTransacao.PREPARADO) {
+
+                tx.setCancelamentoMotoristaPendente(true);
+                repo.salvar(tx);
+
+                if (!repo.salvarNoDisco()) {
+                    tx.setCancelamentoMotoristaPendente(false);
+                    repo.salvar(tx);
+                    repo.salvarNoDisco();
+                    return false;
+                }
+
+                log.info("[REDE] Cancelamento de motorista pendente na transação '{}'.", idTransacao);
+                return true;
+            }
 
             // Cancelamento pelo motorista tem prioridade.
             if (estadoAtual == EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
