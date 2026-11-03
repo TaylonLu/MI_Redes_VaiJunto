@@ -123,17 +123,6 @@ public class ServerManager {
         ctx.status(resposta.status()).json(resposta.corpo());
     }
 
-    public void cancelPassageiro(@NotNull Context ctx) {
-        ConsorcioUtils.RespostaConsorcio resposta =
-                participante.cancel(
-                        ctx.pathParam("id"),
-                        EstadoTransacao.CANCELADO_PELO_PASSAGEIRO,
-                        null
-                );
-
-        ctx.status(resposta.status()).json(resposta.corpo());
-    }
-
     public void cancelMotorista(@NotNull Context ctx) {
         // Repassa o ID e resgata quem enviou o aviso pelo header X-Server-Id
         ConsorcioUtils.RespostaConsorcio resposta =
