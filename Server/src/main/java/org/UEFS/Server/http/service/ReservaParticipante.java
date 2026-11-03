@@ -178,33 +178,36 @@ public class ReservaParticipante {
     /** Efetiva a transação localmente e manda uma ordem de <i>commit</i>
      * para o próximo vizinho. */
     public RespostaConsorcio commit(String idTransacao) {
-        if (!idValido(idTransacao)) throw new ServerException(400, "id da transacao invalido");
+        if (!idValido(idTransacao))
+            throw new ServerException(400, "id da transacao invalido");
 
         Transacao existente = transacoes.buscar(idTransacao);
-        if (existente == null) {
+        if (existente == null)
             throw new ServerException(404, "Transacao desconhecida (nao houve prepare)");
+
+        // Registra a decisão local de COMMIT.
+        Resultado resultado = transacoes.decidir(idTransacao, EstadoTransacao.COMITADO);
+
+        if (resultado != Resultado.OK) {
+            log.warn("[RESERVA] Commit da transação '{}' recusado. Resultado: {}",
+                    idTransacao, resultado);
+
+            throw new ServerException(500, "Falha ao confirmar reserva: " + resultado);
         }
 
-        // Gravar decisão
-        Resultado R = transacoes.decidir(idTransacao, EstadoTransacao.COMITADO);
-        if (R != Resultado.OK) {
-            log.warn("[RESERVA] Commit da transação '{}' recusado. Resultado: {}", idTransacao, R);
-
-            throw new ServerException(500, "Falha ao confirmar reserva: " + R);
-        }
-        // Pega o proximo vizinho para a propagação
+        // Propaga o COMMIT antes de efetivar eventual cancelamento pendente.
         boolean propagacaoPendente = false;
+
         if (!isVazio(existente.getProximo())) {
             Vizinho proximo = buscarVizinho(existente.getProximo());
             propagacaoPendente = proximo == null || !repasse.commit(proximo, idTransacao);
+        }
 
-            // efetiva o cancelamento somente depois de propagar o COMMIT.
-            if (existente.isCancelamentoMotoristaPendente()) {
-                if (!transacoes.registrarCancelamentoMotorista(idTransacao, null)) {
-                    throw new ServerException(503,
-                            "Commit registrado, mas o cancelamento pendente não pôde ser efetivado."
-                    );
-                }
+        // Não depende da existência de um próximo servidor.
+        if (existente.isCancelamentoMotoristaPendente()) {
+            if (!transacoes.registrarCancelamentoMotorista(idTransacao, null)) {
+                log.warn("[RESERVA] COMMIT registrado, mas cancelamento da transação '{}' continua pendente.",
+                        idTransacao);
             }
         }
 

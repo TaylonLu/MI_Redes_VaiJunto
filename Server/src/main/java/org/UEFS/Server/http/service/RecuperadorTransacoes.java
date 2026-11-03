@@ -53,7 +53,15 @@ public class RecuperadorTransacoes {
                 if (tx.isEmProcessamento()) continue;
 
                 switch (tx.getEstado()) {
-                    case COMITADO -> propagarCommit(tx);
+                    case COMITADO -> {
+                        propagarCommit(tx);
+
+                        if (tx.isCancelamentoMotoristaPendente()) {
+                            if (transacoes.registrarCancelamentoMotorista(tx.getId(), null)) {
+                                recuperarCancelamentoMotorista(tx);
+                            }
+                        }
+                    }
                     case ABORTADO -> propagarRollback(tx);
                     case PREPARADO -> recuperarPreparada(tx);
                     case CANCELANDO -> recuperarCancelamentoPassageiro(tx);

@@ -725,12 +725,15 @@ public class TransacaoService {
                     && estadoAtual == EstadoTransacao.PREPARADO) {
 
                 tx.setCancelamentoMotoristaPendente(true);
+                tx.setAvisoAnteriorPendente(!isVazio(tx.getAnterior()) && !tx.getAnterior().equals(remetente));
+                tx.setAvisoProximoPendente(!isVazio(tx.getProximo()) && !tx.getProximo().equals(remetente));
+
                 repo.salvar(tx);
 
                 if (!repo.salvarNoDisco()) {
                     tx.setCancelamentoMotoristaPendente(false);
-                    tx.setAvisoAnteriorPendente(!isVazio(tx.getAnterior()) && !tx.getAnterior().equals(remetente));
-                    tx.setAvisoProximoPendente(!isVazio(tx.getProximo()) && !tx.getProximo().equals(remetente));
+                    tx.setAvisoAnteriorPendente(false);
+                    tx.setAvisoProximoPendente(false);
                     repo.salvar(tx);
                     repo.salvarNoDisco();
                     return false;
