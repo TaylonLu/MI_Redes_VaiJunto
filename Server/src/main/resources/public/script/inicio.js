@@ -49,14 +49,14 @@ async function efetuarLogin() {
         localStorage.setItem("usuario", JSON.stringify(resposta.usuario));
         window.location.href = "/";
     } catch (erro) {
-        console.log("Aconteceu um erro: " + erro.message);
+        mostrarErro("login-erro", erro.message);
     }
 }
 
 async function efetuarCadastro() {
     const senha = getData("cad-senha").trim();
     if (senha !== getData("cad-senha-conf").trim()) {
-        mostrarErro("cad-erro", "As senhas não coincidem.");
+        mostrarErro("cadastro-erro", "As senhas não coincidem.");
         return;
     }
 
@@ -74,7 +74,7 @@ async function efetuarCadastro() {
         localStorage.setItem("usuario", JSON.stringify(resposta.usuario));
         window.location.href = "/";
     } catch (erro) {
-        console.log("Aconteceu um erro: " + erro.message);
+        mostrarErro("cadastro-erro", erro.message);
     }
 }
 
