@@ -56,6 +56,7 @@ public class RecuperadorTransacoes {
                     case COMITADO -> propagarCommit(tx);
                     case ABORTADO -> propagarRollback(tx);
                     case PREPARADO -> recuperarPreparada(tx);
+                    case CANCELANDO -> recuperarCancelamentoPassageiro(tx);
                     case CANCELADO_PELO_PASSAGEIRO -> {
                         if (tx.souDono(meuId))
                             transacoes.retentarCancelamentoPassageiro(tx);
@@ -125,6 +126,26 @@ public class RecuperadorTransacoes {
 
         transacoes.salvar(tx);
         transacoes.salvarNoDisco();
+    }
+
+    private void recuperarCancelamentoPassageiro(Transacao tx) {
+        if (tx.getEstado() != EstadoTransacao.CANCELANDO) return;
+
+        String proximoId = tx.getProximo();
+
+        // Se houver próximo servidor, tenta encaminhar o cancelamento.
+        if (!isVazio(proximoId)) {
+            Vizinho proximo = ServerConstant.getVizinho(proximoId);
+            if (proximo == null || !peerClient.cancel(proximo, tx.getId(), EstadoTransacao.CANCELADO_PELO_PASSAGEIRO)){
+                log.warn("[RECUPERAÇÃO] Falha ao propagar cancelamento da transação '{}' para '{}'",
+                        tx.getId(), proximoId);
+            }
+        }
+
+        Resultado resultado = transacoes.concluirCancelamentoPassageiro(tx.getId());
+        if (resultado != Resultado.OK) {
+            log.warn("[RECUPERAÇÃO] Não foi possível concluir o cancelamento da transação '{}': {}", tx.getId(), resultado);
+        }
     }
 
     private void recuperarPreparada(Transacao tx) {
