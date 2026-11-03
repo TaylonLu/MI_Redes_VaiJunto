@@ -469,6 +469,8 @@ public class TransacaoService {
      */
     public void cancelarTransacoesPorCarona(String idCarona) {
         synchronized (caronaService) {
+            List<Transacao> transacoesParaNotificar = new ArrayList<>();
+
             for (Transacao tx : repo.getData()) {
                 if (!tx.comitado()) continue;
 
@@ -502,13 +504,20 @@ public class TransacaoService {
                     List<Perna> pernasLocais = pernasDe(tx);
                     liberar(pernasLocais, tx.getIdPassageiro());
 
-                    notificarCancelamento(tx);
+                    transacoesParaNotificar.add(tx);
 
                     log.info("[CANCELAR] Transação '{}' cancelada devido a cancelamento da carona '{}'", tx.getId(), idCarona);
                 }
             }
-            repo.salvarNoDisco();
-            caronaRepo.salvarNoDisco();
+            boolean transacoesSalvas = repo.salvarNoDisco();
+            boolean caronasSalvas = caronaRepo.salvarNoDisco();
+
+            if (!transacoesSalvas || !caronasSalvas) {
+                log.error("[TRANSAÇÕES] !! Erro ao salvar no disco: Transações: {}, Caronas: {}", transacoesSalvas, caronasSalvas);
+                return;
+            }
+
+            transacoesParaNotificar.forEach(this::notificarCancelamento);
         }
     }
 

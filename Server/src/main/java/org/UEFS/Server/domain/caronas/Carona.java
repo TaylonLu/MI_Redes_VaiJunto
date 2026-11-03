@@ -209,7 +209,7 @@ public class Carona implements Identificavel {
         boolean removeu = false;
         for (Trecho T : trechos) {
             Set<String> ocupantes = ocupacaoPorTrecho.get(T);
-            removeu = ocupantes != null && ocupantes.remove(idPassageiro);
+            removeu |= ocupantes != null && ocupantes.remove(idPassageiro);
         }
 
         return removeu;
