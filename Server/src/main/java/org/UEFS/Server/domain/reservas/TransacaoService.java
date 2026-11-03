@@ -322,9 +322,7 @@ public class TransacaoService {
                 throw new ForbiddenException("Reserva não pertence a esse usuário.");
             }
 
-            if (tx.getEstado() == EstadoTransacao.CANCELANDO) {
-                //
-            } else if (tx.getEstado() != EstadoTransacao.COMITADO) return false;
+            if (tx.getEstado() != EstadoTransacao.COMITADO) return false;
 
             if (tx.souDono(meuId)) {
                 throw new ServerException(400, "O cancelamento deve ser iniciado pelo coordenador");
@@ -349,35 +347,25 @@ public class TransacaoService {
         return concluirCancelamentoPassageiro(idTransacao) == Resultado.OK;
     }
 
-    public boolean registrarCancelamentoMotorista(
-            String idTransacao,
-            String remetente
-    ) {
+    public boolean registrarCancelamentoMotorista(String idTransacao, String remetente) {
         synchronized (caronaService) {
             Transacao tx = repo.getByID(idTransacao);
 
             if (tx == null) return false;
 
-            if (tx.getEstado() == EstadoTransacao.CANCELANDO)
-                return false;
+            if (tx.getEstado() == EstadoTransacao.CANCELANDO) return false;
 
-            if (tx.getEstado() != EstadoTransacao.COMITADO
-                    && tx.getEstado() != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
+            if (tx.getEstado() != EstadoTransacao.COMITADO &&
+                tx.getEstado() != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
                 return false;
             }
 
             if (tx.getEstado() == EstadoTransacao.COMITADO) {
                 tx.setEstado(EstadoTransacao.CANCELADO_PELO_MOTORISTA);
 
-                tx.setAvisoAnteriorPendente(
-                        !isVazio(tx.getAnterior())
-                                && !tx.getAnterior().equals(remetente)
-                );
+                tx.setAvisoAnteriorPendente(!isVazio(tx.getAnterior()) && !tx.getAnterior().equals(remetente));
 
-                tx.setAvisoProximoPendente(
-                        !isVazio(tx.getProximo())
-                                && !tx.getProximo().equals(remetente)
-                );
+                tx.setAvisoProximoPendente(!isVazio(tx.getProximo()) && !tx.getProximo().equals(remetente));
 
                 liberar(pernasDe(tx), tx.getIdPassageiro());
 
@@ -633,6 +621,14 @@ public class TransacaoService {
 
             tx.setEstado(novoEstado);
             repo.salvar(tx);
+            // Tenta salvar, se der errado tenta recuperar o estado anterior
+            if (!repo.salvarNoDisco()) {
+                tx.setEstado(estadoAtual);
+                repo.salvar(tx);
+                repo.salvarNoDisco();
+
+                return false;
+            }
 
             // Só libera os assentos na primeira transição para cancelada.
             if (!jaEstavaCancelada) {
