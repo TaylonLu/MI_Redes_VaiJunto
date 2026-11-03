@@ -139,15 +139,13 @@ $("form-carona").onsubmit = async e => {
 
     const payload = {
         idMotorista: usuario.id,
-        valorPorTrecho: Number(f.get("valor")),
-        vagas: Number(f.get("vagas")),
+        valorPorTrecho: precoPorTrecho,
+        vagas: assentosPorTrecho,
         dataPartida: dataHora,
-        trechos: rota.map(passo => {
-            return {
-                origem: passo.inicio,
-                destino: passo.fim
-            };
-        })
+        trechos: rota.map(passo => ({
+            origem: passo.inicio,
+            destino: passo.fim
+        }))
     };
 
     try {
@@ -211,11 +209,9 @@ $("buscar").onclick = async () => {
     itinSel = null;
     $("ver-detalhes").hidden = true;
     try {
-        const paramOrigem = encodeURIComponent(origem.nome);
-        const paramDestino = encodeURIComponent(destino.nome);
         const params = new URLSearchParams({
-            origem: paramOrigem,
-            destino: paramDestino,
+            origem: origem.nome,
+            destino: destino.nome,
             data,
             vagas: String(vagas)
         });

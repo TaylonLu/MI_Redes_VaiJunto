@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -167,15 +168,44 @@ public class CaronaController {
             throw new ForbiddenException("ID do motorista na requisição não bate com o dono do token.");
         }
 
-        if (!caronaDTO.trechos().isEmpty()) {
+        if (caronaDTO.trechos() == null || caronaDTO.trechos().isEmpty()) {
+            context.status(400).json(Map.of("erro", "A rota precisa possuir pelo menos um trecho."));
             int origemInicial = caronaDTO.trechos().getFirst().origem();
             if (!cidadeMapper.ehCidadeDesteServidor(origemInicial)) {
                 throw new ForbiddenException("Você só pode iniciar caronas a partir das cidades pertencentes a esta região.");
             }
+            return;
+        }
+
+        if (caronaDTO.trechos().stream().anyMatch(Objects::isNull)) {
+            context.status(400).json(Map.of("erro", "A rota contém trechos inválidos."));
+            return;
+        }
+
+        if (caronaDTO.vagas() < 1) {
+            context.status(400).json(Map.of("erro", "A quantidade de vagas deve ser maior que zero."));
+            return;
+        }
+
+        if (!Double.isFinite(caronaDTO.valorPorTrecho()) || caronaDTO.valorPorTrecho() < 0) {
+            context.status(400).json(Map.of("erro", "O valor por trecho é inválido."));
+            return;
+        }
+
+        if (caronaDTO.dataPartida() == null || caronaDTO.dataPartida().isBefore(LocalDateTime.now())) {
+            context.status(400).json(Map.of("erro", "A data de partida é inválida ou está no passado."));
+            return;
+        }
+
+        Rota rota = new Rota(caronaDTO.trechos());
+
+        if (!rota.isContinua()) {
+            context.status(400).json(Map.of("erro", "Os trechos da rota não formam um percurso contínuo."));
+            return;
         }
 
         Carona C = new Carona(
-                new Rota(caronaDTO.trechos()),
+                rota,
                 caronaDTO.idMotorista(),
                 caronaDTO.vagas(),
                 caronaDTO.valorPorTrecho(),
