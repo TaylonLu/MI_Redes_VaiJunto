@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.UEFS.Server.http.service.ConsorcioUtils.isVazio;
 
@@ -39,6 +40,9 @@ public class PeerClient implements Repasse {
     private final HttpClient httpClient;
     private final RelogioLamport relogio;
     private final String meuServidorID;
+
+    // Injeção de falhas
+    private final AtomicBoolean falharProximoCommit = new AtomicBoolean(Boolean.getBoolean("teste.falhar-primeiro-commit"));
 
     private final Map<String, Long> suspeitoAte = new ConcurrentHashMap<>();
 
@@ -156,6 +160,11 @@ public class PeerClient implements Repasse {
 
     @Override
     public boolean commit(Vizinho proximo, String idTransacao) {
+        if (falharProximoCommit.compareAndSet(true, false)) {
+            log.warn("[TESTE] Simulando falha no primeiro commit para {} (transação {})", proximo.id(), idTransacao);
+            return false;
+        }
+        
         Resposta R = enviar(
                 proximo, "PUT",
                 "/api/consorcio/reservas/" + idTransacao + "/commit",

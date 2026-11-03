@@ -120,7 +120,7 @@ public class TransacaoService {
 
                 ocupadas.add(P);
                 assentos.add(new TrechoReserva(P.servidor(), P.idPerna(),
-                        P.trechos().getFirst().origem(), P.trechos().getFirst().destino(),
+                        P.trechos().getFirst().origem(), P.trechos().getLast().destino(),
                         O.assento()));
             }
 

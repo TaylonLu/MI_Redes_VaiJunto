@@ -8,9 +8,13 @@ MODULE      ?= Server
 REGIAO      ?= Unova
 PORT		?= 2602
 RUN_FLAGS   ?= -q
+TESTE_FALHA_COMMIT ?= false
 
 # O Main recebe a região e a porta via System Properties (-Dserver.regiao e -Dserver.port)
-RUN := $(MVN) $(RUN_FLAGS) -pl $(MODULE) exec:java -Dserver.regiao=$(REGIAO) -Dserver.port=$(PORT)
+RUN := JAVA_TOOL_OPTIONS="-Dteste.falhar-primeiro-commit=$(TESTE_FALHA_COMMIT)" \
+    $(MVN) $(RUN_FLAGS) -pl $(MODULE) exec:java \
+    -Dserver.regiao=$(REGIAO) \
+    -Dserver.port=$(PORT)
 
 .DEFAULT_GOAL := help
 .PHONY: help compile run run-only clean rebuild test kanto johto unova kalos

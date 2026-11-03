@@ -23,7 +23,7 @@ public class Usuario implements Identificavel {
         this.senha = senha;
         this.email = email;
         this.nome = nome;
-        this.ID = ServerConstant.getRegiao().nome() + ID_BASE + UUID.randomUUID();
+        this.ID = ServerConstant.getRegiao().regiaoBase() + ID_BASE + UUID.randomUUID();
     }
 
     public Usuario(String id, String email, String senha, String nome) {
