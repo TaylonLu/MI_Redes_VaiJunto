@@ -89,6 +89,14 @@ function limparMapa() {
 function clicou(c) {
     const g = nos.get(c.id);
     if (modo === "criacao") {
+        const cidadeRepetida = c.id === anterior?.id ||
+            rota.some(passo => passo.inicio === c.id);
+
+        if (cidadeRepetida) {
+            aviso("Essa cidade já faz parte do percurso.", "aviso");
+            return;
+        }
+
         if (!anterior && !cidadePertenceAoServidor(c.id)) {
             aviso("A cidade de origem precisa pertencer ao seu servidor.", "erro");
             return;
@@ -120,6 +128,44 @@ function recomecar() {
     limparMapa();
 }
 $("recomecar").onclick = recomecar;
+
+function desfazerRota() {
+    if (!anterior) {
+        return aviso("Não há nada para desfazer.", "aviso");
+    }
+
+    if (rota.length > 0) {
+        const removido = rota.pop();
+
+        // Volta para a cidade anterior.
+        anterior = cidade(removido.inicio);
+
+        // Remove o destaque da cidade retirada.
+        nos.get(removido.fim).classList.remove("sel");
+
+        // Remove a última conexão desenhada.
+        $("rotas").lastElementChild?.remove();
+
+        // Remove a última cidade da lista do percurso.
+        $("percurso").lastElementChild?.remove();
+
+        $("status-criacao").textContent =
+            "Trecho removido. Última cidade: " + anterior.nome;
+
+    } else {
+        // Ainda não existem trechos: desfaz a seleção da origem.
+        nos.get(anterior.id).classList.remove("sel");
+
+        $("percurso").lastElementChild?.remove();
+
+        anterior = null;
+
+        $("status-criacao").textContent =
+            "Clique na origem da rota.";
+    }
+}
+
+$("desfazer-rota").onclick = desfazerRota;
 
 $("confirmar-rota").onclick = () => rota.length
     ? $("popup").showModal()

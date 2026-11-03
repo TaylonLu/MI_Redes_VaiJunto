@@ -1,4 +1,4 @@
-const PRINCIPAL = "/login-efetuado";   // rota que serve a tela principal
+const PRINCIPAL = "/";   // rota que serve a tela principal
 const CORES = ["#27ae60", "#e74c3c", "#9b59b6", "#f39c12", "#3498db"];
 const sessao = {
     token: () => localStorage.getItem("userToken"),
