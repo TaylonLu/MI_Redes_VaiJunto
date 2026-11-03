@@ -246,7 +246,9 @@ public class ReservaParticipante {
 
         // Chama o TransacaoService para alterar o estado, liberar vagas e
         // persistir as flags de avisoAnteriorPendente e avisoProximoPendente
-        transacoes.registrarCancelamentoMotorista(idTransacao, remetente);
+        if (!transacoes.registrarCancelamentoMotorista(idTransacao, remetente)) {
+            throw new ServerException(503, "Falha ao registrar o cancelamento da transação.");
+        }
 
         return builder()
                 .put("id_transacao", idTransacao)

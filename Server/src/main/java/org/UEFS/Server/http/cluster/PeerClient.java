@@ -3,15 +3,12 @@ package org.UEFS.Server.http.cluster;
 import org.UEFS.Server.domain.reservas.EstadoTransacao;
 import org.UEFS.Server.http.relogio.RelogioLamport;
 import org.UEFS.Server.http.relogio.ServerConstant;
-import org.UEFS.Server.http.service.ConsorcioUtils;
 import org.UEFS.Server.http.service.Vizinho;
 import org.UEFS.shared.JsonUtils;
 import org.UEFS.shared.dto.OtherUserDTO;
 import org.UEFS.shared.dto.consorcio.BuscaTrechosResponse;
-import org.UEFS.shared.dto.consorcio.RespostaPrepare;
 import org.UEFS.shared.dto.consorcio.ReservaRequest;
-import org.UEFS.shared.model.Regiao;
-import org.eclipse.jetty.server.Server;
+import org.UEFS.shared.dto.consorcio.RespostaPrepare;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,8 +23,6 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.UEFS.Server.http.service.ConsorcioUtils.isVazio;
 
 public class PeerClient implements Repasse {
     private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
@@ -164,7 +159,7 @@ public class PeerClient implements Repasse {
             log.warn("[TESTE] Simulando falha no primeiro commit para {} (transação {})", proximo.id(), idTransacao);
             return false;
         }
-        
+
         Resposta R = enviar(
                 proximo, "PUT",
                 "/api/consorcio/reservas/" + idTransacao + "/commit",
@@ -175,13 +170,11 @@ public class PeerClient implements Repasse {
 
     @Override
     public boolean cancel(Vizinho vizinho, String idTransacao, EstadoTransacao estado) {
-        String corpo = JsonUtils.toJson(Map.of("estado", estado.name()));
+        String caminho = estado == EstadoTransacao.CANCELADO_PELO_MOTORISTA
+                ? "/api/consorcio/reservas/" + idTransacao + "/cancel-motorista"
+                : "/api/consorcio/reservas/" + idTransacao + "/cancel";
 
-        Resposta resposta = enviar(
-                vizinho,
-                "PUT",
-                "/api/consorcio/reservas/" + idTransacao + "/cancel",
-                corpo,
+        Resposta resposta = enviar(vizinho, "PUT", caminho, null,
                 Duration.ofSeconds(DURATION_S)
         );
 

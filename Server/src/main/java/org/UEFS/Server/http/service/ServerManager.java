@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.UEFS.Server.http.Utils.tokenDe;
+import static org.UEFS.Server.http.service.ConsorcioUtils.isVazio;
 
 
 public class ServerManager {
@@ -113,22 +114,9 @@ public class ServerManager {
     }
 
     public void cancel(@NotNull Context ctx) {
-        CancelamentoRequest pedido = ctx.bodyAsClass(CancelamentoRequest.class);
-
-        EstadoTransacao estado;
-
-        try {
-            estado = EstadoTransacao.valueOf(pedido.estado());
-        } catch (IllegalArgumentException | NullPointerException e) {
-            ctx.status(400).json(Map.of(
-                    "mensagem", "Estado de cancelamento inválido."
-            ));
-            return;
-        }
-
         RespostaConsorcio resposta = participante.cancel(
                 ctx.pathParam("id"),
-                estado,
+                EstadoTransacao.CANCELADO_PELO_PASSAGEIRO,
                 ctx.header("X-Server-Id")
         );
 
