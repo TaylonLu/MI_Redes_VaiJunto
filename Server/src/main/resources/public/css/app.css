@@ -16,11 +16,23 @@
 }
 
 body {
-    margin: 0;
-    background: var(--papel);
-    color: var(--tinta);
-    font-family: var(--fonte), serif;
-    line-height: 1.5
+    position: relative;
+    isolation: isolate;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+
+    background-image: var(--logo-servidor);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: min(45vw, 500px);
+
+    opacity: 0.09;
 }
 
 [hidden] {

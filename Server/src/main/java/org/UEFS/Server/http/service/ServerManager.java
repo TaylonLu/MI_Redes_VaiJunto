@@ -175,7 +175,7 @@ public class ServerManager {
                         mapper::traduzirParaId,
                         C -> C
                 ));
-
+        context.header("X-Server-Region",ServerConstant.getRegiao().regiaoBase());
         context.json(cidades);
     }
 
