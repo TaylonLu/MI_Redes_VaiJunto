@@ -50,6 +50,13 @@ async function enviarJson(url, dados) {
 }
 
 async function efetuarLogin() {
+    const botao = document.querySelector(`#screen-login button[type="submit"]`)
+    if (botao.disabled) return;
+
+    botao.disabled = true;
+    botao.textContent = "Entrando...";
+    limparErro("login-erro");
+
     const dadosLogin = {
         "email": getData("login-email").trim(),
         "senha": getData("login-senha").trim()
@@ -64,6 +71,9 @@ async function efetuarLogin() {
         window.location.href = "/";
     } catch (erro) {
         mostrarErro("login-erro", erro.message);
+    } finally {
+        botao.disabled = false;
+        botao.textContent = "Confirmar";
     }
 }
 
@@ -73,6 +83,13 @@ async function efetuarCadastro() {
         mostrarErro("cadastro-erro", "As senhas não coincidem.");
         return;
     }
+
+    const botao = document.querySelector('#screen-cadastro button[type="submit"]');
+    if (botao.disabled) return;
+
+    botao.disabled = true;
+    botao.textContent = "Cadastrando...";
+    limparErro("cadastro-erro");
 
     const dadosCadastro = {
         "nome": getData("cad-nome").trim(),
@@ -89,6 +106,9 @@ async function efetuarCadastro() {
         window.location.href = "/";
     } catch (erro) {
         mostrarErro("cadastro-erro", erro.message);
+    } finally {
+        botao.disabled = false;
+        botao.textContent = "Confirmar";
     }
 }
 
