@@ -240,7 +240,7 @@ public class TransacaoService {
             // Uma transação confirmada não pode sofrer rollback
             if (tx.getEstado() != EstadoTransacao.PREPARADO) return Resultado.CONFLITO;
 
-            List<Perna> pernas = pernasDe(tx);
+            List<Perna> pernas = pernasDe(tx, true);
             tx.setEstado(EstadoTransacao.ABORTADO);
             liberar(pernas, tx.getIdPassageiro());
 
@@ -692,6 +692,22 @@ public class TransacaoService {
             }
 
             EstadoTransacao estadoAtual = tx.getEstado();
+            if (estado == EstadoTransacao.CANCELADO_PELO_MOTORISTA
+                    && estadoAtual == EstadoTransacao.PREPARADO) {
+
+                tx.setCancelamentoMotoristaPendente(true);
+                repo.salvar(tx);
+
+                if (!repo.salvarNoDisco()) {
+                    tx.setCancelamentoMotoristaPendente(false);
+                    repo.salvar(tx);
+                    repo.salvarNoDisco();
+                    return false;
+                }
+
+                log.info("[REDE] Cancelamento de motorista pendente na transação '{}'.", idTransacao);
+                return true;
+            }
 
             // Cancelamento pelo motorista tem prioridade.
             if (estadoAtual == EstadoTransacao.CANCELADO_PELO_MOTORISTA) {

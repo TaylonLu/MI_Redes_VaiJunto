@@ -61,6 +61,7 @@ public class Transacao implements Identificavel {
         this.estado = estado;
         this.avisoAnteriorPendente = avisoAnteriorPendente != null && avisoAnteriorPendente;
         this.avisoProximoPendente = avisoProximoPendente != null && avisoProximoPendente;
+        this.cancelamentoMotoristaPendente = Boolean.TRUE.equals(cancelamentoMotoristaPendente);
         this.cancelamentosPendentes = cancelamentosPendentes == null
                 ? new HashSet<>()
                 : new HashSet<>(cancelamentosPendentes);
