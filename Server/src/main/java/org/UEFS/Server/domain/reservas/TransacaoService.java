@@ -594,11 +594,7 @@ public class TransacaoService {
      * P2P: Recebe um cancelamento vindo da rede, processa localmente
      * e continua a propagar a onda.
      */
-    public void receberCancelamentoDaRede(
-            String idTransacao,
-            EstadoTransacao estado,
-            String remetente
-    ) {
+    public boolean receberCancelamentoDaRede(String idTransacao, EstadoTransacao estado, String remetente) {
         if (estado != EstadoTransacao.CANCELADO_PELO_PASSAGEIRO
                 && estado != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
             throw new IllegalArgumentException("Estado de cancelamento inválido.");
@@ -609,14 +605,14 @@ public class TransacaoService {
 
             if (tx == null) {
                 log.warn("[REDE] Transação '{}' não encontrada.", idTransacao);
-                return;
+                return true;
             }
 
             EstadoTransacao estadoAtual = tx.getEstado();
 
             // Cancelamento pelo motorista tem prioridade.
             if (estadoAtual == EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
-                return;
+                return true;
             }
 
             EstadoTransacao novoEstado =
@@ -626,7 +622,7 @@ public class TransacaoService {
 
             // Evita processar novamente o mesmo cancelamento.
             if (estadoAtual == novoEstado) {
-                return;
+                return true;
             }
 
             boolean jaEstavaCancelada =
@@ -640,20 +636,24 @@ public class TransacaoService {
 
             // Só libera os assentos na primeira transição para cancelada.
             if (!jaEstavaCancelada) {
-                liberar(pernasDe(tx), tx.getIdPassageiro());
+                List<Perna> pernas = pernasDe(tx);
+                liberar(pernas, tx.getIdPassageiro());
+
+                if (!caronaRepo.salvarNoDisco()) {
+                    reocupar(pernas, tx.getIdPassageiro());
+
+                    tx.setEstado(estadoAtual);
+                    repo.salvar(tx);
+
+                    repo.salvarNoDisco();
+                    caronaRepo.salvarNoDisco();
+
+                    return false;
+                }
             }
-
-            boolean transacoesSalvas = repo.salvarNoDisco();
-            boolean caronasSalvas = caronaRepo.salvarNoDisco();
-
-            if (!transacoesSalvas || !caronasSalvas) {
-                log.error("[ERRO CRÍTICO] Falha ao persistir cancelamento. Transações: {}, Caronas: {}",
-                        transacoesSalvas, caronasSalvas);
-                return;
-            }
-
             // Continua a propagação, sem retornar ao remetente.
             notificarCancelamento(tx, remetente);
+            return true;
         }
     }
 

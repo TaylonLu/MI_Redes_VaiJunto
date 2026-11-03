@@ -205,20 +205,15 @@ public class ReservaParticipante {
      * Intercepta a requisição HTTP {@code PUT /cancel} da rede e delega a limpeza
      * inteligente para o método receber {@code ReceberCancelamentoDaRede}.
      */
-    public RespostaConsorcio cancel(
-            String idTransacao,
-            EstadoTransacao estado,
-            String remetente
-    ) {
+    public RespostaConsorcio cancel(String idTransacao, EstadoTransacao estado, String remetente) {
         if (!idValido(idTransacao))
             throw new ServerException(400, "id da transacao invalido");
 
-        if (estado != EstadoTransacao.CANCELADO_PELO_PASSAGEIRO
-                && estado != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
+        if (estado != EstadoTransacao.CANCELADO_PELO_PASSAGEIRO && estado != EstadoTransacao.CANCELADO_PELO_MOTORISTA)
             throw new ServerException(400, "tipo de cancelamento invalido");
-        }
 
-        transacoes.receberCancelamentoDaRede(idTransacao, estado, remetente);
+        if (!transacoes.receberCancelamentoDaRede(idTransacao, estado, remetente))
+            throw new ServerException(503, "Falha ao persistir o cancelamento");
 
         return ConsorcioUtils.builder()
                 .put("id_transacao", idTransacao)
