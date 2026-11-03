@@ -29,57 +29,99 @@ function svgEl(tag, attrs, cls) {
 }
 
 const linha = (a, b, cor, larg) =>
-    $("rotas").append(svgEl("line", { x1: a.cx, y1: a.cy, x2: b.cx, y2: b.cy, stroke: cor, "stroke-width": larg }));
+    $("rotas").append(svgEl("line", {x1: a.cx, y1: a.cy, x2: b.cx, y2: b.cy, stroke: cor, "stroke-width": larg}));
 
 // ---------- Mapa ----------
+
 function desenharMapa() {
     const estradasSvg = $("estradas");
     const cidadesSvg = $("cidades");
 
+    const fragmentoEstradas = document.createDocumentFragment();
+    const fragmentoCidades = document.createDocumentFragment();
+
     for (const a of cidades) {
+        // ---------- Estradas ----------
         for (const idV of a.estradas) {
             const b = cidade(idV);
+
             if (b && a.id < b.id) {
-                estradasSvg.append(svgEl("line", { x1: a.cx, y1: a.cy, x2: b.cx, y2: b.cy }, "estrada"));
+                fragmentoEstradas.append(
+                    svgEl("line", {
+                        x1: a.cx,
+                        y1: a.cy,
+                        x2: b.cx,
+                        y2: b.cy
+                    }, "estrada")
+                );
             }
         }
 
-        const classeRegiao = "regiao-" + a.regiao.toLowerCase().replace(/\s+/g, "-");
+        // ---------- Cidades ----------
+        const classeRegiao = "regiao-" +
+            a.regiao.toLowerCase().replace(/\s+/g, "-");
+
         const g = svgEl("g", {}, `cidade ${classeRegiao}`);
         g.dataset.regiao = a.regiao;
 
-        const halo = svgEl("circle", { cx: a.cx, cy: a.cy, r: 22 }, "halo");
-        const ponto = svgEl("circle", { cx: a.cx, cy: a.cy, r: 9 }, "ponto");
+        const halo = svgEl("circle", {
+            cx: a.cx, cy: a.cy, r: 22
+        }, "halo");
 
-        const texto = svgEl("text", { x: a.cx + 18, y: a.cy + 5 });
+        const ponto = svgEl("circle", {
+            cx: a.cx, cy: a.cy, r: 9
+        }, "ponto");
+
+        const texto = svgEl("text", {
+            x: a.cx + 18,
+            y: a.cy + 5
+        });
+
         texto.textContent = a.nome;
 
         g.append(halo, ponto, texto);
-        g.addEventListener("click", () => { if (!arrastou) clicou(a); });
+
+        g.addEventListener("click", () => {
+            if (!arrastou) clicou(a);
+        });
 
         nos.set(a.id, g);
+
         if (modo === "criacao" && !cidadePertenceAoServidor(a.id)) {
             g.classList.add("cidade-externa");
         }
-        cidadesSvg.append(g);
+
+        fragmentoCidades.append(g);
     }
+
+    // Insere todos os elementos de uma vez.
+    estradasSvg.append(fragmentoEstradas);
+    cidadesSvg.append(fragmentoCidades);
 }
+
 
 // Arrastar o mapa (sem pointer capture, para não perder o clique nas cidades)
 let tx = 0, ty = 0, ox = 0, oy = 0, x0 = 0, y0 = 0, arrastando = false, arrastou = false;
 $("mapa").addEventListener("pointerdown", e => {
     if (e.button !== 0) return;
-    arrastando = true; arrastou = false;
-    x0 = e.clientX; y0 = e.clientY; ox = tx; oy = ty;
+    arrastando = true;
+    arrastou = false;
+    x0 = e.clientX;
+    y0 = e.clientY;
+    ox = tx;
+    oy = ty;
 });
 window.addEventListener("pointermove", e => {
     if (!arrastando) return;
     const dx = e.clientX - x0, dy = e.clientY - y0;
     if (Math.abs(dx) + Math.abs(dy) > 4) arrastou = true;
-    tx = ox + dx; ty = oy + dy;
+    tx = ox + dx;
+    ty = oy + dy;
     $("mundo").style.transform = `translate(${tx}px,${ty}px)`;
 });
-window.addEventListener("pointerup", () => { arrastando = false; });
+window.addEventListener("pointerup", () => {
+    arrastando = false;
+});
 
 function limparMapa() {
     $("rotas").replaceChildren();
@@ -105,28 +147,32 @@ function clicou(c) {
             if (!(anterior.estradas.includes(c.id) || c.estradas.includes(anterior.id)))
                 return aviso(`Não há estrada direta entre ${anterior.nome} e ${c.nome}`, "erro");
             linha(anterior, c, "#2980b9", 6);
-            rota.push({ inicio: anterior.id, fim: c.id });
+            rota.push({inicio: anterior.id, fim: c.id});
         }
         anterior = c;
         g.classList.add("sel");
         $("status-criacao").textContent = (rota.length ? "Trecho adicionado até: " : "Origem definida: ") + c.nome;
         $("percurso").append(h("li", "", c.nome));
     } else if (!origem) {
-        origem = c; g.classList.add("origem");
+        origem = c;
+        g.classList.add("origem");
         $("busca-origem").textContent = "Origem: " + c.nome;
     } else if (!destino && c !== origem) {
-        destino = c; g.classList.add("destino");
+        destino = c;
+        g.classList.add("destino");
         $("busca-destino").textContent = "Destino: " + c.nome;
     }
 }
 
 // ---------- Modo: criação ----------
 function recomecar() {
-    anterior = null; rota = [];
+    anterior = null;
+    rota = [];
     $("percurso").replaceChildren();
     $("status-criacao").textContent = "Clique na origem da rota.";
     limparMapa();
 }
+
 $("recomecar").onclick = recomecar;
 
 function desfazerRota() {
@@ -241,6 +287,7 @@ function limparBusca() {
     $("ver-detalhes").hidden = true;
     limparMapa();
 }
+
 $("limpar-busca").onclick = limparBusca;
 
 function desenharItinerario(it) {
@@ -257,8 +304,8 @@ function desenharItinerario(it) {
         ];
 
         for (let j = 0; j < percurso.length - 1; j++) {
-            const cOrigem = cidades.find(c => c.nome === percurso[j]);
-            const cDestino = cidades.find(c => c.nome === percurso[j + 1]);
+            const cOrigem = cidadesPorNome.get(percurso[j]);
+            const cDestino = cidadesPorNome.get(percurso[j + 1]);
 
             if (cOrigem && cDestino) {
                 linha(cOrigem, cDestino, cores[i], 7);
@@ -269,10 +316,10 @@ function desenharItinerario(it) {
 
 const cardItinerario = it => {
     const trechos = it.trechos || [];
-    const n  = nCaronas(trechos), t = trechos.length; // alterado de passos para trechos
+    const n = nCaronas(trechos), t = trechos.length; // alterado de passos para trechos
     const preco = ` - ${Number(it.preco_total ?? 0).toLocaleString(
         "pt-BR",
-        { style: "currency", currency: "BRL" }
+        {style: "currency", currency: "BRL"}
     )}`;
     return h("li", "card", h("strong", "", n <= 1 ? `Carona Direta (${t} trechos)${preco}` : `Baldeação: ${n} carros (${t} trechos)${preco}`));
 };
@@ -292,7 +339,7 @@ $("buscar").onclick = async () => {
             vagas: String(vagas)
         });
 
-        const resultadoBusca = await api(`/api/cliente/itinerarios?${params}`,"GET"
+        const resultadoBusca = await api(`/api/cliente/itinerarios?${params}`, "GET"
         );
         // Ajuste os nomes das chaves aos componentes do seu BuscaCaronaRequest
         itinerarios = resultadoBusca?.itinerarios || [];
@@ -340,7 +387,7 @@ function corpoTrechosBusca(trechos) {
                 h("small", "", `Horário: ${fmtData(t.horario)}`),
 
                 h("small", "", `Preço: ${Number(t.preco).toLocaleString(
-                    "pt-BR", { style: "currency", currency: "BRL" }
+                    "pt-BR", {style: "currency", currency: "BRL"}
                 )}`),
 
                 h("small", "",
@@ -371,8 +418,8 @@ async function reservar(it) {
         const trechosSolicitados = (it.trechos || []).map(t => ({
             servidor: t.servidor,
             id_carona: t.id_carona,
-            origem: cidades.find(c => c.nome === t.origem)?.id,
-            destino: cidades.find(c => c.nome === t.destino)?.id
+            origem: cidadesPorNome.get(t.origem)?.id,
+            destino: cidadesPorNome.get(t.destino)?.id
         }));
 
         if (trechosSolicitados.some(t =>
@@ -410,16 +457,17 @@ const ZOOM_MAX = 3.5; // Limite máximo de aproximação (zoom in)
 const ZOOM_PASSO = 0.15; // Velocidade do zoom
 
 function aplicarZoom(novoZoom) {
-    // Garante que o zoom não passa dos limites definidos
     zoomAtual = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, novoZoom));
 
-    // A propriedade 'scale' isolada não quebra o 'transform: translate' caso arraste o mapa
     const mundo = $("mundo");
+
     if (mundo) {
         mundo.style.scale = zoomAtual;
     }
 
     mundo.style.setProperty("--zoom", zoomAtual);
+
+    $("mapa").classList.toggle("zoom-detalhado", zoomAtual >= 1.2);
 }
 
 // 1. Zoom usando a roda do rato (Scroll)
@@ -431,7 +479,7 @@ if (areaMapa) {
         // Se o deltaY for negativo (scroll para cima), aproxima. Caso contrário, afasta.
         const direcao = e.deltaY < 0 ? 1 : -1;
         aplicarZoom(zoomAtual + (ZOOM_PASSO * direcao));
-    }, { passive: false }); // 'passive: false' é obrigatório para usar preventDefault no wheel
+    }, {passive: false}); // 'passive: false' é obrigatório para usar preventDefault no wheel
 }
 
 // 2. Zoom usando os botões visuais
@@ -449,13 +497,16 @@ if (btnZoomIn && btnZoomOut) {
     try {
         await carregarCidades();
         if (modo === "criacao") await carregarCidadesServidor();
+    } catch {
+        return aviso("Não foi possível carregar as cidades.", "erro");
     }
-    catch { return aviso("Não foi possível carregar as cidades.", "erro"); }
 
     const img = $("img");
-    if (!img.complete) await new Promise(r => { img.onload = img.onerror = r; });
+    if (!img.complete) await new Promise(r => {
+        img.onload = img.onerror = r;
+    });
     const w = img.naturalWidth || Math.max(...cidades.map(c => c.x + c.largura));
-    const alt = img.naturalHeight  || Math.max(...cidades.map(c => c.y + c.altura));
+    const alt = img.naturalHeight || Math.max(...cidades.map(c => c.y + c.altura));
     $("svg").setAttribute("width", w);
     $("svg").setAttribute("height", alt);
     desenharMapa();

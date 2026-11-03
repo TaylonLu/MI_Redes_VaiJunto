@@ -454,7 +454,16 @@ dialog::backdrop {
     stroke-width: 3;
     paint-order: stroke;
     opacity: 0;
-    pointer-events: none
+    pointer-events: none;
+    transition: opacity .15s ease;
+}
+
+.zoom-detalhado .cidade text,
+.cidade:hover text,
+.cidade.sel text,
+.cidade.origem text,
+.cidade.destino text {
+    opacity: 1;
 }
 
 .cidade:hover text, .cidade.sel text, .cidade.origem text, .cidade.destino text {

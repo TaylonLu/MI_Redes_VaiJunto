@@ -12,6 +12,7 @@ const sessao = {
 };
 let cidades = [];
 let cidadesPorID = new Map();
+let cidadesPorNome = new Map();
 
 // Cria elementos; strings viram texto (nunca HTML)
 function h(tag, cls, ...filhos) {
@@ -129,6 +130,12 @@ async function carregarCidades() {
         c.id = Number(c.id);
         c.estradas = (c.estradas ?? []).map(Number);
         cidadesPorID.set(c.id, c);
+    }
+
+    cidadesPorNome.clear();
+
+    for (const c of cidades) {
+        cidadesPorNome.set(c.nome, c);
     }
 }
 
