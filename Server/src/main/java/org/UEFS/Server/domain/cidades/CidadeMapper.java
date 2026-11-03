@@ -11,6 +11,7 @@ import java.util.*;
 public class CidadeMapper {
     private final Map<String, Integer> nomeParaId = new HashMap<>();
     private final Map<Integer, String> idParaNome = new HashMap<>();
+    private final Map<Integer, Set<Integer>> conexoesPorCidade = new HashMap<>();
 
     private final Set<Integer> cidadesDoMeuServidor = new HashSet<>();
 
@@ -44,10 +45,18 @@ public class CidadeMapper {
             for (CidadeJSON c : lista) {
                 nomeParaId.put(c.nome().trim().toLowerCase(), c.id());
                 idParaNome.put(c.id(), c.nome());
+                conexoesPorCidade.put(c.id(),
+                        new HashSet<>(c.conexoes() == null ? List.of() : c.conexoes())
+                );
             }
         } catch (Exception e) {
             throw new RuntimeException("Falha ao carregar " + caminhoArquivoJson, e);
         }
+    }
+
+    public boolean existeConexao(int origem, int destino) {
+        return conexoesPorCidade.getOrDefault(origem, Set.of()).contains(destino)
+                || conexoesPorCidade.getOrDefault(destino, Set.of()).contains(origem);
     }
 
     public int traduzirParaId(String nome) {

@@ -58,7 +58,7 @@ function desenharMapa() {
         g.addEventListener("click", () => { if (!arrastou) clicou(a); });
 
         nos.set(a.id, g);
-        if (!cidadesServidor.has(Number(a.id))) {
+        if (modo === "criacao" && !cidadePertenceAoServidor(a.id)) {
             g.classList.add("cidade-externa");
         }
         cidadesSvg.append(g);
@@ -196,7 +196,10 @@ function desenharItinerario(it) {
 const cardItinerario = it => {
     const trechos = it.trechos || [];
     const n  = nCaronas(trechos), t = trechos.length; // alterado de passos para trechos
-    const preco = it.preco_total ? ` - $${it.preco_total.toFixed(2)}` : "";
+    const preco = ` - ${Number(it.preco_total ?? 0).toLocaleString(
+        "pt-BR",
+        { style: "currency", currency: "BRL" }
+    )}`;
     return h("li", "card", h("strong", "", n <= 1 ? `Carona Direta (${t} trechos)${preco}` : `Baldeação: ${n} carros (${t} trechos)${preco}`));
 };
 

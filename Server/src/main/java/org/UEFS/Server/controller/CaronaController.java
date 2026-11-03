@@ -184,11 +184,6 @@ public class CaronaController {
             throw new ForbiddenException("Você só pode iniciar caronas a partir das cidades pertencentes a esta região.");
         }
 
-        if (caronaDTO.trechos().stream().anyMatch(Objects::isNull)) {
-            context.status(400).json(Map.of("erro", "A rota contém trechos inválidos."));
-            return;
-        }
-
         if (caronaDTO.vagas() < 1) {
             context.status(400).json(Map.of("erro", "A quantidade de vagas deve ser maior que zero."));
             return;
@@ -208,6 +203,13 @@ public class CaronaController {
 
         if (!rota.isContinua()) {
             context.status(400).json(Map.of("erro", "Os trechos da rota não formam um percurso contínuo."));
+            return;
+        }
+        boolean estradaInvalida = rota.getTrechos().stream()
+                .anyMatch(t -> !cidadeMapper.existeConexao(t.origem(), t.destino()));
+
+        if (estradaInvalida) {
+            context.status(400).json(Map.of("erro", "A rota contém uma estrada inexistente."));
             return;
         }
 
