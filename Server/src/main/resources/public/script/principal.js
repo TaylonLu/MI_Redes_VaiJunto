@@ -70,7 +70,7 @@ function renderReservas() {
     $("cancelar-reserva").disabled = true;
 
     const ativas = reservas.filter(r =>
-        ["CANCELADA", "CONCLUIDA"].includes(String(r.status).toUpperCase())
+        String(r.status).toUpperCase() === "ATIVA"
     );
 
     const historico = reservas.filter(r =>
