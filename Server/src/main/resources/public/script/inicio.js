@@ -19,6 +19,12 @@ function mostrarErro(id, mensagem) {
     elemento.hidden = false;
 }
 
+function limparErro(id) {
+    const elemento = document.getElementById(id);
+    elemento.textContent = "";
+    elemento.hidden = true;
+}
+
 async function enviarJson(url, dados) {
     let resposta;
     try {
