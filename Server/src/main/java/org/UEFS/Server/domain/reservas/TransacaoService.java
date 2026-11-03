@@ -340,7 +340,7 @@ public class TransacaoService {
 
         if (!isVazio(tx.getProximo())) {
             Vizinho proximo = ServerConstant.getVizinho(tx.getProximo());
-            if (proximo == null || !client.cancelPassageiro(proximo, idTransacao))
+            if (proximo == null || !client.cancel(proximo, idTransacao, EstadoTransacao.CANCELADO_PELO_PASSAGEIRO))
                 return false;
         }
 
