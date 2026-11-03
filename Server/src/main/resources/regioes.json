@@ -1,0 +1,98 @@
+[
+  {
+    "ip": "localhost",
+    "porta": 2602,
+    "nome": "Unova Metro Lines",
+    "regiao_base": "Unova",
+    "cidades_base": [
+      "Castelia",
+      "Join Avenue",
+      "Nimbasa City",
+      "Aspertia",
+      "Floccesy Town",
+      "Virbank City",
+      "Driftveil City",
+      "Mistralton City",
+      "Icyrus City",
+      "Opelucid City",
+      "Lacunosa Town",
+      "Lentimas Town",
+      "Black and White",
+      "Humilau City",
+      "Nuvema Town",
+      "Striaton City",
+      "Nacrene City",
+      "Undella Town"
+    ],
+    "conexoes_externas": [
+      "Cerulean City",
+      "Snowbelle City",
+      "Anistar City"
+    ],
+    "servidores_vizinhos": [
+      "Lumiose Express Network"
+    ]
+  },
+  {
+    "ip": "localhost",
+    "porta": 2603,
+    "nome": "Lumiose Express Network",
+    "regiao_base": "Kalos",
+    "cidades_base": [
+      "Lumiose City",
+      "Camphrier Town",
+      "Coumarine City",
+      "Laverre City",
+      "Dendemille Town",
+      "Santalune City",
+      "Aquacode Town",
+      "Venivile Town",
+      "Victory Road",
+      "Pokémon League",
+      "Snowbelle City",
+      "Anistar City",
+      "Geosenge Town",
+      "Shalour City",
+      "Cyllage City",
+      "Ambrette Town",
+      "Parfum Palace"
+    ],
+    "conexoes_externas": [
+      "Mistralton City",
+      "Icyrus City",
+      "Blackthorn City",
+      "Ecruteak City"
+    ],
+    "servidores_vizinhos": [
+      "Unova Metro Lines",
+      "Johto Magnet Railways"
+    ]
+  },
+  {
+    "ip": "localhost",
+    "porta": 2604,
+    "nome": "Johto Magnet Railways",
+    "regiao_base": "Johto",
+    "cidades_base": [
+      "Safari Zone",
+      "Cianwood City",
+      "Olivine City",
+      "Ecruteak City",
+      "Goldenrod city",
+      "Azalea Town",
+      "Violet City",
+      "Cherrygrove City",
+      "Mahogany Town",
+      "Blackthorn City",
+      "New Bark town"
+    ],
+    "conexoes_externas": [
+      "Venivile Town",
+      "Geosenge Town",
+      "Lavender Town"
+    ],
+    "servidores_vizinhos": [
+      "Lumiose Express Network"
+    ]
+  }
+]
