@@ -111,9 +111,11 @@ public class ServerManager {
             return;
         }
 
-        context.json(buscaService.executar(origem, destino, visitados, incluirRemotoOrigem,
+        context.json(buscaService.executar(origem, destino,
                 dataDesejada,
-                vagasRequeridas
+                vagasRequeridas,
+                visitados,
+                incluirRemotoOrigem
         ));
     }
 

@@ -89,8 +89,8 @@ function limparMapa() {
 function clicou(c) {
     const g = nos.get(c.id);
     if (modo === "criacao") {
-        if (!cidadePertenceAoServidor(c.id)) {
-            aviso("Essa cidade não pertence ao seu servidor.", "erro");
+        if (!anterior && !cidadePertenceAoServidor(c.id)) {
+            aviso("A cidade de origem precisa pertencer ao seu servidor.", "erro");
             return;
         }
         if (anterior) {
@@ -142,10 +142,9 @@ $("form-carona").onsubmit = async e => {
         valorPorTrecho: precoPorTrecho,
         vagas: assentosPorTrecho,
         dataPartida: dataHora,
-        trechos: rota.map(passo => ({
-            origem: passo.inicio,
-            destino: passo.fim
-        }))
+        trechos: rota.map(passo =>
+            `${passo.inicio}-${passo.fim}`
+        )
     };
 
     try {

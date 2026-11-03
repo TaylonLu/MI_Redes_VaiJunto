@@ -170,11 +170,18 @@ public class CaronaController {
 
         if (caronaDTO.trechos() == null || caronaDTO.trechos().isEmpty()) {
             context.status(400).json(Map.of("erro", "A rota precisa possuir pelo menos um trecho."));
-            int origemInicial = caronaDTO.trechos().getFirst().origem();
-            if (!cidadeMapper.ehCidadeDesteServidor(origemInicial)) {
-                throw new ForbiddenException("Você só pode iniciar caronas a partir das cidades pertencentes a esta região.");
-            }
             return;
+        }
+
+        if (caronaDTO.trechos().stream().anyMatch(Objects::isNull)) {
+            context.status(400).json(Map.of("erro", "A rota contém trechos inválidos."));
+            return;
+        }
+
+        int origemInicial = caronaDTO.trechos().getFirst().origem();
+
+        if (!cidadeMapper.ehCidadeDesteServidor(origemInicial)) {
+            throw new ForbiddenException("Você só pode iniciar caronas a partir das cidades pertencentes a esta região.");
         }
 
         if (caronaDTO.trechos().stream().anyMatch(Objects::isNull)) {
