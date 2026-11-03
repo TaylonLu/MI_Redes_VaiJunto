@@ -11,8 +11,13 @@ let filtroCarona = "ativas";
 
 // ---------- Abas ----------
 function abrirAba(nome) {
-    document.querySelectorAll("[data-aba]").forEach(b => b.setAttribute("aria-selected", b.dataset.aba === nome));
-    document.querySelectorAll(".painel").forEach(p => p.hidden = p.id !== "aba-" + nome);
+    document.querySelectorAll("[data-aba]").forEach(b =>
+        b.setAttribute("aria-pressed", b.dataset.aba === nome)
+    );
+
+    document.querySelectorAll(".painel").forEach(p =>
+        p.hidden = p.id !== "aba-" + nome
+    );
 }
 document.querySelectorAll("[data-aba]").forEach(b => b.onclick = () => abrirAba(b.dataset.aba));
 
@@ -41,13 +46,13 @@ $("abrir-form").onclick = () => { $("abrir-form").hidden = true; $("form-motoris
 $("cancelar-form").onclick = () => { $("form-motorista").reset(); $("form-motorista").hidden = true; $("abrir-form").hidden = false; };
 
 $("form-motorista").onsubmit = async e => {
+    e.preventDefault();
     const botao = e.target.querySelector('button[type="submit"]');
     if (botao.disabled) return;
 
     botao.disabled = true;
     botao.textContent = "Cadastrando...";
 
-    e.preventDefault();
     const f = new FormData(e.target);
     const corpo = {};
     for (const campo of ["cnh", "placaCarro", "modeloCarro", "corCarro"]) corpo[campo] = f.get(campo).trim();
@@ -225,7 +230,6 @@ function detalhesCarona(c) {
             : [h("p", "vazio", "Nenhum trecho cadastrado.")])));
 }
 
-// ---------- Cancelamentos ----------
 // ---------- Cancelamentos ----------
 async function cancelar(selecionado, url, msgVazio, msgConfirma, msgOk) {
     if (!selecionado) return aviso(msgVazio, "aviso");

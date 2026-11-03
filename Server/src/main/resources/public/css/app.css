@@ -81,7 +81,7 @@ small, .vazio {
     cursor: pointer
 }
 
-.abas button[aria-selected=true] {
+.abas button[aria-pressed=true] {
     color: var(--rota);
     border-bottom-color: var(--faixa)
 }
