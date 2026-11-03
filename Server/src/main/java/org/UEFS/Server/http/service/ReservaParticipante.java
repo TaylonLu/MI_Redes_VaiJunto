@@ -9,6 +9,8 @@ import org.UEFS.Server.http.cluster.ResultadoRepasse;
 import org.UEFS.Server.http.relogio.ServerConstant;
 import org.UEFS.shared.dto.consorcio.*;
 import org.UEFS.shared.model.ServerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -18,6 +20,7 @@ import static org.UEFS.Server.http.service.ConsorcioUtils.*;
 public class ReservaParticipante {
     private static final Pattern ID_VALIDO = Pattern.compile("[A-Za-z0-9._-]+");
     private static final int MAX_TRECHOS = 8;
+    private static final Logger log = LoggerFactory.getLogger(ReservaParticipante.class);
 
     private final String meuId;
     private final List<Vizinho> vizinhos;
@@ -184,9 +187,11 @@ public class ReservaParticipante {
 
         // Gravar decisão
         Resultado R = transacoes.decidir(idTransacao, EstadoTransacao.COMITADO);
-        if (R != Resultado.OK)
-            throw new ServerException(500, "Falha ao gravar a reserva em disco");
+        if (R != Resultado.OK) {
+            log.warn("[RESERVA] Commit da transação '{}' recusado. Resultado: {}", idTransacao, R);
 
+            throw new ServerException(500, "Falha ao confirmar reserva: " + R);
+        }
         // Pega o proximo vizinho para a propagação
         boolean propagacaoPendente = false;
         if (!isVazio(existente.getProximo())) {

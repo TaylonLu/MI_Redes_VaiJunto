@@ -8,6 +8,7 @@ import org.UEFS.shared.dto.ItinerarioDTO;
 import org.UEFS.shared.dto.PassoItinerarioDTO;
 import org.UEFS.shared.dto.Trecho;
 import org.UEFS.shared.enums.StatusCarona;
+import org.UEFS.shared.model.ServerException;
 
 import java.util.*;
 
@@ -144,16 +145,18 @@ public class CaronaService {
     }
 
     public void cancelarCaronaETransacoes(String idCarona, String idMotorista) {
-        Carona carona = caronaRepo.getByID(idCarona);
+        synchronized (this) {
+            Carona carona = caronaRepo.getByID(idCarona);
 
-        if (carona == null) throw new NotFoundResponse("Carona não encontrada.");
-        if (!carona.getId_motorista().equalsIgnoreCase(idMotorista))
-            throw new ForbiddenException("Você só pode cancelar suas próprias caronas.");
+            if (carona == null) throw new NotFoundResponse("Carona não encontrada.");
+            if (!carona.getId_motorista().equalsIgnoreCase(idMotorista))
+                throw new ForbiddenException("Você só pode cancelar suas próprias caronas.");
 
-        carona.setStatus(StatusCarona.CANCELADA);
-        caronaRepo.salvarNoDisco();
-
-        listeners.forEach(L -> L.aoCancelarCarona(idCarona));
+            carona.setStatus(StatusCarona.CANCELADA);
+            if (!caronaRepo.salvarNoDisco())
+                throw new ServerException(500, "Falha ao cancelar a carona.");
+        }
+            listeners.forEach(L -> L.aoCancelarCarona(idCarona));
     }
 
     public void sincronizarPorCarona(String id) {

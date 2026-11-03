@@ -139,6 +139,7 @@ public class RecuperadorTransacoes {
             if (proximo == null || !peerClient.cancel(proximo, tx.getId(), EstadoTransacao.CANCELADO_PELO_PASSAGEIRO)){
                 log.warn("[RECUPERAÇÃO] Falha ao propagar cancelamento da transação '{}' para '{}'",
                         tx.getId(), proximoId);
+                return;
             }
         }
 

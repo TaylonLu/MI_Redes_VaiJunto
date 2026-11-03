@@ -163,8 +163,13 @@ public class TransacaoService {
                 return Resultado.OK;
 
             // Não permitir commit de transações canceladas ou em andamento
-            if (estadoAtual != EstadoTransacao.PREPARADO)
+            if (estadoAtual != EstadoTransacao.PREPARADO) {
+                log.warn("[TRANSACAO] Commit recusado: id='{}', estado atual='{}', estado solicitado='{}'",
+                        idTransacao, estadoAtual, novoEstado
+                );
+
                 return Resultado.CONFLITO;
+            }
 
             // Backup
             List<TrechoReserva> itinerarioAnterior = transacao.getItinerario();
@@ -188,8 +193,10 @@ public class TransacaoService {
 
     /** Chamado no fim do prepare: a recuperação (passo 5) já pode olhar para esta transação. */
     public void terminarProcessamento(String idTransacao) {
-        Transacao t = repo.getByID(idTransacao);
-        if (t != null) t.setEmProcessamento(false);
+        synchronized (caronaService) {
+            Transacao t = repo.getByID(idTransacao);
+            if (t != null) t.setEmProcessamento(false);
+        }
     }
 
     /**
