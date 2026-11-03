@@ -13,6 +13,12 @@ function navigateTo(targetScreenId) {
     }
 }
 
+function mostrarErro(id, mensagem) {
+    const elemento = document.getElementById(id);
+    elemento.textContent = mensagem;
+    elemento.hidden = false;
+}
+
 async function enviarJson(url, dados) {
     let resposta;
     try {

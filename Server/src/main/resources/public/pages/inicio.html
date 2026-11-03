@@ -52,25 +52,27 @@
     <form onsubmit="event.preventDefault(); efetuarCadastro()">
         <div class="form-grid0">
             <label class="form-label" for="cad-nome">Nome:</label>
-            <input type="text" id="cad-nome" class="form-control" placeholder="Seu nome completo">
+            <input type="text" id="cad-nome" class="form-control" placeholder="Seu nome completo" required>
 
             <label class="form-label" for="cad-email">Email:</label>
-            <input type="email" id="cad-email" class="form-control" placeholder="Seu melhor email">
+            <input type="email" id="cad-email" class="form-control" placeholder="Seu melhor email" required>
 
             <label class="form-label" for="cad-senha">Senha:</label>
-            <input type="password" id="cad-senha" class="form-control" placeholder="Crie uma senha">
+            <input type="password" id="cad-senha" class="form-control" placeholder="Crie uma senha" required>
 
             <label class="form-label" for="cad-senha-conf">Repita a Senha:</label>
-            <input type="password" id="cad-senha-conf" class="form-control" placeholder="Confirme a senha">
+            <input type="password" id="cad-senha-conf" class="form-control" placeholder="Confirme a senha" required>
+        </div>
+
+        <p id="cadastro-erro"  class="form-erro" role="alert" hidden></p>
+
+        <div class="btn-container">
+            <button type="submit" class="btn-primary" onclick="efetuarCadastro()">Confirmar</button>
+            <button type="button" class="btn-secondary" onclick="navigateTo('screen-inicio')">Voltar</button>
         </div>
     </form>
 
-    <p id="cadastro-erro"  class="form-erro" role="alert" hidden></p>
 
-    <div class="btn-container">
-        <button class="btn-primary" onclick="efetuarCadastro()">Confirmar</button>
-        <button class="btn-secondary" onclick="navigateTo('screen-inicio')">Voltar</button>
-    </div>
 </div>
 
 <script src="../script/inicio.js"></script>
