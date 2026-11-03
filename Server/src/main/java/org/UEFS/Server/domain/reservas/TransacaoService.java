@@ -376,6 +376,23 @@ public class TransacaoService {
                 }
             }
 
+            if (tx.souDono(meuId)) {
+                List<TrechoReserva> trechos = tx.getItinerario() != null && !tx.getItinerario().isEmpty()
+                                ? tx.getItinerario()
+                                : tx.getLocais();
+
+                for (TrechoReserva trecho : trechos) {
+                    String servidorId = trecho.servidor();
+
+                    if (servidorId != null
+                            && !servidorId.isBlank()
+                            && !servidorId.equalsIgnoreCase(meuId)
+                            && !servidorId.equalsIgnoreCase(remetente)) {
+                        tx.adicionarCancelamentoPendente(servidorId);
+                    }
+                }
+            }
+
             repo.salvar(tx);
 
             return repo.salvarNoDisco();
@@ -755,4 +772,10 @@ public class TransacaoService {
 
     private Preparo recusa(Resultado r, String motivo) { return new Preparo(r, List.of(), false, motivo); }
 
+    public void salvar(Transacao tx) {
+        repo.salvar(tx);
+    }
+    public boolean salvarNoDisco() {
+        return repo.salvarNoDisco();
+    }
 }

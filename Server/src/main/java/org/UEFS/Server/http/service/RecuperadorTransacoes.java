@@ -86,18 +86,26 @@ public class RecuperadorTransacoes {
         if (tx.getEstado() != EstadoTransacao.CANCELADO_PELO_MOTORISTA)
             return;
 
-        Set<String> servidores = new HashSet<>();
-
         if (tx.souDono(meuId)) {
-            // Coordenador: notifica todos os servidores do itinerário.
-            List<TrechoReserva> trechos =
-                    tx.getItinerario() != null && !tx.getItinerario().isEmpty()
-                            ? tx.getItinerario()
-                            : tx.getLocais();
+            // Coordenador: notifica somente os servidores pendentes.
 
-            for (var trecho : trechos) {
-                servidores.add(trecho.servidor());
+            for (String servidorId : tx.getCancelamentosPendentes()) {
+                Vizinho vizinho = ServerConstant.getVizinho(servidorId);
+
+                if (vizinho != null
+                        && peerClient.cancel(vizinho, tx.getId(), tx.getEstado())) {
+
+                    tx.confirmarCancelamento(servidorId);
+
+                } else {
+                    log.warn("[RECUPERAÇÃO] Cancelamento da transação '{}'  ainda pendente para '{}'.",
+                            tx.getId(), servidorId
+                    );
+                }
             }
+
+            transacoes.salvar(tx);
+            transacoes.salvarNoDisco();
         } else {
             /*
              * Se a notificação ao anterior funcionar, a respectiva flag será desativada.
@@ -119,17 +127,6 @@ public class RecuperadorTransacoes {
                 if (vizinho != null && peerClient.cancel(vizinho, tx.getId(), tx.getEstado())) {
                     tx.setAvisoProximoPendente(false);
                 }
-            }
-        }
-
-        servidores.removeIf(id -> id.equalsIgnoreCase(meuId));
-
-        for (String servidorId : servidores) {
-            Vizinho vizinho = ServerConstant.getVizinho(servidorId);
-
-            if (vizinho == null || !peerClient.cancel(vizinho, tx.getId(), tx.getEstado())) {
-                log.warn("[RECUPERAÇÃO] Cancelamento da transação '{}' ainda pendente para '{}'.",
-                        tx.getId(), servidorId);
             }
         }
     }
