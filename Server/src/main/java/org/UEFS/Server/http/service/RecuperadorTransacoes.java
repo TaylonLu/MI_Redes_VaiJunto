@@ -142,6 +142,7 @@ public class RecuperadorTransacoes {
             }
         }
 
+        // O próximo confirmou (ou não existe próximo): conclui localmente.
         Resultado resultado = transacoes.concluirCancelamentoPassageiro(tx.getId());
         if (resultado != Resultado.OK) {
             log.warn("[RECUPERAÇÃO] Não foi possível concluir o cancelamento da transação '{}': {}", tx.getId(), resultado);

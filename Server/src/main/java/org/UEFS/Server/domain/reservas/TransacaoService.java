@@ -353,14 +353,15 @@ public class TransacaoService {
 
             if (tx == null) return false;
 
-            if (tx.getEstado() == EstadoTransacao.CANCELANDO) return false;
+            EstadoTransacao estadoAtual = tx.getEstado();
 
-            if (tx.getEstado() != EstadoTransacao.COMITADO &&
-                tx.getEstado() != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
+            if (estadoAtual != EstadoTransacao.COMITADO
+                    && estadoAtual != EstadoTransacao.CANCELANDO
+                    && estadoAtual != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
                 return false;
             }
 
-            if (tx.getEstado() == EstadoTransacao.COMITADO) {
+            if (estadoAtual != EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
                 tx.setEstado(EstadoTransacao.CANCELADO_PELO_MOTORISTA);
 
                 tx.setAvisoAnteriorPendente(!isVazio(tx.getAnterior()) && !tx.getAnterior().equals(remetente));
@@ -371,7 +372,7 @@ public class TransacaoService {
 
                 if (!caronaRepo.salvarNoDisco()) {
                     reocupar(pernasDe(tx), tx.getIdPassageiro());
-                    tx.setEstado(EstadoTransacao.COMITADO);
+                    tx.setEstado(estadoAtual);
                     return false;
                 }
             }
