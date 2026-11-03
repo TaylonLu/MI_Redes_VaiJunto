@@ -527,8 +527,7 @@ public class TransacaoService {
             if (meuId.equals(tx.getCoordenadorId())) {
                 Set<String> servidoresNotify = new HashSet<>();
 
-                List<TrechoReserva> trechos =
-                        (tx.getItinerario() != null && !tx.getItinerario().isEmpty())
+                List<TrechoReserva> trechos = (tx.getItinerario() != null && !tx.getItinerario().isEmpty())
                                 ? tx.getItinerario()
                                 : tx.getLocais();
 
@@ -600,6 +599,7 @@ public class TransacaoService {
 
             // Cancelamento pelo motorista tem prioridade.
             if (estadoAtual == EstadoTransacao.CANCELADO_PELO_MOTORISTA) {
+                notificarCancelamento(tx, remetente);
                 return true;
             }
 
