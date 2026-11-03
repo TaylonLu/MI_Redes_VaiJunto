@@ -1,6 +1,7 @@
 exigirLogin();
 const $ = id => document.getElementById(id);
 let usuario = sessao.usuario(), reservaSel = null, caronaSel = null;
+$("cancelar-reserva").disabled = true;
 
 let reservas = [];
 let caronas = [];
@@ -66,9 +67,10 @@ $("logout").onclick = async () => {
 // ---------- Filtros das listas ----------
 function renderReservas() {
     reservaSel = null;
+    $("cancelar-reserva").disabled = true;
 
     const ativas = reservas.filter(r =>
-        String(r.status ?? "ATIVA").toUpperCase() === "ATIVA"
+        ["CANCELADA", "CONCLUIDA"].includes(String(r.status).toUpperCase())
     );
 
     const historico = reservas.filter(r =>
@@ -78,13 +80,14 @@ function renderReservas() {
     const lista = filtroReserva === "ativas" ? ativas : historico;
 
     renderLista(
-        $("lista-reservas"),
-        lista,
-        cardReserva,
+        $("lista-reservas"),lista,cardReserva,
         filtroReserva === "ativas"
             ? "Você não possui reservas ativas."
             : "Você ainda não possui reservas no histórico.",
-        r => reservaSel = r
+        r => {
+                reservaSel = r;
+                $("cancelar-reserva").disabled = false;
+        }
     );
 
     $("cancelar-reserva").hidden = filtroReserva !== "ativas";
@@ -96,6 +99,7 @@ function renderReservas() {
 
 function renderCaronas() {
     caronaSel = null;
+    $("cancelar-carona").disabled = true;
 
     const ativas = caronas.filter(c =>
         ["AGENDADA", "EM_ANDAMENTO"].includes(String(c.status).toUpperCase())
@@ -114,21 +118,24 @@ function renderCaronas() {
         filtroCarona === "ativas"
             ? "Você não possui caronas ativas."
             : "Você ainda não possui caronas no histórico.",
-        c => caronaSel = c
+        c => {
+            caronaSel = c;
+            $("cancelar-carona").disabled = false;
+        }
     );
 
     $("cancelar-carona").hidden = filtroCarona !== "ativas";
 
     document.querySelectorAll("[data-filtro-carona]").forEach(b => {
-        b.setAttribute("aria-pressed", b.dataset.filtroCarona === filtroCarona);
-    });
-}
+            b.setAttribute("aria-pressed", b.dataset.filtroCarona === filtroCarona);
+        });
+    }
 
-document.querySelectorAll("[data-filtro-reserva]").forEach(b => {
-    b.onclick = () => {
-        filtroReserva = b.dataset.filtroReserva;
-        renderReservas();
-    };
+    document.querySelectorAll("[data-filtro-reserva]").forEach(b => {
+        b.onclick = () => {
+            filtroReserva = b.dataset.filtroReserva;
+            renderReservas();
+        };
 });
 
 document.querySelectorAll("[data-filtro-carona]").forEach(b => {
@@ -251,15 +258,20 @@ async function carregar() {
     try {
         reservas = await api("/api/cliente/reservas");
         renderReservas();
-
-        if (usuario.perfilMotorista) {
-            caronas = await api("/api/cliente/caronas");
-            renderCaronas();
-        } else {
-            caronas = [];
-        }
     } catch (e) {
         aviso(e.message, "erro");
+    }
+
+    if (usuario.perfilMotorista) {
+        try {
+            caronas = await api("/api/cliente/caronas");
+            renderCaronas();
+        } catch (e) {
+            aviso(e.message, "erro");
+        }
+    } else {
+        caronas = [];
+        renderCaronas();
     }
 }
 
