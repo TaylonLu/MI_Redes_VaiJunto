@@ -57,6 +57,8 @@ public class Transacao implements Identificavel {
         this.locais = List.copyOf(locais);
         this.itinerario = itinerario;
         this.estado = estado;
+        this.avisoAnteriorPendente = avisoAnteriorPendente != null && avisoAnteriorPendente;
+        this.avisoProximoPendente = avisoProximoPendente != null && avisoProximoPendente;
         this.cancelamentosPendentes = cancelamentosPendentes == null
                 ? new HashSet<>()
                 : new HashSet<>(cancelamentosPendentes);

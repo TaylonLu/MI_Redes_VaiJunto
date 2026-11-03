@@ -9,6 +9,7 @@ import org.UEFS.Server.http.cluster.PeerClient;
 import org.UEFS.Server.http.relogio.ServerConstant;
 import org.UEFS.shared.JsonUtils;
 import org.UEFS.shared.dto.consorcio.TrechoReserva;
+import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,12 +99,27 @@ public class RecuperadorTransacoes {
                 servidores.add(trecho.servidor());
             }
         } else {
-            // Participante: notifica os dois vizinhos da cadeia.
-            if (!isVazio(tx.getAnterior()))
-                servidores.add(tx.getAnterior());
+            /*
+             * Se a notificação ao anterior funcionar, a respectiva flag será desativada.
+             * Se falhar, continuará true para a próxima recuperação.
+             * O mesmo vale para o próximo.
+             * As alterações serão persistidas no JSON.
+             */
+            if (tx.isAvisoAnteriorPendente()) {
+                String anterior = tx.getAnterior();
+                Vizinho vizinho = ServerConstant.getVizinho(anterior);
+                if (vizinho != null && peerClient.cancel(vizinho, tx.getId(), tx.getEstado())) {
+                    tx.setAvisoAnteriorPendente(false);
+                }
+            }
 
-            if (!isVazio(tx.getProximo()))
-                servidores.add(tx.getProximo());
+            if (tx.isAvisoProximoPendente()) {
+                String proximo = tx.getAnterior();
+                Vizinho vizinho = ServerConstant.getVizinho(proximo);
+                if (vizinho != null && peerClient.cancel(vizinho, tx.getId(), tx.getEstado())) {
+                    tx.setAvisoProximoPendente(false);
+                }
+            }
         }
 
         servidores.removeIf(id -> id.equalsIgnoreCase(meuId));
