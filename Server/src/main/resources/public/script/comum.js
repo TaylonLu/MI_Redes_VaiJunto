@@ -85,6 +85,11 @@ async function carregarCidades() {
         }
     }
 
+    if (!Array.isArray(cidades)) {
+        cidades = [];
+        sessionStorage.removeItem("cidades_cache");
+    }
+
     if (cidades.length === 0) {
         const resposta = await fetch("/data/cidades.json");
 
@@ -92,6 +97,9 @@ async function carregarCidades() {
             throw new Error(`Erro HTTP: ${resposta.status}`);
 
         const bruto = await resposta.json();
+        if (!Array.isArray(bruto)) {
+            throw new Error("Formato inválido dos dados de cidades.");
+        }
 
         cidades = bruto.map(c => {
             const x = Number(c.x || 0);

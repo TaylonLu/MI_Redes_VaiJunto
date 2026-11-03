@@ -16,6 +16,10 @@ function abrirAba(nome) {
 }
 document.querySelectorAll("[data-aba]").forEach(b => b.onclick = () => abrirAba(b.dataset.aba));
 
+function mostrarErroLista(id, mensagem) {
+    $(id).replaceChildren(h("li", "vazio", mensagem));
+}
+
 // ---------- Perfil ----------
 function renderPerfil() {
     const m = usuario.perfilMotorista;
@@ -268,6 +272,7 @@ async function carregar() {
         reservas = await api("/api/cliente/reservas");
         renderReservas();
     } catch (e) {
+        mostrarErroLista("lista-reservas", "Não foi possível carregar suas reservas.");
         aviso(e.message, "erro");
     }
 
@@ -276,6 +281,7 @@ async function carregar() {
             caronas = await api("/api/cliente/caronas");
             renderCaronas();
         } catch (e) {
+            mostrarErroLista("lista-caronas", "Não foi possível carregar suas caronas.");
             aviso(e.message, "erro");
         }
     } else {
