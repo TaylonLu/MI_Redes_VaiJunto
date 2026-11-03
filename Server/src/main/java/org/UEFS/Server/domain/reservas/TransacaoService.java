@@ -22,6 +22,7 @@ import org.UEFS.shared.dto.Trecho;
 import org.UEFS.shared.dto.consorcio.TrechoReserva;
 import org.UEFS.shared.dto.consorcio.TrechoSolicitado;
 import org.UEFS.shared.dto.responses.ReservaResponse;
+import org.UEFS.shared.enums.StatusCarona;
 import org.UEFS.shared.enums.StatusReserva;
 import org.UEFS.shared.model.ServerException;
 import org.slf4j.Logger;
@@ -171,8 +172,33 @@ public class TransacaoService {
                 return Resultado.CONFLITO;
             }
 
+            // O coordenador verifica novamente suas caronas antes de confirmar.
+            // Os participantes respeitam o COMMIT recebido após terem votado READY.
+            if (itinerarioCompleto != null) {
+                if (transacao.isCancelamentoMotoristaPendente()) {
+                    log.warn("[TRANSACAO] Commit recusado: cancelamento de motorista pendente. ID='{}'",
+                            idTransacao);
+                    return Resultado.CONFLITO;
+                }
+
+                List<Perna> pernas = pernasDe(transacao);
+
+                if (pernas.size() != transacao.getLocais().size()) {
+                    log.warn("[TRANSACAO] Commit recusado: carona local indisponível. ID='{}'",
+                            idTransacao);
+                    return Resultado.CONFLITO;
+                }
+            }
+
             // Backup
             List<TrechoReserva> itinerarioAnterior = transacao.getItinerario();
+//            List<Perna> pernas = pernasDe(transacao);
+//
+//            if (pernas.size() != transacao.getLocais().size()) {
+//                log.warn("[TRANSACAO] Commit recusado: uma ou mais caronas não estão disponíveis. ID='{}'",
+//                        idTransacao);
+//                return Resultado.CONFLITO;
+//            }
 
             // Atualiza o estado
             transacao.setEstado(EstadoTransacao.COMITADO);
@@ -480,10 +506,21 @@ public class TransacaoService {
             List<Transacao> transacoesParaNotificar = new ArrayList<>();
 
             for (Transacao tx : repo.getData()) {
-                if (!tx.comitado()) continue;
-
                 boolean envolveEstaCarona = tx.getLocais().stream()
                         .anyMatch(local -> IdPerna.idBase(local.idCarona()).equals(idCarona));
+
+                if (!envolveEstaCarona) continue;
+
+                if (tx.getEstado() == EstadoTransacao.PREPARADO) {
+                    tx.setCancelamentoMotoristaPendente(true);
+
+                    log.info("[CANCELAR] Cancelamento de motorista pendente na transação '{}'.",
+                            tx.getId());
+
+                    continue;
+                }
+
+                if (tx.getEstado() != EstadoTransacao.COMITADO) continue;
 
                 /* O coordenador registra cada servidor do itinerário em cancelamentosPendentes.
                 O participante registra os dois vizinhos usando as flags existentes. */
@@ -509,7 +546,7 @@ public class TransacaoService {
                         tx.setAvisoProximoPendente(!isVazio(tx.getProximo()));
                     }
 
-                    List<Perna> pernasLocais = pernasDe(tx);
+                    List<Perna> pernasLocais = pernasDe(tx, true);
                     liberar(pernasLocais, tx.getIdPassageiro());
 
                     transacoesParaNotificar.add(tx);
@@ -714,30 +751,43 @@ public class TransacaoService {
 
     // ======================= UTILS
     private Perna resolver(TrechoReserva T) {
+        return resolver(T, false);
+    }
+
+    private Perna resolver(TrechoReserva T, Boolean permitirCancelada) {
         Optional<IdPerna> id = IdPerna.decodificar(T.idCarona());
 
         String idBase = IdPerna.idBase(T.idCarona());
 
-        log.info("ID recebido: '{}'", T.idCarona());
-        log.info("ID base: '{}'", idBase);
-        log.info("Carona encontrada: {}", caronaRepo.getByID(idBase) != null);
+        Carona carona = caronaRepo.getByID(idBase);
 
-        Carona carona = caronaRepo.getByID(IdPerna.idBase(T.idCarona()));
         if (carona == null) return null;
+
+        if (!permitirCancelada && carona.getStatus() == StatusCarona.CANCELADA)
+            return null;
 
         List<Trecho> trechos = id.isPresent()
                 ? carona.getRota().subRota(id.get().inicio(), id.get().fim())
                 : carona.getRota().getTrechos();
 
-        return trechos.isEmpty() ? null : new Perna(T.servidor(), T.idCarona(), carona, List.copyOf(trechos));
+        return trechos.isEmpty()
+                ? null
+                : new Perna(T.servidor(), T.idCarona(), carona, List.copyOf(trechos));
     }
 
     private List<Perna> pernasDe(Transacao T) {
+        return pernasDe(T, false);
+    }
+
+    private List<Perna> pernasDe(Transacao T, boolean permitirCancelada) {
         List<Perna> pernas = new ArrayList<>();
+
         for (TrechoReserva X : T.getLocais()) {
-            Perna P = resolver(X);
+            Perna P = resolver(X, permitirCancelada);
+
             if (P != null) pernas.add(P);
         }
+
         return pernas;
     }
 

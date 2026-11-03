@@ -27,13 +27,14 @@ public class Transacao implements Identificavel {
 
     private volatile boolean avisoAnteriorPendente;
     private volatile boolean avisoProximoPendente;
+    private volatile boolean cancelamentoMotoristaPendente;
 
     /** Criação: sempre nasce PREPARADO, sem assentos definidos. */
     public Transacao(String id, String coordenadorId, String anterior, String proximo,
                      String idPassageiro, long relogio, List<TrechoReserva> locais) {
         this(id, coordenadorId, anterior, proximo, idPassageiro, relogio,
              System.currentTimeMillis(), locais, null, EstadoTransacao.PREPARADO,
-                false, false, Set.of());
+                false, false, false, Set.of());
     }
 
     /** Leitura do disco. */
@@ -46,6 +47,7 @@ public class Transacao implements Identificavel {
                      @JsonProperty("estado") EstadoTransacao estado,
                      @JsonProperty("avisoAnteriorPendente") Boolean avisoAnteriorPendente,
                      @JsonProperty("avisoProximoPendente") Boolean avisoProximoPendente,
+                     @JsonProperty("cancelamentoMotoristaPendente") Boolean cancelamentoMotoristaPendente,
                      @JsonProperty("cancelamentosPendentes") Set<String> cancelamentosPendentes) {
         this.id = id;
         this.coordenadorId = coordenadorId;
@@ -67,7 +69,7 @@ public class Transacao implements Identificavel {
     /** Cópia com os assentos escolhidos. Preserva id e criadoEm. */
     public Transacao comAssentos(List<TrechoReserva> assentos) {
         Transacao copia = new Transacao(id, coordenadorId, anterior, proximo, idPassageiro, relogio,
-                criadoEm, assentos, itinerario, EstadoTransacao.PREPARADO, false, false, Set.of());
+                criadoEm, assentos, itinerario, EstadoTransacao.PREPARADO, false, false, false, Set.of());
         copia.emProcessamento = true;
         return copia;
     }
@@ -109,6 +111,15 @@ public class Transacao implements Identificavel {
     public void setAvisoProximoPendente(boolean avisoProximoPendente) {
         this.avisoProximoPendente = avisoProximoPendente;
     }
+
+    public boolean isCancelamentoMotoristaPendente() {
+        return cancelamentoMotoristaPendente;
+    }
+
+    public void setCancelamentoMotoristaPendente(boolean pendente) {
+        this.cancelamentoMotoristaPendente = pendente;
+    }
+
     public boolean comitado() {
         return this.estado == EstadoTransacao.COMITADO;
     }
