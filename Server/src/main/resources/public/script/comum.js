@@ -117,7 +117,7 @@ const nomeCidade = id => cidade(id)?.nome ?? "#" + id;
 
 
 const fmtData = iso => new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
-const nMotoristas = trechos => new Set(trechos.map(t => t.servidor)).size;
+const nMotoristas = trechos => new Set(trechos.map(t => t.idMotorista ?? t.servidor)).size;
 const corStatus = s => ({
     CONFIRMADA: "#2ecc71",
     ATIVA: "#2ecc71",
@@ -144,10 +144,18 @@ function selo(status) {
 }
 
 // Uma cor por passo; muda sempre que o motorista muda
-function coresDosPassos(trechos) { // alterado de passos para trechos
-    let i = 0, atual = trechos[0]?.servidor; // alterado de idMotorista para servidor
+function coresDosPassos(trechos) {
+    let i = 0;
+    let atual = trechos[0]?.idMotorista ?? trechos[0]?.servidor;
+
     return trechos.map(t => {
-        if (t.servidor !== atual) { atual = t.servidor; i = (i + 1) % CORES.length; }
+        const motorista = t.idMotorista ?? t.servidor;
+
+        if (motorista !== atual) {
+            atual = motorista;
+            i = (i + 1) % CORES.length;
+        }
+
         return CORES[i];
     });
 }

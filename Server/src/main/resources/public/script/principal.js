@@ -157,7 +157,7 @@ function cardReserva(r) {
         h("div", "chips", ...trechos.map((p, i) => {
             const chip = h("span", "chip", `${p.origem ?? nomeCidade(p.inicio) ?? "CI"} → ${p.destino ?? nomeCidade(p.fim) ?? "CF"}`);
             chip.style.background = cores[i];
-            chip.title = `Servidor: ${p.servidor}\nCarona: ${p.id_carona ?? p.idCarona}`;
+            chip.title = `Motorista: ${p.idMotorista ?? p.servidor ?? "-"}\nCarona: ${p.idCarona ?? "-"}`;
             return chip;
         })),
         h("small", "", `${trechos.length} trecho(s) • Reserva #${String(idExibicao).slice(0, 8)}`),

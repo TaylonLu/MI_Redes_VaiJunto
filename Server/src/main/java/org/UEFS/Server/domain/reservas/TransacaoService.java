@@ -542,6 +542,8 @@ public class TransacaoService {
 
                 if (tx.getEstado() == EstadoTransacao.PREPARADO) {
                     tx.setCancelamentoMotoristaPendente(true);
+                    tx.setAvisoAnteriorPendente(!isVazio(tx.getAnterior()));
+                    tx.setAvisoProximoPendente(!isVazio(tx.getProximo()));
 
                     log.info("[CANCELAR] Cancelamento de motorista pendente na transação '{}'.",
                             tx.getId());
