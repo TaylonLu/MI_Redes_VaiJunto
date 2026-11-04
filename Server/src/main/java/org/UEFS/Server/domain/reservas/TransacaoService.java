@@ -571,7 +571,7 @@ public class TransacaoService {
 
                             if (servidorId != null
                                     && !servidorId.isBlank()
-                                    && !servidorId.equalsIgnoreCase(meuId)) {
+                                    && !idLogico(servidorId).equalsIgnoreCase(idLogico(meuId))) {
                                 tx.adicionarCancelamentoPendente(servidorId);
                             }
                         }
@@ -623,7 +623,8 @@ public class TransacaoService {
         for (TrechoReserva trecho : trechos) {
             String servidorId = trecho.servidor();
 
-            if (servidorId.equalsIgnoreCase(meuId) || !servidores.add(servidorId))
+            if (idLogico(servidorId).equalsIgnoreCase(idLogico(meuId))
+                    || !servidores.add(idLogico(servidorId)))
                 continue;
 
             Vizinho vizinho = ServerConstant.getVizinho(servidorId);
@@ -662,8 +663,9 @@ public class TransacaoService {
 
                     if (idServidor == null
                             || idServidor.isBlank()
-                            || idServidor.equalsIgnoreCase(meuId)
-                            || (remetente != null && idServidor.equalsIgnoreCase(remetente))
+                            || idLogico(idServidor).equalsIgnoreCase(idLogico(meuId))
+                            || (remetente != null
+                            && idLogico(idServidor).equalsIgnoreCase(idLogico(remetente)))
                             || !servidoresNotify.add(idServidor)) {
                         continue;
                     }
@@ -679,7 +681,7 @@ public class TransacaoService {
 
                 if (anterior != null
                         && !anterior.isEmpty()
-                        && !anterior.equalsIgnoreCase(remetente)) {
+                        && !idLogico(anterior).equalsIgnoreCase(idLogico(remetente))) {
 
                     Vizinho vizinho = ServerConstant.getVizinho(anterior);
 
@@ -692,7 +694,8 @@ public class TransacaoService {
 
                 if (proximo != null
                         && !proximo.isEmpty()
-                        && !proximo.equalsIgnoreCase(remetente)) {
+                        && !idLogico(proximo)
+                            .equalsIgnoreCase(idLogico(remetente))) {
 
                     Vizinho vizinho = ServerConstant.getVizinho(proximo);
 
@@ -717,6 +720,8 @@ public class TransacaoService {
             throw new IllegalArgumentException("Estado de cancelamento inválido.");
         }
 
+        String remetenteId = idLogico(remetente);
+
         synchronized (caronaService) {
             Transacao tx = repo.getByID(idTransacao);
 
@@ -730,8 +735,11 @@ public class TransacaoService {
                     && estadoAtual == EstadoTransacao.PREPARADO) {
 
                 tx.setCancelamentoMotoristaPendente(true);
-                tx.setAvisoAnteriorPendente(!isVazio(tx.getAnterior()) && !tx.getAnterior().equals(remetente));
-                tx.setAvisoProximoPendente(!isVazio(tx.getProximo()) && !tx.getProximo().equals(remetente));
+                tx.setAvisoAnteriorPendente(!isVazio(tx.getAnterior())
+                                && !idLogico(tx.getAnterior()).equalsIgnoreCase(remetenteId));
+
+                tx.setAvisoProximoPendente(!isVazio(tx.getProximo())
+                                && !idLogico(tx.getProximo()).equalsIgnoreCase(remetenteId));
 
                 repo.salvar(tx);
 
