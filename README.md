@@ -560,33 +560,365 @@ Retorna um objeto JSON em que as chaves são identificadores numéricos de cidad
 
 ## 9. API entre servidores
 
-A comunicação interna utiliza o prefixo `/api/consorcio` e é realizada pelo `PeerClient`.
+A API interna utiliza HTTP e JSON sob o prefixo `/api/consorcio`. Cada processo administra seus próprios dados; as rotas abaixo permitem consultar informações de outros nós e coordenar operações distribuídas.
 
-| Método | Rota | Finalidade |
+### 9.1. Convenções de comunicação
+
+Todas as chamadas feitas pelo `PeerClient` enviam:
+
+| Cabeçalho | Obrigatório no cliente HTTP | Significado |
 |---|---|---|
-| `GET` | `/api/consorcio/health` | Verificar a disponibilidade do servidor |
-| `GET` | `/api/consorcio/vivo` | Alias do endpoint de saúde |
-| `GET` | `/api/consorcio/trechos` | Consultar trechos para a busca distribuída |
-| `GET` | `/api/consorcio/usuarios/{id}` | Consultar um usuário remoto |
-| `POST` | `/api/consorcio/reservas/prepare` | Preparar os recursos de uma transação |
-| `DELETE` | `/api/consorcio/reservas/{id}` | Executar rollback |
-| `PUT` | `/api/consorcio/reservas/{id}/commit` | Confirmar uma transação |
-| `PUT` | `/api/consorcio/reservas/{id}/cancel` | Propagar cancelamento de passageiro |
-| `PUT` | `/api/consorcio/reservas/{id}/cancel-motorista` | Propagar cancelamento de motorista |
-| `GET` | `/api/consorcio/reservas/{id}/status` | Consultar o estado de uma transação |
+| `X-Server-Id` | Sim | Identificador do servidor remetente, no formato `ip:porta` |
+| `X-Lamport-Clock` | Sim | Valor atual do relógio lógico do remetente |
+| `Accept` | Sim | `application/json` |
+| `Content-Type` | Quando há corpo | `application/json` |
 
-As requisições entre servidores utilizam os cabeçalhos:
+O middleware do servidor processa `X-Lamport-Clock` antes da rota: atualiza o relógio quando o valor é válido ou incrementa o relógio local quando o cabeçalho está ausente/inválido. Depois da rota, todas as respostas sob `/api` recebem:
 
-| Cabeçalho | Finalidade |
-|---|---|
-| `X-Server-Id` | Identificar o servidor remetente |
-| `X-Lamport-Clock` | Transportar o valor do relógio lógico |
+- `X-Server-Id`: identificador do nó que respondeu.
+- `X-Lamport-Clock`: relógio lógico atualizado do nó que respondeu.
 
-As respostas das rotas `/api` também incluem `X-Server-Id` e `X-Lamport-Clock`. O primeiro identifica o servidor que respondeu; o segundo permite atualizar o relógio do remetente.
+O `PeerClient` atualiza seu relógio a partir desse último cabeçalho. Os endpoints internos não usam token de usuário; a autorização da cadeia é feita principalmente pela validação de `X-Server-Id` contra a lista de vizinhos configurados em operações de preparação e cancelamento. Esses cabeçalhos identificam o remetente, mas não constituem autenticação criptográfica.
 
-O endpoint `/api/consorcio/trechos` recebe os parâmetros de busca `origem`, `destino`, `data`, `vagas` e o histórico `visitados`, utilizado para evitar ciclos na rede.
+### 9.2. Recursos e métodos
 
----
+| Método | Caminho | Parâmetros/corpo | Finalidade |
+|---|---|---|---|
+| `GET` | `/api/consorcio/health` | — | Verificar disponibilidade e consultar relógio |
+| `GET` | `/api/consorcio/vivo` | — | Alias de `health` |
+| `GET` | `/api/consorcio/trechos` | Query: `origem`, `destino`, `data`, `vagas`; opcional `visitados` | Buscar itinerários no nó remoto |
+| `GET` | `/api/consorcio/usuarios/{id}` | Query opcional: `visitados` | Consultar usuário na rede |
+| `POST` | `/api/consorcio/reservas/prepare` | JSON `ReservaRequest` | Preparar os recursos locais e encaminhar o restante da transação |
+| `DELETE` | `/api/consorcio/reservas/{id}` | — | Desfazer preparação (rollback) |
+| `PUT` | `/api/consorcio/reservas/{id}/commit` | — | Registrar e propagar a decisão de confirmação |
+| `PUT` | `/api/consorcio/reservas/{id}/cancel` | — | Receber notificação de cancelamento do passageiro |
+| `PUT` | `/api/consorcio/reservas/{id}/cancel-motorista` | — | Receber notificação de cancelamento do motorista |
+| `GET` | `/api/consorcio/reservas/{id}/status` | — | Consultar o estado persistido de uma transação |
+
+### 9.3. Verificação de disponibilidade
+
+**Requisição**
+
+```http
+GET /api/consorcio/health HTTP/1.1
+Host: localhost:2603
+X-Server-Id: localhost:2602
+X-Lamport-Clock: 42
+Accept: application/json
+```
+
+**Resposta — HTTP 200**
+
+```json
+{
+  "status": "localhost:2603 ta on",
+  "relogio": 43
+}
+```
+
+O valor do relógio é ilustrativo; ele depende do estado lógico do servidor no momento da chamada.
+
+### 9.4. Busca remota de trechos
+
+**Requisição**
+
+```http
+GET /api/consorcio/trechos?origem=Castelia&destino=Lumiose%20City&data=2026-11-05&vagas=2&visitados=localhost%3A2602 HTTP/1.1
+X-Server-Id: localhost:2602
+X-Lamport-Clock: 42
+Accept: application/json
+```
+
+| Parâmetro | Obrigatório | Descrição |
+|---|---|---|
+| `origem` | Sim | Nome da cidade de origem |
+| `destino` | Sim | Nome da cidade de destino |
+| `data` | Sim | Data no formato ISO `AAAA-MM-DD` |
+| `vagas` | Sim | Inteiro maior que zero |
+| `visitados` | Não | Histórico CSV de servidores/cidades visitados para evitar ciclos |
+
+**Resposta — HTTP 200**
+
+O corpo segue os DTOs `BuscaTrechosResponse` e `ItinerarioConsorcioDTO`:
+
+```json
+{
+  "servidor": "localhost:2603",
+  "total": 1,
+  "itinerarios": [
+    {
+      "itinerario_id": "itinerario-exemplo",
+      "preco_total": 25.5,
+      "trechos": [
+        {
+          "servidor": "localhost:2603",
+          "id_carona": "carona-exemplo",
+          "origem": "Castelia",
+          "destino": "Lumiose City",
+          "horario": "2026-11-05T08:00:00",
+          "preco": 25.5,
+          "assentos_livres": 3,
+          "paradas_intermediarias": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+Os valores acima são ilustrativos. `total` informa a quantidade de itinerários retornados pelo nó; cada trecho identifica o servidor proprietário, a carona, as cidades, o horário, o preço, a disponibilidade e as paradas intermediárias.
+
+**Erros de entrada — HTTP 400**
+
+O endpoint retorna `{"erro":"..."}` quando falta algum dos quatro parâmetros obrigatórios, quando a data não pode ser interpretada como `AAAA-MM-DD` ou quando `vagas` não é um inteiro positivo.
+
+### 9.5. Consulta de usuário remoto
+
+**Requisição**
+
+```http
+GET /api/consorcio/usuarios/ID_DO_USUARIO?visitados=localhost%3A2602 HTTP/1.1
+X-Server-Id: localhost:2602
+X-Lamport-Clock: 42
+Accept: application/json
+```
+
+O parâmetro opcional `visitados` contém os identificadores dos servidores já consultados, separados por vírgula. O servidor procura o usuário localmente e, se necessário, consulta os vizinhos ainda não visitados.
+
+**Resposta — HTTP 200**
+
+```json
+{
+  "id": "ID_DO_USUARIO",
+  "email": "usuario@exemplo.com",
+  "nome": "Nome do Usuário"
+}
+```
+
+**Não encontrado — HTTP 404** quando nenhum nó consultado encontra o usuário. A consulta remota usa o DTO `OtherUserDTO`.
+
+### 9.6. Preparação de reserva — PREPARE
+
+O coordenador encaminha a cada participante somente os trechos que pertencem àquele servidor e aos servidores seguintes da cadeia.
+
+**Requisição — HTTP POST**
+
+```http
+POST /api/consorcio/reservas/prepare HTTP/1.1
+X-Server-Id: localhost:2602
+X-Lamport-Clock: 43
+Content-Type: application/json
+Accept: application/json
+```
+
+Corpo (`ReservaRequest`):
+
+```json
+{
+  "id_transacao": "550e8400-e29b-41d4-a716-446655440000",
+  "coordenador_id": "localhost:2602",
+  "passageiro": "id-do-passageiro",
+  "relogio_logico": 43,
+  "trechos_solicitados": [
+    {
+      "servidor": "localhost:2603",
+      "id_carona": "carona-550e8400-origem-destino",
+      "origem": 108,
+      "destino": 211
+    }
+  ]
+}
+```
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id_transacao` | string | Identificador único da transação |
+| `coordenador_id` | string | Identificador do servidor coordenador |
+| `passageiro` | string | Identificador do passageiro |
+| `relogio_logico` | inteiro | Timestamp lógico transportado na solicitação |
+| `trechos_solicitados` | array | Trechos a preparar nesta etapa e nas etapas seguintes |
+| `trechos_solicitados[].servidor` | string | Identificador do servidor proprietário |
+| `trechos_solicitados[].id_carona` | string | Identificador da perna/carona |
+| `trechos_solicitados[].origem` | inteiro | ID da cidade de origem |
+| `trechos_solicitados[].destino` | inteiro | ID da cidade de destino |
+
+O participante verifica o remetente pelo cabeçalho `X-Server-Id`, valida a cadeia, prepara os trechos que administra e encaminha o restante ao próximo vizinho.
+
+**Preparação aceita — HTTP 200**
+
+```json
+{
+  "id_transacao": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "READY",
+  "servidor": "localhost:2603",
+  "assentos": [
+    {
+      "servidor": "localhost:2603",
+      "id_carona": "carona-550e8400-origem-destino",
+      "origem": 108,
+      "destino": 211,
+      "assento": 0
+    }
+  ]
+}
+```
+
+**Preparação recusada**
+
+Quando o coordenador detecta uma recusa, a resposta padronizada é:
+
+```json
+{
+  "id_transacao": "550e8400-e29b-41d4-a716-446655440000",
+  "servidor": "localhost:2603",
+  "status": "RECUSADO",
+  "motivo": "Motivo da recusa"
+}
+```
+
+O código HTTP acompanha a causa: por exemplo, `400` para pedido inválido, `403` para remetente que não é vizinho autorizado, `404` para recurso inexistente e `409` para indisponibilidade/conflito de recurso. Falhas internas podem resultar em `500`; falhas de rede podem ser percebidas pelo chamador como timeout/ausência de resposta, e não como um código HTTP recebido.
+
+### 9.7. Commit
+
+Após receber `READY` de todos os participantes, o coordenador persiste a decisão `COMITADO` e envia:
+
+```http
+PUT /api/consorcio/reservas/550e8400-e29b-41d4-a716-446655440000/commit HTTP/1.1
+X-Server-Id: localhost:2602
+X-Lamport-Clock: 48
+```
+
+Não há corpo JSON.
+
+**Resposta — HTTP 200**
+
+```json
+{
+  "id_transacao": "550e8400-e29b-41d4-a716-446655440000",
+  "mensagem": "Transacao comitada com sucesso",
+  "propagacao_pendente": false
+}
+```
+
+`propagacao_pendente` indica se o servidor não conseguiu confirmar o repasse do commit ao próximo participante. A decisão local já foi persistida; o recuperador tenta retomar propagações pendentes.
+
+Erros relevantes: `400` para ID inválido, `404` se a transação não foi preparada naquele servidor e `500` se não foi possível registrar a decisão local.
+
+### 9.8. Rollback
+
+Quando algum participante recusa o PREPARE, o coordenador envia:
+
+```http
+DELETE /api/consorcio/reservas/550e8400-e29b-41d4-a716-446655440000 HTTP/1.1
+X-Server-Id: localhost:2602
+X-Lamport-Clock: 47
+```
+
+Não há corpo JSON.
+
+**Resposta — HTTP 200**
+
+```json
+{
+  "id_transacao": "550e8400-e29b-41d4-a716-446655440000",
+  "mensagem": "Transacao abortada com sucesso"
+}
+```
+
+O participante registra `ABORTADO`, libera a ocupação local e propaga o rollback ao próximo servidor, se houver. Um rollback após a transação já ter sido confirmada é recusado com HTTP `409`; ID inválido gera `400` e falha de persistência pode gerar `500`.
+
+### 9.9. Cancelamentos
+
+As duas operações não possuem corpo JSON. O tipo de cancelamento é indicado pela própria rota.
+
+**Cancelamento solicitado pelo passageiro**
+
+```http
+PUT /api/consorcio/reservas/{id}/cancel HTTP/1.1
+X-Server-Id: localhost:2602
+X-Lamport-Clock: 52
+```
+
+Resposta — HTTP 200:
+
+```json
+{
+  "id_transacao": "550e8400-e29b-41d4-a716-446655440000",
+  "mensagem": "Cancelamento recebido"
+}
+```
+
+O receptor valida se o remetente é um vizinho e registra o estado de cancelamento recebido. ID inválido resulta em `400`; falha ao persistir o cancelamento resulta em `503`.
+
+**Cancelamento iniciado pelo motorista**
+
+```http
+PUT /api/consorcio/reservas/{id}/cancel-motorista HTTP/1.1
+X-Server-Id: localhost:2602
+X-Lamport-Clock: 53
+```
+
+Resposta — HTTP 200:
+
+```json
+{
+  "id_transacao": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "CANCELADA_MOTORISTA",
+  "mensagem": "Cancelamento registrado"
+}
+```
+
+Se a transação não existir no nó, a implementação também responde HTTP 200 com `{"id_transacao":"...","mensagem":"Transação inexistente"}`. Falha ao registrar o cancelamento resulta em `503`; ID inválido resulta em `400`.
+
+### 9.10. Consulta de estado da transação
+
+**Requisição**
+
+```http
+GET /api/consorcio/reservas/550e8400-e29b-41d4-a716-446655440000/status HTTP/1.1
+X-Server-Id: localhost:2603
+X-Lamport-Clock: 55
+Accept: application/json
+```
+
+**Resposta — HTTP 200**
+
+```json
+{
+  "id_transacao": "550e8400-e29b-41d4-a716-446655440000",
+  "mensagem": "Reserva CANCELADA.",
+  "status": "COMITADO",
+  "coordenador_id": "localhost:2602"
+}
+```
+
+O campo `status` é a fonte de verdade e pode conter um dos estados persistidos da transação: `PREPARADO`, `COMITADO`, `ABORTADO`, `CANCELANDO`, `CANCELADO_PELO_PASSAGEIRO` ou `CANCELADO_PELO_MOTORISTA`. O campo `mensagem` é atualmente uma mensagem fixa da implementação e não deve ser usado para inferir o estado. Transação desconhecida resulta em HTTP `404`.
+
+### 9.11. Códigos HTTP e formato de erro
+
+Os códigos abaixo documentam os casos produzidos pelos handlers e serviços internos. Nem toda rota utiliza todos os códigos.
+
+| Código | Significado no contexto da API |
+|---:|---|
+| `200 OK` | Consulta concluída, preparação aceita (`READY`) ou operação interna concluída |
+| `201 Created` | Reserva confirmada pelo endpoint do cliente/coordenador |
+| `400 Bad Request` | Parâmetro ausente/inválido, JSON inválido, ID ou cadeia inválida |
+| `403 Forbidden` | Servidor remetente não autorizado na cadeia ou acesso não permitido |
+| `404 Not Found` | Usuário, carona, transação ou recurso não encontrado |
+| `409 Conflict` | Conflito de estado, recurso indisponível ou rollback de transação já confirmada |
+| `500 Internal Server Error` | Falha interna ou falha ao persistir/decidir uma operação |
+| `503 Service Unavailable` | Falha ao registrar um cancelamento |
+| Sem resposta HTTP | Timeout, conexão recusada ou falha de rede no cliente HTTP |
+
+Os erros tratados pelo servidor são enviados no formato:
+
+```json
+{
+  "erro": "Descrição do problema"
+}
+```
+
+As recusas de PREPARE geradas pelo coordenador usam o formato específico com `id_transacao`, `servidor`, `status: "RECUSADO"` e `motivo`, descrito na seção 9.6.
 
 ## 10. Busca distribuída
 
@@ -630,7 +962,57 @@ O protocolo é executado em duas fases:
 
 Se a preparação falhar, a transação é marcada como `ABORTADO` e o rollback é propagado para liberar os recursos temporariamente ocupados.
 
-### 11.2. Estados da transação
+### 11.2. Diagrama de sequência da confirmação de um itinerário
+
+O diagrama representa uma reserva em que o itinerário passa por três servidores: Unova (coordenador), Kalos e Johto. O PREPARE é encaminhado em cadeia; as respostas `READY` retornam pelo caminho inverso. Somente depois de todos os participantes aceitarem o pedido o coordenador persiste a decisão `COMITADO` e inicia a propagação do COMMIT.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor P as Passageiro
+    participant U as Unova (coordenador)
+    participant K as Kalos (participante)
+    participant J as Johto (participante)
+
+    P->>U: POST /api/cliente/reservas (trechos)
+    U->>U: Validar itinerário e preparar trechos locais
+    U->>K: POST /api/consorcio/reservas/prepare
+    K->>K: Validar remetente e preparar trechos locais
+    K->>J: POST /api/consorcio/reservas/prepare
+    J->>J: Preparar trechos locais
+    J-->>K: HTTP 200 READY + assentos
+    K-->>U: HTTP 200 READY + assentos
+    U->>U: Persistir decisão COMITADO
+    U->>K: PUT /api/consorcio/reservas/{id}/commit
+    K->>K: Persistir COMITADO
+    K->>J: PUT /api/consorcio/reservas/{id}/commit
+    J->>J: Persistir COMITADO
+    J-->>K: HTTP 200
+    K-->>U: HTTP 200
+    U-->>P: HTTP 201 CONFIRMADO + trechos
+
+    alt Algum participante recusa o PREPARE
+        J-->>K: RECUSADO (ou falha no preparo)
+        K->>K: Desfazer recursos locais
+        K-->>U: RECUSADO
+        U->>U: Marcar ABORTADO e liberar recursos locais
+        U->>K: DELETE /api/consorcio/reservas/{id}
+        K->>J: DELETE /api/consorcio/reservas/{id}
+        J->>J: Liberar recursos e persistir ABORTADO
+        U-->>P: Resposta de reserva recusada
+    end
+```
+
+**Interpretação do fluxo:**
+
+1. O cliente envia uma lista ordenada de trechos ao servidor que recebeu a solicitação; esse servidor é o coordenador.
+2. O coordenador valida que os trechos locais aparecem primeiro, que os servidores formam uma cadeia de vizinhos e que não há repetição inválida de servidores/carona.
+3. Cada participante prepara somente os trechos que administra e encaminha os trechos restantes ao próximo servidor.
+4. Uma resposta `READY` significa que os recursos locais foram preparados, não que a reserva já está confirmada.
+5. Se todos responderem `READY`, o coordenador persiste `COMITADO` antes de propagar o commit. Se houver recusa, inicia o rollback.
+6. A resposta HTTP `201` ao passageiro é emitida pelo coordenador depois de registrar a decisão local. Se a propagação do commit ao próximo nó falhar, `propagacao_pendente` sinaliza a pendência para recuperação.
+
+### 11.3. Estados da transação
 
 A enumeração `EstadoTransacao` contém:
 
@@ -643,7 +1025,7 @@ A enumeração `EstadoTransacao` contém:
 | `CANCELADO_PELO_PASSAGEIRO` | Cancelamento do passageiro concluído |
 | `CANCELADO_PELO_MOTORISTA` | Reserva cancelada em decorrência do cancelamento da carona |
 
-### 11.3. Concorrência local e ocupação por trecho
+### 11.4. Concorrência local e ocupação por trecho
 
 As operações que alteram a ocupação são sincronizadas em torno do serviço de caronas. A preparação verifica a disponibilidade antes de ocupar os assentos; a decisão posterior confirma ou desfaz essa ocupação.
 
@@ -651,7 +1033,7 @@ Como a ocupação é mantida por trecho, o sistema pode aceitar passageiros em p
 
 As operações de preparação, commit e rollback devem ser idempotentes: repetir uma mensagem não pode reservar ou liberar os mesmos recursos duas vezes.
 
-### 11.4. Cancelamentos
+### 11.5. Cancelamentos
 
 O cancelamento do passageiro utiliza o estado intermediário `CANCELANDO`, permitindo que o recuperador retome uma propagação que não foi concluída por indisponibilidade de um vizinho. Após a propagação, a transação passa para `CANCELADO_PELO_PASSAGEIRO`.
 
