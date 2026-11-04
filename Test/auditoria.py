@@ -8,7 +8,8 @@ from pathlib import Path
 from simulador import CONFIG, SERVIDORES
 
 
-BASE = Path(__file__).resolve().parent\nDIRETORIO_DADOS = (BASE.parent / CONFIG.get("diretorio_dados", "data")).resolve()
+BASE = Path(__file__).resolve().parent
+DIRETORIO_DADOS = (BASE.parent / CONFIG.get("diretorio_dados", "data")).resolve()
 
 
 def carregar_json(caminho):
