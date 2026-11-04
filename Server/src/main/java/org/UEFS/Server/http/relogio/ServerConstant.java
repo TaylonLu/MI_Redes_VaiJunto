@@ -97,7 +97,7 @@ public final class ServerConstant {
                     .toUpperCase(Locale.ROOT);
             String hostEnv = System.getenv("HOST_" + nomeLimpo);
             String isReal = (hostEnv != null && !hostEnv.isEmpty()) ? hostEnv : R.ip();
-            return new Vizinho(R.regiaoBase(), isReal, R.porta());
+            return new Vizinho(R.regiaoBase(), R.ip(), isReal, R.porta());
         }).toList();
     }
 
