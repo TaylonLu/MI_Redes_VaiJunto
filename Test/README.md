@@ -10,4 +10,4 @@ Ele executa os três servidores locais com Docker Compose, realiza carga concorr
 
 Consulte **[README_AUTOMACAO.md](README_AUTOMACAO.md)** para pré-requisitos, opções, cenários e detalhes da execução.
 
-Os scripts auxiliares `simulador.py`, `auditoria.py`, `controle_falhas.py` e `agent.py` continuam disponíveis para uso isolado.
+`auditoria.py`, `controle_falhas.py` e `agent.py` continuam disponíveis como ferramentas auxiliares. `simulador.py` mantém as configurações compartilhadas usadas pela auditoria; o fluxo recomendado de carga é o orquestrador acima.
