@@ -410,8 +410,8 @@ def run_audit():
         cwd=TEST, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
     print(result.stdout, flush=True)
-    if result.returncode:
-        raise TestFailure("A auditoria terminou com erro.")
+    if result.returncode or "[FALHA]" in result.stdout or "[ERRO]" in result.stdout:
+        raise TestFailure("A auditoria encontrou inconsistências ou terminou com erro.")
 
 
 def main():
