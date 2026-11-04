@@ -1,22 +1,31 @@
 {
-  "servidores": [
-    {
-      "id": "localhost:2602",
-      "url": "http://localhost:2602",
-      "container": "vai-junto-unova"
-    },
-    {
-      "id": "localhost:2603",
-      "url": "http://localhost:2603",
-      "container": "vai-junto-kalos"
-    },
-    {
-      "id": "localhost:2604",
-      "url": "http://localhost:2604",
-      "container": "vai-junto-johto"
-    }
-  ],
   "timeout": 15,
   "intervalo_recuperacao": 30,
-  "diretorio_dados": "../data"
+  "modo": "local",
+  "servidores": [
+    {
+      "id": "Unova",
+      "url": "http://127.0.0.1:2602",
+      "container": "vai-junto-unova",
+      "controle": {
+        "tipo": "docker"
+      }
+    },
+    {
+      "id": "Kalos",
+      "url": "http://127.0.0.1:2603",
+      "container": "vai-junto-kalos",
+      "controle": {
+        "tipo": "docker"
+      }
+    },
+    {
+      "id": "Johto",
+      "url": "http://127.0.0.1:2604",
+      "container": "vai-junto-johto",
+      "controle": {
+        "tipo": "docker"
+      }
+    }
+  ]
 }
