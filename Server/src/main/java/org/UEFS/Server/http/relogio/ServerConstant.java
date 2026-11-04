@@ -89,7 +89,7 @@ public final class ServerConstant {
 
         return buscar(identificador)
                 .map(Regiao::id)
-                .orElse(normalizar(idLogico(identificador)));
+                .orElse(normalizar(identificador));
     }
 
     public static void carregar(String regiao) {

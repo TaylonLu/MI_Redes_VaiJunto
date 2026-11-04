@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import static org.UEFS.Server.http.relogio.ServerConstant.idLogico;
 import static org.UEFS.Server.http.service.ConsorcioUtils.isVazio;
 
 public class TransacaoService {
@@ -316,8 +317,8 @@ public class TransacaoService {
 
             // LAZY check para sincronizar o estado caso o coordenador seja outro servidor.
             if (tx.getEstado() == EstadoTransacao.COMITADO &&
-                    !ServerConstant.idLogico(tx.getCoordenadorId())
-                            .equalsIgnoreCase(ServerConstant.idLogico(this.meuId))) {
+                    !idLogico(tx.getCoordenadorId())
+                            .equalsIgnoreCase(idLogico(this.meuId))) {
                 sincronizarStatus(tx);
             }
 
@@ -382,6 +383,7 @@ public class TransacaoService {
     }
 
     public boolean registrarCancelamentoMotorista(String idTransacao, String remetente) {
+        String remetenteId = idLogico(remetente);
         synchronized (caronaService) {
             Transacao tx = repo.getByID(idTransacao);
 
@@ -406,10 +408,10 @@ public class TransacaoService {
 
                 if (!pendenciaAnterior) {
                     tx.setAvisoAnteriorPendente(
-                            !isVazio(tx.getAnterior()) && !tx.getAnterior().equals(remetente));
+                            !isVazio(tx.getAnterior()) && !tx.getAnterior().equalsIgnoreCase(remetenteId));
 
                     tx.setAvisoProximoPendente(
-                            !isVazio(tx.getProximo()) && !tx.getProximo().equals(remetente));
+                            !isVazio(tx.getProximo()) && !tx.getProximo().equalsIgnoreCase(remetenteId));
                 }
 
                 liberar(pernas, tx.getIdPassageiro());
@@ -451,8 +453,8 @@ public class TransacaoService {
 
                     if (servidorId != null
                             && !servidorId.isBlank()
-                            && !servidorId.equalsIgnoreCase(meuId)
-                            && !servidorId.equalsIgnoreCase(remetente)) {
+                            && !idLogico(servidorId).equalsIgnoreCase(idLogico(meuId))
+                            && !idLogico(servidorId).equalsIgnoreCase(remetenteId)) {
                         tx.adicionarCancelamentoPendente(servidorId);
                     }
                 }
@@ -648,7 +650,7 @@ public class TransacaoService {
 
     private void notificarCancelamento(Transacao tx, String remetente) {
         CompletableFuture.runAsync(() -> {
-            if (meuId.equals(tx.getCoordenadorId())) {
+            if (idLogico(meuId).equalsIgnoreCase(idLogico(tx.getCoordenadorId()))) {
                 Set<String> servidoresNotify = new HashSet<>();
 
                 List<TrechoReserva> trechos = (tx.getItinerario() != null && !tx.getItinerario().isEmpty())
