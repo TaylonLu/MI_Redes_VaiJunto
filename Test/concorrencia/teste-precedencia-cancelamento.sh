@@ -7,7 +7,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 source "$SCRIPT_DIR/../comum.sh"
 
-COMPOSE=(docker compose -f "$ROOT_DIR/compose_1.yaml")
+COMPOSE=(docker compose -f "$ROOT_DIR/compose.yaml")
 
 SUFIXO="$(date +%s)-$$"
 
