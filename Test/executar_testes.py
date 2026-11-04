@@ -136,7 +136,11 @@ def create_ride(server: str, label: str, path: list[int], seats: int, departure:
     suffix = uuid.uuid4().hex
     profile = {
         "cnh": str(int(suffix[:11], 16) % 10**11).zfill(11),
-        "placaCarro": f"T{suffix[:6].upper()}",
+        "placaCarro": (
+            f"TST{int(suffix[0], 16) % 10}"
+            f"{chr(65 + int(suffix[1], 16) % 26)}"
+            f"{int(suffix[2:4], 16) % 100:02d}"
+        ),
         "modeloCarro": "Veículo de teste",
         "corCarro": "Azul"
     }
