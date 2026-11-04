@@ -14,12 +14,18 @@ public record Regiao(
         @JsonProperty("servidores_vizinhos") List<String> vizinhos
 ) {
     public String id() {
-        return ip + ":" + porta;
+        return regiaoBase;
     }
+
     @JsonIgnore
     public List<String> getCidades() {
         List<String> cidades = new ArrayList<>(cidadesBase);
         cidades.addAll(conexoesExternas);
         return cidades;
+    }
+
+    @JsonIgnore
+    public String endereco() {
+        return ip + ":" + porta;
     }
 }

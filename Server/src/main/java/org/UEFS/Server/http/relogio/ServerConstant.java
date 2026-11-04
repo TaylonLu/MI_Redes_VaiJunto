@@ -46,13 +46,17 @@ public final class ServerConstant {
         return vizinhos;
     }
     public static Vizinho getVizinho(String dado) {
+        if (dado == null || dado.isBlank()) return null;
+
         String alvo = normalizar(dado);
+
         return vizinhos.stream()
-                .filter(V -> normalizar(V.id()).equals(alvo) || V.ip().equalsIgnoreCase(dado))
+                .filter(v -> normalizar(v.id()).equals(alvo)
+                        || normalizar(v.endereco()).equals(alvo)
+                        || normalizar(v.ip()).equals(alvo))
                 .findFirst()
                 .orElse(null);
     }
-
     public static Optional<Regiao> getMe() {
         return buscar(MEU_ID);
     }
@@ -83,7 +87,7 @@ public final class ServerConstant {
         ));
 
         EU = eu;
-        MEU_ID = eu.id();
+        MEU_ID = eu.regiaoBase();
         porta = eu.porta();
 
         vizinhos = eu.vizinhos().stream().map(id -> {
@@ -93,23 +97,21 @@ public final class ServerConstant {
                     .toUpperCase(Locale.ROOT);
             String hostEnv = System.getenv("HOST_" + nomeLimpo);
             String isReal = (hostEnv != null && !hostEnv.isEmpty()) ? hostEnv : R.ip();
-            return new Vizinho(R.ip(), isReal, R.porta());
+            return new Vizinho(R.regiaoBase(), isReal, R.porta());
         }).toList();
     }
 
-    /** Busca uma região a partir do nome dela. */
+    /** Busca uma região pelo identificador lógico, nome de apresentação
+     * ou endereço antigo IP:porta.
+     */
     public static Optional<Regiao> buscar(String nome) {
-        Regiao regiaoEncontrada = REGIOES.stream()
+        if (nome == null || nome.isBlank()) return Optional.empty();
+
+        return REGIOES.stream()
                 .filter(r -> r.regiaoBase().equalsIgnoreCase(nome)
                         || r.nome().equalsIgnoreCase(nome)
-                        || r.id().equalsIgnoreCase(nome))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Região '" + nome + "' não encontrada no regioes.json. " +
-                                "Regiões disponíveis: " + REGIOES.stream().map(Regiao::regiaoBase).toList()
-                ));
-
-        return Optional.of(regiaoEncontrada);
+                        || r.endereco().equalsIgnoreCase(nome))
+                .findFirst();
     }
 
     public static String normalizar(String id) {

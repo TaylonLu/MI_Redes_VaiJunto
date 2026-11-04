@@ -98,7 +98,7 @@ A topologia configurada é uma cadeia:
 Unova -------- Kalos -------- Johto
 ```
 
-O identificador utilizado nas mensagens entre servidores é formado pelo endereço IP e pela porta (`ip:porta`). Portanto, em uma execução local, os identificadores são `localhost:2602`, `localhost:2603` e `localhost:2604`; eles não são simplesmente os nomes das regiões.
+O identificador lógico utilizado nas mensagens entre servidores é formado pelos campos `ip` e `porta` do `regioes.json`. Na configuração atual, os identificadores são `localhost:2602`, `localhost:2603` e `localhost:2604`. **Mantenha esses valores iguais em todas as máquinas**: eles identificam os nós de forma estável e não precisam ser os endereços físicos usados para comunicação. O endereço de rede efetivo de cada vizinho é substituído pelas variáveis `HOST_UNOVA`, `HOST_KALOS`, `HOST_JOHTO` ou `HOST_KANTO`.
 
 ### 2.2. Arquivo de regiões
 
@@ -110,7 +110,7 @@ O identificador utilizado nas mensagens entre servidores é formado pelo endere�
 - Cidades de fronteira utilizadas como conexões externas (`conexoes_externas`).
 - Servidores vizinhos (`servidores_vizinhos`).
 
-A classe `ServerConstant` carrega esse arquivo e determina a região atual, o identificador do servidor e os vizinhos. As variáveis de ambiente `HOST_UNOVA`, `HOST_KALOS`, `HOST_JOHTO` e `HOST_KANTO` podem substituir os endereços IP utilizados na comunicação entre processos — por exemplo, pelos nomes dos serviços Docker.
+A classe `ServerConstant` carrega esse arquivo e determina a região atual, o identificador lógico do servidor e os vizinhos. Para cada vizinho, ela consulta `HOST_<REGIAO>` e usa esse valor como host HTTP; quando a variável não está definida, utiliza o campo `ip` do JSON. Assim, `localhost:2602` pode continuar sendo o identificador lógico de Unova, enquanto `HOST_UNOVA=192.168.1.10` define o endereço alcançável pelos outros computadores. No Docker Compose, os valores padrão são os nomes dos serviços (`unova`, `kalos`, `johto` e `kanto`).
 
 ### 2.3. Cidades
 
@@ -214,7 +214,8 @@ MI_Redes_VaiJunto/
 ├── Dockerfile
 ├── Makefile
 ├── Makefile.local
-├── compose_1.yaml
+├── compose.yaml
+├── .env.example
 └── pom.xml
 ```
 
@@ -299,69 +300,111 @@ make -f Makefile.local rebuild
 
 ### 6.1. Execução local, sem Docker
 
-Primeiro compile o projeto:
+Compile o projeto:
 
 ```bash
 make -f Makefile.local compile
 ```
 
-Depois, abra um terminal para cada servidor atualmente configurado:
+Em uma única máquina, abra um terminal para cada região:
 
 ```bash
 make -f Makefile.local run-only REGIAO=Unova
-```
-
-```bash
 make -f Makefile.local run-only REGIAO=Kalos
-```
-
-```bash
 make -f Makefile.local run-only REGIAO=Johto
 ```
 
-Também existem atalhos:
+Quando os processos estiverem em computadores diferentes, defina em cada computador as variáveis referentes aos **servidores vizinhos** antes de iniciar o processo. Exemplo no PowerShell, considerando Unova em `192.168.1.10`, Kalos em `192.168.1.11` e Johto em `192.168.1.12`:
 
-```bash
-make -f Makefile.local unova
-make -f Makefile.local kalos
-make -f Makefile.local johto
+**Computador de Unova:**
+
+```powershell
+$env:HOST_KALOS = "192.168.1.11"
+make -f Makefile.local run-only REGIAO=Unova
 ```
 
-O alvo `run-only` inicia sem recompilar. Quando o código for alterado, execute `compile` novamente antes de iniciar os processos.
+**Computador de Kalos:**
 
-Para iniciar uma região manualmente com compilação prévia:
-
-```bash
-make -f Makefile.local run REGIAO=Unova
+```powershell
+$env:HOST_UNOVA = "192.168.1.10"
+$env:HOST_JOHTO = "192.168.1.12"
+make -f Makefile.local run-only REGIAO=Kalos
 ```
 
-**Atenção:** embora o Makefile tenha uma variável `PORT`, a classe `Main` não lê a propriedade `server.port`. A porta utilizada pelo servidor vem de `regioes.json`; portanto, alterar apenas `PORT=` no Makefile não muda a porta efetiva.
+**Computador de Johto:**
+
+```powershell
+$env:HOST_KALOS = "192.168.1.11"
+make -f Makefile.local run-only REGIAO=Johto
+```
+
+No Linux/WSL, use `export HOST_KALOS=192.168.1.11` (e as demais variáveis necessárias) no terminal que iniciará o processo. Os endereços são exemplos: substitua-os pelos IPv4 alcançáveis na rede onde os computadores estão conectados.
+
+Cada máquina precisa aceitar conexões TCP na porta de seu servidor: 2602 para Unova, 2603 para Kalos e 2604 para Johto. No Windows, o IPv4 pode ser consultado com `ipconfig`; no Linux, com `ip -4 addr`. Confirme também que o firewall permite a porta e que os computadores não estão em redes Wi-Fi com isolamento entre clientes.
+
+Para conferir a conectividade de outro computador no PowerShell:
+
+```powershell
+Test-NetConnection 192.168.1.11 -Port 2603
+```
+
+O resultado esperado é `TcpTestSucceeded : True`.
+
+O alvo `run-only` inicia sem recompilar. Quando o código for alterado, execute `make -f Makefile.local compile` novamente antes de iniciar os processos.
+
+A porta efetiva vem do registro da região em `regioes.json`; alterar apenas `PORT=` no Makefile não muda a porta utilizada pelo servidor.
 
 ### 6.2. Execução com Docker Compose
 
-O arquivo Compose presente no repositório é `compose_1.yaml`. Para iniciar os três serviços que possuem configuração regional, utilize:
+O Compose lê automaticamente um arquivo `.env` na raiz do projeto para substituir as variáveis declaradas em `compose.yaml`. Comece criando sua configuração local:
 
-```bash
-docker compose -f compose_1.yaml up --build unova kalos johto
+**PowerShell:**
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-Para acompanhar os logs:
+**Linux/WSL:**
 
 ```bash
-docker compose -f compose_1.yaml logs -f
+cp .env.example .env
 ```
 
-Para encerrar:
+Para executar todos os servidores na mesma máquina e no mesmo projeto Compose, mantenha os nomes de serviço do exemplo (`unova`, `kalos`, `johto` e `kanto`). Os próprios valores padrão do Compose também permitem iniciar sem um arquivo `.env`:
 
 ```bash
-docker compose -f compose_1.yaml down
+docker compose up --build unova kalos johto
 ```
 
-As portas publicadas são 2602 (Unova), 2603 (Kalos) e 2604 (Johto). O Compose também declara um serviço Kanto na porta 2605, mas a região Kanto ainda não está cadastrada em `regioes.json`; por isso, esse serviço não consegue ser inicializado pela configuração atual.
+Para distribuir os servidores entre computadores diferentes, edite o `.env` **em cada computador** e substitua os nomes dos serviços pelos IPv4 das máquinas que hospedam os vizinhos. Por exemplo, no computador que hospedará somente Unova:
 
-O volume `./data:/app/data` mantém os dados fora do ciclo de vida dos contêineres. Cada servidor separa seus arquivos de acordo com a própria porta.
+```dotenv
+HOST_UNOVA=unova
+HOST_KALOS=192.168.1.11
+HOST_JOHTO=192.168.1.12
+HOST_KANTO=kanto
+```
 
-**Atenção ao Makefile principal:** `Makefile` ainda define `docker compose -f compose.yaml`, mas esse arquivo não está presente no repositório consultado. Até alinhar esse nome, utilize os comandos Docker Compose explícitos acima em vez dos alvos `make up`, `make build`, `make down` e `make logs`.
+Nesse computador, inicie somente o serviço correspondente:
+
+```bash
+docker compose up -d --build unova
+docker compose logs -f unova
+```
+
+No computador de Kalos, configure `HOST_UNOVA` e `HOST_JOHTO` com os IPs das máquinas correspondentes e inicie `kalos`. No computador de Johto, configure `HOST_KALOS` e inicie `johto`. Cada computador deve ter seu próprio `.env`; não versione esse arquivo, pois ele contém endereços específicos do ambiente.
+
+As portas publicadas são 2602 (Unova), 2603 (Kalos) e 2604 (Johto). Libere a porta correspondente no firewall do computador que hospeda cada servidor. Para testar, acesse, a partir de outro computador, por exemplo, `http://192.168.1.10:2602/api/consorcio/health`.
+
+**Atenção ao Docker:** dentro de um contêiner, o IP detectado pelo próprio Java pode ser um endereço interno da rede Docker. Para configurar os outros computadores, utilize o IPv4 da máquina hospedeira (por exemplo, obtido com `ipconfig` no Windows), e não o IP interno do contêiner.
+
+O volume `./data:/app/data` mantém os dados fora do ciclo de vida dos contêineres. Cada servidor separa seus arquivos de acordo com sua porta. Para encerrar os serviços iniciados naquele computador:
+
+```bash
+docker compose down
+```
+
+O serviço Kanto continua declarado no Compose, mas a região Kanto não está cadastrada no `regioes.json` atual; portanto, não o inicie até adicionar sua configuração regional.
 
 ---
 

@@ -23,6 +23,8 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
 
@@ -102,8 +104,19 @@ public class Main {
         IOUtils.fprintln("[:green]Região " + ServerConstant.getMeuId() + " na porta " + ServerConstant.getPorta() + "[::]");
         for (Vizinho v : ServerConstant.getVizinhos())
             System.out.println("  vizinho " + v.id() + " -> " + v.url());
-        System.out.println("  em outras máquinas, aponte este servidor com: HOST_"
-                + ServerConstant.getMeuId().toUpperCase(java.util.Locale.ROOT) + "=" + ipLocal());
+        String regiao = ServerConstant.getRegiao().regiaoBase()
+                .replaceAll("[^a-zA-Z0-9]", "")
+                .toUpperCase(java.util.Locale.ROOT);
+
+        System.out.println("  Para que outros nós alcancem este servidor, configure: HOST_"
+                + regiao + "=<IP_DA_MAQUINA>");
+
+        if (Files.exists(Path.of("/.dockerenv")) || Files.exists(Path.of("/run/.containerenv"))) {
+            System.out.println("  Execução em contêiner: use o IPv4 da máquina hospedeira, não o IP interno do contêiner.");
+        } else {
+            System.out.println("  IPv4 detectado nesta máquina: " + ipLocal()
+                    + " (confirme que é acessível pelos outros nós).");
+        }
     }
 
     static String ipLocal() throws SocketException {

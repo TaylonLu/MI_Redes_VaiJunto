@@ -1,6 +1,6 @@
 [
   {
-    "ip": "localhost",
+    "ip": "172.16.230.17",
     "porta": 2602,
     "nome": "Unova Metro Lines",
     "regiao_base": "Unova",
@@ -34,7 +34,7 @@
     ]
   },
   {
-    "ip": "localhost",
+    "ip": "172.16.230.17",
     "porta": 2603,
     "nome": "Lumiose Express Network",
     "regiao_base": "Kalos",
@@ -69,7 +69,7 @@
     ]
   },
   {
-    "ip": "localhost",
+    "ip": "172.16.230.27",
     "porta": 2604,
     "nome": "Johto Magnet Railways",
     "regiao_base": "Johto",
