@@ -359,7 +359,7 @@ public class TransacaoService {
 
             if (tx.getEstado() != EstadoTransacao.COMITADO) return false;
 
-            if (tx.souDono(meuId)) {
+            if (!tx.souDono(meuId)) {
                 throw new ServerException(400, "O cancelamento deve ser iniciado pelo coordenador");
             }
 
