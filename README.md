@@ -87,10 +87,10 @@ A aplicação é formada por processos independentes. Não existe um servidor ce
 O arquivo `Server/src/main/resources/regioes.json` contém, no estado consultado, três regiões:
 
 | Região | Identificador do servidor | Porta | Vizinhos configurados |
-|---|---|---:|---|
-| Unova | `localhost:2602` | 2602 | Kalos |
-| Kalos | `localhost:2603` | 2603 | Unova e Johto |
-| Johto | `localhost:2604` | 2604 | Kalos |
+|--------|---------------------------|------:|-----------------------|
+| Unova  | `Unova`                   |  2602 | Kalos                 |
+| Kalos  | `Kalos`                   |  2603 | Unova e Johto         |
+| Johto  | `Johto`                   |  2604 | Kalos                 |
 
 A topologia configurada é uma cadeia:
 
@@ -1118,11 +1118,11 @@ Os scripts de integração ficam no diretório `Test/` e utilizam Bash, cURL e j
 
 ### 15.1. Scripts principais
 
-| Arquivo | Objetivo |
-|---|---|
-| `Test/teste-health.sh` | Consultar o endpoint de saúde dos servidores listados em `Test/comum.sh` |
+| Arquivo                         | Objetivo                                                                                            |
+|---------------------------------|-----------------------------------------------------------------------------------------------------|
+| `Test/teste-health.sh`          | Consultar o endpoint de saúde dos servidores listados em `Test/comum.sh`                            |
 | `Test/teste-cadastro-carona.sh` | Exercitar cadastro, perfil de motorista, publicação e consulta de carona, além de uma reserva local |
-| `Test/executar.sh` | Executar a verificação da rede, o teste de saúde e o fluxo de cadastro/reserva |
+| `Test/executar.sh`              | Executar a verificação da rede, o teste de saúde e o fluxo de cadastro/reserva                      |
 
 Para executar o conjunto principal:
 

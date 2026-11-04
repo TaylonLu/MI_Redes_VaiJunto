@@ -14,6 +14,7 @@ import org.UEFS.shared.dto.consorcio.TrechoSolicitado;
 
 import java.util.*;
 
+import static org.UEFS.Server.http.relogio.ServerConstant.idLogico;
 import static org.UEFS.Server.http.relogio.ServerConstant.normalizar;
 import static org.UEFS.Server.http.service.ConsorcioUtils.*;
 
@@ -61,7 +62,6 @@ public class ReservaCoordenador {
         String idTransacao = UUID.randomUUID().toString();
         int timestamp = relogio.tique();
         Transacao transacao = transacoes.criarTransacaoLocal(idTransacao, idPassageiro, timestamp, trechos.subList(0, qtdLocais), proximo);
-
 
         // Prepare
         Preparo preparo = transacoes.preparar(transacao);
@@ -124,7 +124,7 @@ public class ReservaCoordenador {
                 return ResultadoValidacao.erro(400, "Trecho invalido no itinerario");
             }
 
-            String serv = normalizar(T.servidor());
+            String serv = idLogico(T.servidor());
 
             trechos.add(new TrechoSolicitado(
                     serv, T.idCarona(), T.origem(), T.destino()

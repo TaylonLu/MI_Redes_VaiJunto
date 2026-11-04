@@ -316,7 +316,8 @@ public class TransacaoService {
 
             // LAZY check para sincronizar o estado caso o coordenador seja outro servidor.
             if (tx.getEstado() == EstadoTransacao.COMITADO &&
-                    !tx.getCoordenadorId().equalsIgnoreCase(this.meuId)) {
+                    !ServerConstant.idLogico(tx.getCoordenadorId())
+                            .equalsIgnoreCase(ServerConstant.idLogico(this.meuId))) {
                 sincronizarStatus(tx);
             }
 

@@ -136,12 +136,7 @@ public class ConsorcioUtils {
      * @return {@link Vizinho} caso o ID seja de um vizinho ou {@code NULL} caso contrário.
      */
     public static Vizinho buscarVizinho(String id) {
-        if (isVazio(id)) return null;
-        String norm = ServerConstant.normalizar(id);
-        return ServerConstant.getVizinhos().stream()
-                .filter(V -> V.id().equals(norm))
-                .findFirst()
-                .orElse(null);
+        return ServerConstant.getVizinho(id);
     }
 
     public static int toHttpStatus(Resultado resultado) {

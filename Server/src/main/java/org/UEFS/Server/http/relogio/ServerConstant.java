@@ -80,6 +80,18 @@ public final class ServerConstant {
         }
     }
 
+    /**
+     * Converte um identificador antigo (IP:porta), nome de região
+     * ou identificador lógico para o identificador lógico atual.
+     */
+    public static String idLogico(String identificador) {
+        if (identificador == null || identificador.isBlank()) return "";
+
+        return buscar(identificador)
+                .map(Regiao::id)
+                .orElse(normalizar(idLogico(identificador)));
+    }
+
     public static void carregar(String regiao) {
         Regiao eu = buscar(regiao).orElseThrow(() -> new IllegalArgumentException(
                 "Região desconhecida: '" + regiao + "'. Válidas: "

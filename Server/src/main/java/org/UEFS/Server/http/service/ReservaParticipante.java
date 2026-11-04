@@ -48,10 +48,12 @@ public class ReservaParticipante {
         if (isVazio(pedido.coordenadorId())) throw new ServerException(400, "Corpo sem corrdenador_id");
         if (isVazio(pedido.passageiro())) throw new ServerException(400, "passageiro ausente");
 
-        String servidorAnterior = ServerConstant.normalizar(remetente);
+        String servidorAnterior = ServerConstant.idLogico(remetente);
 
-        if (isVazio(remetente) || buscarVizinho(servidorAnterior) == null)
+        if (isVazio(remetente) || buscarVizinho(remetente) == null)
             throw new ServerException(403, "Remetente nao autorizado para esta cadeia");
+
+        String coordenadorId = ServerConstant.idLogico(pedido.coordenadorId());
 
         List<TrechoSolicitado> lista = pedido.trechosSolicitados();
         if (lista == null || lista.isEmpty() || lista.size() > MAX_TRECHOS)
@@ -66,7 +68,7 @@ public class ReservaParticipante {
             if (T == null || isVazio(T.servidor()) || !idCaronaValido(T.idCarona()))
                 throw new ServerException(400, "trecho sem servidor ou com id_carona invalido");
 
-            String servidor = ServerConstant.normalizar(T.servidor());
+            String servidor = ServerConstant.idLogico(T.servidor());
 
             trechos.add(new TrechoSolicitado(servidor, T.idCarona(), T.origem(), T.destino()));
 
@@ -113,7 +115,7 @@ public class ReservaParticipante {
             meusTrechos.add(new TrechoReserva(T.servidor(), T.idCarona(), T.origem(), T.destino(), 0));
         }
 
-        Transacao transacao = new Transacao(id, pedido.coordenadorId(), servidorAnterior,
+        Transacao transacao = new Transacao(id, coordenadorId, servidorAnterior,
                             proximo == null ? "" : proximo.id(), pedido.passageiro(),
                             pedido.relogioLogico(), meusTrechos
         );
@@ -127,7 +129,7 @@ public class ReservaParticipante {
         if (!preparo.repetido() && proximo != null) {
             ResultadoRepasse rep;
             try {
-                ReservaRequest pedidoRestante = new ReservaRequest(id, pedido.coordenadorId(), pedido.passageiro(),
+                ReservaRequest pedidoRestante = new ReservaRequest(id, coordenadorId, pedido.passageiro(),
                         pedido.relogioLogico(), List.copyOf(trechosDosProximo));
                 rep = repasse.prepare(proximo, pedidoRestante, contarServidoresConsecutivos(trechosDosProximo));
             } catch (RuntimeException e) {

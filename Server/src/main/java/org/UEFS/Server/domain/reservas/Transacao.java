@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.UEFS.Server.http.relogio.ServerConstant.idLogico;
+
 public class Transacao implements Identificavel {
     private final String id;                      // = id_transacao
     private final String coordenadorId;
@@ -126,6 +128,7 @@ public class Transacao implements Identificavel {
     }
 
     public boolean souDono(String meuId) {
-        return this.coordenadorId.equalsIgnoreCase(meuId);
+        return idLogico(coordenadorId)
+                .equalsIgnoreCase(idLogico(meuId));
     }
 }
