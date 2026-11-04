@@ -1,3 +1,9 @@
+x-hosts: &hosts
+  HOST_UNOVA: "172.16.230.27"
+  HOST_KALOS: "172.16.230.17"
+  HOST_JOHTO: "172.16.230.17"
+  HOST_KANTO: "192.168.1.13"
+
 services:
   unova:
     build:
@@ -7,11 +13,8 @@ services:
     ports:
       - "2602:2602"
     environment:
+      <<: *hosts
       MAVEN_OPTS: "-Dserver.regiao=Unova -Dserver.port=2602"
-      HOST_UNOVA: ${HOST_UNOVA:-unova}
-      HOST_KALOS: ${HOST_KALOS:-kalos}
-      HOST_JOHTO: ${HOST_JOHTO:-johto}
-      HOST_KANTO: ${HOST_KANTO:-kanto}
     volumes:
       - .:/app
       - ./data:/app/data
@@ -25,11 +28,8 @@ services:
     ports:
       - "2603:2603"
     environment:
+      <<: *hosts
       MAVEN_OPTS: "-Dserver.regiao=Kalos -Dserver.port=2603"
-      HOST_UNOVA: ${HOST_UNOVA:-unova}
-      HOST_KALOS: ${HOST_KALOS:-kalos}
-      HOST_JOHTO: ${HOST_JOHTO:-johto}
-      HOST_KANTO: ${HOST_KANTO:-kanto}
     volumes:
       - .:/app
       - ./data:/app/data
@@ -43,11 +43,8 @@ services:
     ports:
       - "2604:2604"
     environment:
+      <<: *hosts
       MAVEN_OPTS: "-Dserver.regiao=Johto -Dserver.port=2604"
-      HOST_UNOVA: ${HOST_UNOVA:-unova}
-      HOST_KALOS: ${HOST_KALOS:-kalos}
-      HOST_JOHTO: ${HOST_JOHTO:-johto}
-      HOST_KANTO: ${HOST_KANTO:-kanto}
     volumes:
       - .:/app
       - ./data:/app/data
@@ -61,11 +58,8 @@ services:
     ports:
       - "2605:2605"
     environment:
+      <<: *hosts
       MAVEN_OPTS: "-Dserver.regiao=Kanto -Dserver.port=2605"
-      HOST_UNOVA: ${HOST_UNOVA:-unova}
-      HOST_KALOS: ${HOST_KALOS:-kalos}
-      HOST_JOHTO: ${HOST_JOHTO:-johto}
-      HOST_KANTO: ${HOST_KANTO:-kanto}
     volumes:
       - .:/app
       - ./data:/app/data
