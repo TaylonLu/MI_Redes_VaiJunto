@@ -24,7 +24,7 @@ services:
     ports:
       - "2603:2603"
     environment:
-      - MAVEN_OPTS=-Dserver.regiao=Kalos -Dserver.port=2603
+      - MAVEN_OPTS=-Dserver.regiao=Kalos -Dserver.port=2603 -Dvaijunto.teste.falha.etapas=prepare,commit -Dvaijunto.teste.falha.diretorio=/app/Test/.falhas-kalos
       - HOST_UNOVA=unova
       - HOST_KALOS=kalos
       - HOST_JOHTO=johto
