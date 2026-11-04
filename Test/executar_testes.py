@@ -206,12 +206,12 @@ def reserve_payload(rides):
     return {"trechos": rides}
 
 
-def search_itinerary(passenger, origin="Mistralton City", destination="Goldenrod city", day=None):
+def search_itinerary(passenger, origin="Mistralton City", destination="Goldenrod city", day=None, server="Unova"):
     query = urllib.parse.urlencode({
         "origem": origin, "destino": destination,
         "data": day, "vagas": 1
     })
-    status, data = http("Unova", "GET", "/api/cliente/itinerarios?" + query,
+    status, data = http(server, "GET", "/api/cliente/itinerarios?" + query,
                         token=passenger["token"])
     require(status == 200 and isinstance(data, dict),
             f"Busca de itinerário falhou: HTTP {status} {data}")
@@ -364,20 +364,32 @@ def run_failure_commit():
 def run_load(passengers_count: int, threads: int):
     log(f"TESTE DE CARGA: {passengers_count} passageiros, {threads} threads.")
     rides, day = create_trip_set(passengers_count, "carga")
-    passengers = [create_user("Unova", f"passageiro-carga-{i+1}")
-                  for i in range(passengers_count)]
+    passageiros_unova = [create_user("Unova", f"passageiro-carga-unova-{i+1}")
+                           for i in range(passengers_count)]
+    passageiros_kalos = [create_user("Kalos", f"passageiro-carga-kalos-{i+1}")
+                         for i in range(passengers_count)]
+    passageiros_johto = [create_user("Johto", f"passageiro-carga-johto-{i+1}")
+                         for i in range(passengers_count)]
 
     latencies = []
     lock = threading.Lock()
-    counts = {"buscas": 0, "reservas_confirmadas": 0, "reservas_recusadas": 0}
+    counts = {"buscas_unova": 0, "buscas_kalos": 0, "buscas_johto": 0,
+              "reservas_confirmadas": 0, "reservas_recusadas": 0}
 
-    def work(passenger):
+    def work(passengers):
+        passageiro_unova, passageiro_kalos, passageiro_johto = passengers
         start = time.perf_counter()
-        itineraries = search_itinerary(passenger, day=day)
+        search_itinerary(passageiro_unova, day=day, server="Unova")
+        search_itinerary(passageiro_kalos, origin="Snowbelle City",
+                         destination="Ecruteak City", day=day, server="Kalos")
+        search_itinerary(passageiro_johto, origin="Ecruteak City",
+                         destination="Goldenrod city", day=day, server="Johto")
         with lock:
-            counts["buscas"] += 1
+            counts["buscas_unova"] += 1
+            counts["buscas_kalos"] += 1
+            counts["buscas_johto"] += 1
         status, data = http("Unova", "POST", "/api/cliente/reservas",
-                            reserve_payload(rides), passenger["token"], timeout=35)
+                            reserve_payload(rides), passageiro_unova["token"], timeout=35)
         elapsed = time.perf_counter() - start
         with lock:
             latencies.append(elapsed)
@@ -388,15 +400,19 @@ def run_load(passengers_count: int, threads: int):
         return status, data
 
     start = time.perf_counter()
+    tarefas = zip(passageiros_unova, passageiros_kalos, passageiros_johto)
     with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as pool:
-        results = list(pool.map(work, passengers))
+        results = list(pool.map(work, tarefas))
     duration = time.perf_counter() - start
     ordered = sorted(latencies)
     percentile = lambda p: ordered[min(len(ordered)-1, int((len(ordered)-1)*p))] if ordered else 0
     require(counts["reservas_confirmadas"] == passengers_count,
             f"Carga: esperadas {passengers_count} reservas confirmadas; "
             f"recebidas {counts['reservas_confirmadas']}.")
-    log(f"Buscas: {counts['buscas']}; reservas confirmadas: {counts['reservas_confirmadas']}; "
+    total_buscas = counts["buscas_unova"] + counts["buscas_kalos"] + counts["buscas_johto"]
+    log(f"Buscas: {total_buscas} (Unova={counts['buscas_unova']}, "
+        f"Kalos={counts['buscas_kalos']}, Johto={counts['buscas_johto']}); "
+        f"reservas confirmadas: {counts['reservas_confirmadas']}; "
         f"recusadas: {counts['reservas_recusadas']}")
     log(f"Duração: {duration:.2f}s; latência p50={percentile(.50):.3f}s, "
         f"p95={percentile(.95):.3f}s, p99={percentile(.99):.3f}s")
