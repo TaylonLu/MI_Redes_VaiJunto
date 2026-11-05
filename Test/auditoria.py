@@ -5,10 +5,11 @@ import time
 import re
 from pathlib import Path
 
-from simulador import CONFIG, SERVIDORES
 
 
 BASE = Path(__file__).resolve().parent
+CONFIG = json.loads((BASE / "config.json").read_text(encoding="utf-8"))
+SERVIDORES = CONFIG["servidores"]
 DIRETORIO_DADOS = (BASE.parent / CONFIG.get("diretorio_dados", "data")).resolve()
 
 
