@@ -445,7 +445,7 @@ def run_concurrency(passengers_count: int, threads: int):
         for i in range(passengers_count)
     ]
 
-    barrier = threading.Barrier(min(passengers_count, threads))
+    barrier = threading.Barrier(passengers_count)
 
     def work(passenger):
         search_itinerary(passenger, day=day)
@@ -455,7 +455,7 @@ def run_concurrency(passengers_count: int, threads: int):
             reserve_payload(rides), passenger["token"], timeout=35
         )
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=passengers_count) as pool:
         results = list(pool.map(work, passengers))
 
     confirmed = sum(
