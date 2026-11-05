@@ -277,6 +277,8 @@ def run_reservation_with_failure(passenger, rides, stage: str, wait_crash=35):
     log(f"Kalos caiu deterministicamente na etapa '{stage}'. Reiniciando...")
     docker("start", container)
     wait_health("Kalos", 60)
+    # Aguarda expirar a janela de suspeita temporária do PeerClient após a queda.
+    time.sleep(3)
     worker.join(timeout=40)
     require(not worker.is_alive(), "A requisição de reserva não terminou após a recuperação.")
     return result.get("response")
