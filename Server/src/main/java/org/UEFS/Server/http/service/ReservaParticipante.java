@@ -124,6 +124,9 @@ public class ReservaParticipante {
         if (preparo.resultado() != Resultado.OK)
             return respostaRecusa(toHttpStatus(preparo.resultado()), id, preparo.motivo());
 
+        if (!preparo.repetido()) {
+            FalhaControlada.executar("prepare");
+        }
 
         List<TrechoReserva> assentosAcumulados = new ArrayList<>(preparo.assentos());
         if (!preparo.repetido() && proximo != null) {
@@ -196,6 +199,9 @@ public class ReservaParticipante {
 
             throw new ServerException(500, "Falha ao confirmar reserva: " + resultado);
         }
+
+        // A falha ocorre depois da persistência local e antes da propagação ao próximo nó.
+        FalhaControlada.executar("commit");
 
         // Propaga o COMMIT antes de efetivar eventual cancelamento pendente.
         boolean propagacaoPendente = false;

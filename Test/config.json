@@ -5,7 +5,7 @@
   "servidores": [
     {
       "id": "Unova",
-      "url": "http://172.16.230.27:2602",
+      "url": "http://localhost:2602",
       "container": "vai-junto-unova",
       "controle": {
         "tipo": "docker"
@@ -13,7 +13,7 @@
     },
     {
       "id": "Kalos",
-      "url": "http://172.16.230.27:2603",
+      "url": "http://localhost:2603",
       "container": "vai-junto-kalos",
       "controle": {
         "tipo": "docker"
@@ -21,11 +21,12 @@
     },
     {
       "id": "Johto",
-      "url": "http://172.16.230.27:2604",
+      "url": "http://localhost:2604",
       "container": "vai-junto-johto",
       "controle": {
         "tipo": "docker"
       }
     }
-  ]
+  ],
+  "diretorio_dados": "data"
 }
