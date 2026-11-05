@@ -25,7 +25,9 @@ O script:
 6. Derruba Kalos deterministicamente após persistir `COMITADO`, reinicia o nó e verifica a propagação do commit.
 7. Executa a auditoria de consistência existente.
 
-Os dois pontos de falha são ativados por arquivos-marcadores no volume compartilhado. O próprio servidor remove o marcador e encerra o processo; o orquestrador detecta a parada e inicia o contêiner novamente. Não há dependência de `sleep` para acertar a janela da requisição.
+Os dois pontos de falha são ativados por arquivos-marcadores no volume compartilhado. O próprio servidor remove o marcador e encerra o processo; o orquestrador detecta a parada e inicia o contêiner novamente. A queda é sincronizada pela detecção do encerramento do contêiner, sem depender de atrasos artificiais para acertar a janela da requisição.
+
+Após o health check de Kalos, o orquestrador aguarda mais 3 segundos antes de concluir a tentativa. Essa pequena espera permite expirar a janela temporária em que o `PeerClient` ainda considera o vizinho suspeito após uma falha de comunicação; assim, uma busca imediatamente posterior ao restart não é descartada por esse estado transitório.
 
 ## Opções
 
@@ -54,6 +56,57 @@ Kalos persiste a reserva local em `PREPARADO` e encerra o processo antes de enca
 Kalos persiste `COMITADO` e encerra o processo antes de propagar a decisão para Johto. Unova pode responder com a confirmação local e indicar propagação pendente. Após a recuperação, os recuperadores de Unova e Kalos repetem a propagação. O teste aguarda os três registros `COMITADO` e verifica a ocupação em cada servidor.
 
 A injeção é exclusiva do serviço Kalos no arquivo `compose+3.yaml`. Sem os marcadores, as propriedades não provocam falha.
+
+## Resultado medido: 50 passageiros / 30 threads
+
+Execução completa realizada em 05/11/2026, com o comando:
+
+```bash
+python3 Test/executar_testes.py --passageiros 50 --threads 30
+```
+
+<badge color="success">Todos os cenários aprovados</badge>
+
+### Carga concorrente
+
+| Métrica | Resultado |
+|---|---:|
+| Passageiros | 50 |
+| Threads simultâneas | 30 |
+| Buscas totais | 150 |
+| Buscas por servidor | 50 em cada nó |
+| Reservas confirmadas | 50 |
+| Reservas recusadas | 0 |
+| Duração da carga | 2,63 s |
+| Latência p50 | 1,805 s |
+| Latência p95 | 1,904 s |
+| Latência p99 | 1,918 s |
+
+O teste confirmou as 50 reservas e não detectou reservas perdidas ou duplicadas.
+
+### Falhas e recuperação
+
+| Cenário | Comportamento observado | Resultado |
+|---|---|---|
+| Queda após `PREPARADO` em Kalos | Unova recebeu HTTP 502, abortou a transação e as vagas foram liberadas | Aprovado |
+| Queda após `COMITADO` em Kalos | A resposta inicial foi HTTP 201 com `propagacao_pendente: true`; após o restart, os três nós convergiram para `COMITADO` e mantiveram os assentos ocupados | Aprovado |
+
+### Auditoria global
+
+A auditoria terminou com:
+
+```text
+[OK] Nenhuma inconsistência detectada.
+
+Transações por servidor:
+Unova: {'COMITADO': 51, 'ABORTADO': 1}
+Kalos: {'COMITADO': 51, 'ABORTADO': 1}
+Johto: {'COMITADO': 51}
+```
+
+Os 51 registros `COMITADO` por servidor correspondem às 50 reservas da carga e à reserva confirmada no cenário de falha após COMMIT. O cenário PREPARE gerou a transação abortada em Unova e Kalos.
+
+**Escopo:** este resultado comprova a execução bem-sucedida dessa configuração e desse ambiente local; não representa um limite máximo de capacidade nem substitui testes em rede/ambiente de produção.
 
 ## Dados e limpeza
 
