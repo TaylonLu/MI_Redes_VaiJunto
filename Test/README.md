@@ -1,13 +1,15 @@
-# Testes automatizados VaiJunto
+# Testes automatizados — VaiJunto
 
-A suíte de testes atual foi consolidada no orquestrador Python:
+A pasta contém três testes independentes. Execute os comandos na raiz do repositório:
 
-```bash
-python3 Test/executar_testes.py
-```
+| Teste | Comando | Objetivo |
+|---|---|---|
+| Carga | `python3 Test/teste_carga.py --passageiros 50 --threads 30` | Medir buscas e reservas distribuídas sob volume. |
+| Concorrência | `python3 Test/teste_concorrencia.py --passageiros 20` | Fazer passageiros disputarem simultaneamente uma vaga e verificar exclusividade. |
+| Falhas | `python3 Test/teste_falhas.py` | Injetar quedas após PREPARADO e COMITADO e verificar recuperação. |
 
-Ele executa os três servidores locais com Docker Compose, realiza carga concorrente e testa falhas controladas durante PREPARE e COMMIT, incluindo recuperação e auditoria.
+Acrescente `--sem-build` para reutilizar containers já iniciados.
 
-Consulte **[README_AUTOMACAO.md](README_AUTOMACAO.md)** para pré-requisitos, opções, cenários, detalhes da execução e resultados medidos em uma carga de 50 passageiros.
+Os executáveis compartilham funções em `suporte.py`, configurações em `config.json` e auditoria em `auditoria.py`. A injeção de falhas depende das propriedades habilitadas para Kalos em `compose+3.yaml`.
 
-`auditoria.py`, `controle_falhas.py` e `agent.py` continuam disponíveis como ferramentas auxiliares. `simulador.py` mantém as configurações compartilhadas usadas pela auditoria; o fluxo recomendado de carga é o orquestrador acima.
+Consulte [README_AUTOMACAO.md](README_AUTOMACAO.md) para pré-requisitos, cenários e resultados de carga registrados.
